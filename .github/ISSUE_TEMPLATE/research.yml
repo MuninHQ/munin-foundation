@@ -1,0 +1,25 @@
+name: Research task
+description: Investigate a question using evidence
+title: "[Research] "
+labels: ["research"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Research question
+    validations:
+      required: true
+  - type: textarea
+    id: importance
+    attributes:
+      label: Why it matters
+    validations:
+      required: true
+  - type: textarea
+    id: method
+    attributes:
+      label: Method
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence requirements
