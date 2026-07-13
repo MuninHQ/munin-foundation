@@ -11,16 +11,17 @@ Munin Foundation is the private research and product-thinking repository behind 
 
 **Project Apollo — Discovery and Validation**
 
-Our objective is to test whether persistent, user-owned continuity creates meaningful value beyond ordinary AI memory, chat history, and knowledge-management tools.
-
 ## Repository map
 
-- `docs/` — vision, product, principles, terminology, and governance
+- `docs/vision/` — vision, manifesto, and beliefs
+- `docs/product/` — roadmap and product discovery
+- `docs/brand/` — brand strategy
+- `docs/terminology/` — canonical language
 - `rfcs/` — durable proposals
-- `research/` — hypotheses, evidence, market analysis, and Red Team
-- `decisions/` — architecture and product decision records
+- `research/` — hypotheses, evidence, experiments, and Red Team
+- `decisions/` — accepted decision records
 - `journal/` — dated founder and research notes
-- `.github/` — collaboration templates and automated checks
+- `archive/` — preserved legacy material
 
 ## Principles
 
