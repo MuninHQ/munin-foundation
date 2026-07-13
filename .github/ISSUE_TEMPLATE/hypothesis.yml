@@ -1,0 +1,23 @@
+name: Hypothesis
+description: Propose a falsifiable hypothesis
+title: "[Hypothesis] "
+labels: ["hypothesis"]
+body:
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Hypothesis
+    validations:
+      required: true
+  - type: textarea
+    id: test
+    attributes:
+      label: Test
+    validations:
+      required: true
+  - type: textarea
+    id: kill
+    attributes:
+      label: Kill criteria
+    validations:
+      required: true
