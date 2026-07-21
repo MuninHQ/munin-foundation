@@ -2,7 +2,7 @@
 
 **Building the foundations of Human Computing.**
 
-Munin Foundation is the private research and product-thinking repository behind Munin.
+Munin Foundation is the public research and product-thinking repository behind Munin.
 
 > We are not trying to build a better AI.  
 > We are trying to discover what comes after AI.
@@ -35,4 +35,4 @@ Munin Foundation is the private research and product-thinking repository behind 
 
 ## Status
 
-Private early-stage research. Concepts are hypotheses unless explicitly marked as accepted decisions.
+Public early-stage research. Concepts are hypotheses unless explicitly marked as accepted decisions.
