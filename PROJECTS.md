@@ -1,6 +1,6 @@
 # Active Projects Portfolio
 
-> **Source of truth for active initiatives, ownership, status, dependencies, and next milestones.**
+> **Source of truth for active initiatives, shared capabilities, ownership, status, dependencies, and next milestones.**
 >
 > Last updated: **2026-07-27**
 
@@ -8,9 +8,9 @@
 
 | Role | Responsibility |
 |---|---|
-| **André** | Executive owner, final prioritization, product direction, and decisions |
-| **ChatGPT** | Strategy, portfolio governance, career operations, architecture, documentation, and SITREP |
-| **Claude** | Repository implementation, refactoring, technical documentation, tests, and code maintenance |
+| **André** | Executive owner, final prioritization, product direction, approval, and publication decisions |
+| **ChatGPT** | Strategy, portfolio governance, career operations, architecture, editorial strategy, documentation, and SITREP |
+| **Claude** | Repository implementation, refactoring, structured artifacts, automation, technical documentation, tests, and code maintenance |
 
 ### Status vocabulary
 
@@ -39,6 +39,14 @@
 | **P3** | Personal Technology Environment | Active | André + Claude | GitHub and local environments | Create a canonical technical inventory and recovery guide |
 | — | Project Atlas | Archived | — | Archive | No action |
 
+## Shared capabilities
+
+| Capability | Status | Owner | Consumers | Canonical document | Next milestone |
+|---|---|---|---|---|---|
+| **Content Engine** | Active | André + ChatGPT + Claude | Career Operations, North Star, Munin, AIP, Intellectual Production, YT-LAB | `docs/product/content-engine.md` | Complete the Drex publication cycle and create the reusable backlog |
+
+The Content Engine is not a separate product. North Star governs it as a portfolio capability; projects supply source material, and the shared editorial workflow produces approved public artifacts.
+
 ---
 
 ## P0 — Career Operations
@@ -53,10 +61,11 @@ Secure a senior or executive role across Product, Strategy, Payments, Open Finan
 - Core professional narratives and case studies are organized.
 - ATS keywords and target roles are defined.
 - Vacancy analysis, outreach, applications, follow-ups, and interview preparation are active.
+- The Content Engine supports professional positioning and can convert published work into targeted outreach and strategic conversations.
 
 ### Main risk
 
-Excessive CV customization can consume time better spent on applications, networking, follow-ups, and interviews.
+Excessive CV customization can consume time better spent on applications, networking, follow-ups, interviews, and high-value professional visibility.
 
 ### Operating decision
 
@@ -74,13 +83,14 @@ Create one pipeline:
 
 ### Objective
 
-Serve as the governance and prioritization layer for professional direction, decisions, projects, and execution.
+Serve as the governance and prioritization layer for professional direction, decisions, projects, capabilities, and execution.
 
 ### Current state
 
 - Strategic direction is defined.
-- Career, Munin, AIP, research, and personal development are conceptually connected.
+- Career, Munin, AIP, research, intellectual production, and personal development are conceptually connected.
 - Operational commands such as `SITREP`, `INCREP`, and `EXECUTE` are part of the intended model.
+- Shared capabilities, beginning with the Content Engine, are now represented separately from projects.
 
 ### Main risk
 
@@ -88,14 +98,15 @@ North Star, Munin, AIP, and Neo have overlapping responsibilities.
 
 ### Boundary decision
 
-- **North Star OS:** governance, priorities, portfolio, and executive dashboard.
+- **North Star OS:** governance, priorities, portfolio, shared capabilities, and executive dashboard.
 - **Munin:** intelligence product, user interface, context, and operational experience.
 - **AIP:** architecture, domain model, protocols, and reusable technical foundation.
 - **Neo:** Munin's conversational and voice interface.
+- **Content Engine:** shared editorial operating capability, not a standalone platform.
 
 ### Next milestone
 
-Define the canonical dashboard, project schema, and decision workflow.
+Define the canonical dashboard, project schema, capability schema, and decision workflow.
 
 ---
 
@@ -114,6 +125,7 @@ Build a contextual intelligence system for research, continuity, organization, a
 - Repository and initial structure exist.
 - Vision, product, research, decision, terminology, and journal areas are defined.
 - GitHub is now part of the consolidated working model with Claude.
+- Validated Munin lessons may feed the Content Engine, but hypotheses must never be presented publicly as delivered capabilities.
 
 ### Main risk
 
@@ -144,6 +156,7 @@ Provide the technical and domain architecture that supports the personal intelli
 - Python domain structure exists for capabilities, context, events, knowledge, and profile.
 - Previous validation recorded 28 passing tests and clean linting.
 - The architecture is more mature than the current product definition.
+- Accepted architectural lessons may be transformed into public educational content through the Content Engine.
 
 ### Documentation backlog
 
@@ -171,23 +184,66 @@ Consolidate the documents above and map every component to Munin v0.1.
 
 ### Objective
 
-Build professional authority through original analysis and executive communication.
+Build professional authority through original analysis, executive communication, and systematic reuse of knowledge.
 
 ### Current flagship
 
 White paper covering Drex, stablecoins, blockchain, tokenization, regulation, and financial infrastructure.
 
-### Remaining work
+### Operating capability
+
+Intellectual Production uses the shared **Content Engine**, defined in `docs/product/content-engine.md`.
+
+Editorial pipeline:
+
+`Idea → Research → Draft → Review → Approved → Scheduled → Published → Repurposed`
+
+Supported outputs include:
+
+- LinkedIn posts and articles.
+- Carousels.
+- White papers.
+- Executive briefs and one-pagers.
+- Presentations and talk outlines.
+- Strategic comments, analytical reposts, and outreach messages.
+
+### Ownership
+
+- **André:** editorial owner, final approval, and publication.
+- **ChatGPT:** positioning, editorial strategy, calendar, synthesis, drafting support, and executive review.
+- **Claude:** structured artifacts, repository organization, templates, transformations, automation, and version maintenance.
+
+No content may be published automatically without André's explicit approval.
+
+### Remaining work on the flagship
 
 - Reduce density.
 - Improve diagrams and visual storytelling.
 - Strengthen the AI chapter.
 - Rewrite the conclusion with a stronger executive position.
-- Produce the final PDF, LinkedIn post, carousel, and outreach message.
+- Produce the final PDF, LinkedIn post, carousel, executive brief, and outreach message.
+- Create a backlog of follow-on publications derived from the same research.
+
+### Metrics
+
+- Approved publications and lead time.
+- Percentage of flagship assets repurposed.
+- Qualified engagement and substantive conversations.
+- New relevant connections.
+- Conversations with recruiters, hiring leaders, founders, executives, and domain experts.
+- Interviews, collaborations, speaking invitations, or opportunities influenced by content.
 
 ### Next milestone
 
-Publish the complete Drex executive content package.
+Complete the Drex executive package as the first full Content Engine cycle:
+
+1. Final white paper.
+2. Executive LinkedIn post.
+3. Carousel.
+4. Executive brief or one-pager.
+5. Targeted outreach message.
+6. Publication and performance record.
+7. Reusable follow-on content backlog.
 
 ---
 
@@ -226,7 +282,7 @@ Validate a faceless, AI-assisted, evergreen YouTube channel without depending on
 
 ### Current state
 
-Strategy and validation criteria exist; consistent production has not started.
+Strategy and validation criteria exist; consistent production has not started. The Content Engine may supply approved research and scripts, but YT-LAB remains a separate channel experiment with its own success and shutdown criteria.
 
 ### Next milestone
 
@@ -265,7 +321,7 @@ Develop international executive communication, English at C1 level, and professi
 
 ### Operating model
 
-Treat this as direct support for active career opportunities rather than an isolated study project.
+Treat this as direct support for active career opportunities rather than an isolated study project. Approved content can also be adapted into English to support executive communication practice and international positioning.
 
 ### Next milestone
 
@@ -291,7 +347,7 @@ Build a private plan across three horizons:
 2. Debt and restriction resolution.
 3. Wealth rebuilding and property planning.
 
-> Financial details should remain in a private workspace and must not be committed to this public repository.
+> Financial details should remain in a private workspace and must not be committed to this public repository or used as public content.
 
 ---
 
@@ -343,18 +399,20 @@ Restart requires an explicit decision, owner, scope, and resource allocation.
 ## Portfolio rules
 
 1. P0 work takes precedence over all build initiatives.
-2. North Star governs the portfolio; it does not duplicate Munin product functionality.
+2. North Star governs the portfolio and shared capabilities; it does not duplicate Munin product functionality.
 3. Munin v0.1 must remain narrow and usable.
 4. AIP components require a direct mapping to an accepted Munin use case.
 5. Neo remains a Munin module.
-6. Pilot projects need explicit success and shutdown criteria.
-7. Sensitive personal information must remain outside public repositories.
-8. Every active initiative must have an owner, next milestone, and current status.
-9. Update this document whenever a material priority, boundary, status, or milestone changes.
+6. The Content Engine remains a shared operating capability, not a standalone product.
+7. Public content requires André's explicit approval and a confidentiality review.
+8. Pilot projects need explicit success and shutdown criteria.
+9. Sensitive personal information must remain outside public repositories.
+10. Every active initiative and capability must have an owner, next milestone, and current status.
+11. Update this document whenever a material priority, boundary, status, capability, or milestone changes.
 
 ## SITREP cadence
 
-A project SITREP should report:
+A project or capability SITREP should report:
 
 - Current status.
 - Changes since the previous report.
@@ -363,3 +421,4 @@ A project SITREP should report:
 - Decisions required.
 - Next milestone.
 - Owner and target date, when applicable.
+- For the Content Engine: pipeline inventory, publications, repurposing, qualified engagement, and strategic outcomes.
