@@ -1,0 +1,14 @@
+# Local Claude Code and Munin execution artifacts
+.munin-runs/
+.claude/settings.local.json
+
+# Environment and credentials
+.env
+.env.*
+!.env.example
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
