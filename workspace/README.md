@@ -10,11 +10,9 @@ A provider-neutral operating layer for using ChatGPT and Claude Code as compleme
 
 ## Structure
 
-- `agents/` — reusable subagent definitions for Claude Code.
-- `skills/` — repeatable procedures and quality gates.
-- `templates/` — plans, handoffs, reviews, and decision records.
-- `standards/` — shared engineering and research rules.
-- `scripts/` — setup and verification helpers.
+- `agents/` — five reusable Claude Code subagent definitions.
+- `skills/` — five installable skills, each packaged as `<name>/SKILL.md`.
+- `scripts/install-munin-workspace.ps1` — installs and verifies both asset types under `~/.claude/`.
 
 ## Rules
 
@@ -25,7 +23,7 @@ A provider-neutral operating layer for using ChatGPT and Claude Code as compleme
 5. Do not merge to `main` without explicit approval.
 6. Record important decisions and unresolved risks in GitHub.
 
-## Initial agents
+## Agents
 
 - Product Manager
 - Software Architect
@@ -33,10 +31,20 @@ A provider-neutral operating layer for using ChatGPT and Claude Code as compleme
 - Quality Reviewer
 - GitHub Maintainer
 
-## Initial skills
+## Skills
 
 - Discovery to Spec
 - Plan to Execution
 - Research with Evidence
 - Repository Health Check
 - Handoff Protocol
+
+## Installation
+
+From the repository root in PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install-munin-workspace.ps1
+```
+
+Restart Claude Code after installation. The script reports installed counts and fails when post-install verification cannot find an expected asset.
