@@ -1,0 +1,26 @@
+{
+  "projects": [
+    {
+      "id": "munin",
+      "name": "Munin v0.1",
+      "priority": "P1",
+      "status": "active",
+      "currentOutcome": "Vertical slice implementation",
+      "nextAction": "Run the first state transition",
+      "blockers": [],
+      "updatedAt": "2026-08-04T20:00:00.000Z"
+    }
+  ],
+  "decisions": [],
+  "actions": [
+    {
+      "id": "act-demo",
+      "title": "Complete the first Munin vertical slice",
+      "projectId": "munin",
+      "priority": "P1",
+      "status": "planned",
+      "createdAt": "2026-08-04T20:00:00.000Z",
+      "updatedAt": "2026-08-04T20:00:00.000Z"
+    }
+  ]
+}

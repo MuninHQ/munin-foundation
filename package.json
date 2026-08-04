@@ -1,0 +1,14 @@
+{
+  "name": "munin-foundation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "munin": "dist/cli.js" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test dist/tests/*.test.js",
+    "start": "npm run build && node dist/cli.js"
+  },
+  "devDependencies": { "typescript": "^5.6.3", "@types/node": "^22.10.2" },
+  "engines": { "node": ">=20" }
+}
