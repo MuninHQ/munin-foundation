@@ -1,0 +1,128 @@
+version: 1
+project: YT-LAB
+status: setup
+priority: below-career-os
+
+constraints:
+  faceless: true
+  own_voice: false
+  personal_brand_dependency: false
+  initial_budget_brl: 500
+  weekly_human_hours: 5
+  publication_requires_human_approval: true
+
+experiment:
+  target_long_form_videos: 10
+  primary_niche: null
+  audience_promise: null
+  channel_name: null
+  start_date: null
+  decision_after_video_count: 10
+  candidate_niche_families:
+    - history-and-forgotten-events
+    - curiosities-and-explainers
+    - technology-and-financial-infrastructure
+    - verifiable-mysteries
+    - business-and-economic-case-studies
+
+scoring:
+  scale: 0-5
+  positive_weights:
+    evergreen_durability: 0.20
+    demand_signal: 0.20
+    series_depth: 0.15
+    differentiation: 0.15
+    evidence_availability: 0.10
+    advertiser_value: 0.10
+  negative_weights:
+    copyright_risk: -0.15
+    production_effort: -0.10
+    factual_risk: -0.05
+  hard_reject:
+    copyright_risk_gte: 4
+    factual_risk_gte: 4
+
+workflow:
+  - topic-scoring
+  - evidence-pack
+  - original-angle
+  - script
+  - fact-and-copyright-review
+  - production-plan
+  - voice-and-visual-assembly
+  - packaging
+  - final-human-review
+  - publish
+  - analytics-review
+
+video_slots:
+  - id: V01
+    cluster: null
+    primary_test: baseline
+    status: backlog
+  - id: V02
+    cluster: null
+    primary_test: packaging
+    status: backlog
+  - id: V03
+    cluster: null
+    primary_test: opening-retention
+    status: backlog
+  - id: V04
+    cluster: null
+    primary_test: topic-cluster-a
+    status: backlog
+  - id: V05
+    cluster: null
+    primary_test: topic-cluster-b
+    status: backlog
+  - id: V06
+    cluster: null
+    primary_test: title-hypothesis
+    status: backlog
+  - id: V07
+    cluster: null
+    primary_test: thumbnail-hypothesis
+    status: backlog
+  - id: V08
+    cluster: null
+    primary_test: narrative-structure
+    status: backlog
+  - id: V09
+    cluster: null
+    primary_test: repeat-best-cluster
+    status: backlog
+  - id: V10
+    cluster: null
+    primary_test: validation-replication
+    status: backlog
+
+tracked_metrics:
+  production:
+    - human_minutes
+    - cash_cost_brl
+    - manual_corrections
+    - governance_blocks
+  packaging:
+    - impressions
+    - click_through_rate
+    - traffic_sources
+  content:
+    - first_30_second_retention
+    - average_percentage_viewed
+    - average_view_duration
+    - returning_viewers
+    - subscribers_per_1000_views
+  portfolio:
+    - median_views_by_video_age
+    - cumulative_watch_time
+    - performance_by_cluster
+    - videos_with_impressions_after_30_days
+
+stop_conditions:
+  - weekly_human_hours_exceeded_repeatedly
+  - initial_budget_exceeded_without_traction
+  - dependency_on_copyrighted_or_minimally_transformed_material
+  - no_improving_topic_cluster_after_corrective_tests
+  - workflow_cannot_be_templated
+  - material_conflict_with_career_os_priority
