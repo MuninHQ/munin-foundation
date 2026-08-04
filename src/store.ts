@@ -3,7 +3,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { MuninEvent, MuninState } from './types.js';
 
-const emptyState: MuninState = { projects: [], decisions: [], actions: [] };
+const emptyState: MuninState = { projects: [], decisions: [], actions: [], jobs: [] };
 
 export class ContextStore {
   constructor(private readonly root = process.env.MUNIN_DATA_DIR ?? path.resolve('data/runtime')) {}
@@ -19,7 +19,13 @@ export class ContextStore {
 
   async load(): Promise<MuninState> {
     await this.ensure();
-    return JSON.parse(await readFile(this.statePath(), 'utf8')) as MuninState;
+    const state = JSON.parse(await readFile(this.statePath(), 'utf8')) as Partial<MuninState>;
+    return {
+      projects: state.projects ?? [],
+      decisions: state.decisions ?? [],
+      actions: state.actions ?? [],
+      jobs: state.jobs ?? [],
+    };
   }
 
   async save(state: MuninState): Promise<void> {
