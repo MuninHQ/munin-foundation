@@ -1,7 +1,36 @@
 import { randomUUID } from 'node:crypto';
 import { ContextStore } from './store.js';
 import { generateSitrep } from './sitrep.js';
-import type { Action, Decision, Priority, Project, Status } from './types.js';
+import type {
+  Action,
+  Decision,
+  JobOpportunity,
+  JobStatus,
+  Priority,
+  Project,
+  Status,
+} from './types.js';
+
+const careerSignals = [
+  'payments',
+  'open finance',
+  'open banking',
+  'artificial intelligence',
+  'ai',
+  'blockchain',
+  'digital assets',
+  'product',
+  'leadership',
+  'financial infrastructure',
+  'fintech',
+];
+
+function scoreOpportunity(text: string): { fitScore: number; matchedSignals: string[] } {
+  const normalized = text.toLowerCase();
+  const matchedSignals = careerSignals.filter(signal => normalized.includes(signal));
+  const fitScore = Math.min(100, 45 + matchedSignals.length * 5);
+  return { fitScore, matchedSignals };
+}
 
 export class MuninService {
   constructor(private readonly store = new ContextStore()) {}
@@ -69,11 +98,7 @@ export class MuninService {
     return decision;
   }
 
-  async resolveDecision(
-    decisionId: string,
-    status: 'accepted' | 'rejected',
-    rationale?: string,
-  ): Promise<Decision> {
+  async resolveDecision(decisionId: string, status: 'accepted' | 'rejected', rationale?: string): Promise<Decision> {
     const state = await this.store.load();
     const decision = state.decisions.find(item => item.id === decisionId);
     if (!decision) throw new Error(`Decision not found: ${decisionId}`);
@@ -110,18 +135,74 @@ export class MuninService {
     action.status = 'done';
     action.outcome = outcome;
     action.updatedAt = new Date().toISOString();
-    const project = action.projectId
-      ? state.projects.find(item => item.id === action.projectId)
-      : undefined;
+    const project = action.projectId ? state.projects.find(item => item.id === action.projectId) : undefined;
     if (project) {
       project.currentOutcome = outcome;
       project.updatedAt = action.updatedAt;
     }
     await this.store.save(state);
-    await this.store.event('action.executed', 'action', action.id, {
-      outcome,
-      projectId: action.projectId,
-    });
+    await this.store.event('action.executed', 'action', action.id, { outcome, projectId: action.projectId });
     return action;
+  }
+
+  async addJob(company: string, role: string, description = ''): Promise<JobOpportunity> {
+    const state = await this.store.load();
+    const now = new Date().toISOString();
+    const score = scoreOpportunity(`${company} ${role} ${description}`);
+    const job: JobOpportunity = {
+      id: `job-${randomUUID().slice(0, 8)}`,
+      company,
+      role,
+      status: 'discovered',
+      fitScore: score.fitScore,
+      matchedSignals: score.matchedSignals,
+      nextAction: score.fitScore >= 80 ? 'Investigate and tailor application' : 'Review fit before applying',
+      createdAt: now,
+      updatedAt: now,
+    };
+    state.jobs.push(job);
+    await this.store.save(state);
+    await this.store.event('job.created', 'job', job.id, { company, role, fitScore: job.fitScore });
+    return job;
+  }
+
+  async listJobs(): Promise<JobOpportunity[]> {
+    return (await this.store.load()).jobs.sort((a, b) => b.fitScore - a.fitScore);
+  }
+
+  async updateJob(jobId: string, status: JobStatus, nextAction?: string): Promise<JobOpportunity> {
+    const state = await this.store.load();
+    const job = state.jobs.find(item => item.id === jobId);
+    if (!job) throw new Error(`Job not found: ${jobId}`);
+    job.status = status;
+    job.nextAction = nextAction ?? job.nextAction;
+    job.updatedAt = new Date().toISOString();
+    if (status === 'applied' && !job.appliedAt) {
+      job.appliedAt = job.updatedAt;
+      const followUp = new Date();
+      followUp.setDate(followUp.getDate() + 7);
+      job.followUpAt = followUp.toISOString();
+    }
+    await this.store.save(state);
+    await this.store.event('job.updated', 'job', job.id, { status, nextAction, followUpAt: job.followUpAt });
+    return job;
+  }
+
+  async careerSitrep(): Promise<string> {
+    const jobs = await this.listJobs();
+    const now = Date.now();
+    const followUps = jobs.filter(job => job.followUpAt && new Date(job.followUpAt).getTime() <= now && !['offer', 'rejected', 'closed'].includes(job.status));
+    const top = jobs.slice(0, 5);
+    return [
+      'CAREER SITREP',
+      '',
+      `Pipeline: ${jobs.length}`,
+      `Applied: ${jobs.filter(job => job.status === 'applied').length}`,
+      `Interviews: ${jobs.filter(job => job.status === 'interview').length}`,
+      `Follow-ups due: ${followUps.length}`,
+      '',
+      'Top opportunities:',
+      ...top.map(job => `- ${job.company} — ${job.role} (${job.fitScore}%) — ${job.nextAction ?? 'No next action'}`),
+    ].join('\n');
   }
 }
