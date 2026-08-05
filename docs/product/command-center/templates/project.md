@@ -1,6 +1,6 @@
 ---
 id: project-slug
-title: Project title
+project_title: Project title
 status: discovery
 owner: unassigned
 updated: YYYY-MM-DD
