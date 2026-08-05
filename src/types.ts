@@ -1,6 +1,8 @@
 export type Priority = 'P0' | 'P1' | 'P2';
 export type Status = 'planned' | 'active' | 'blocked' | 'done' | 'paused';
 export type JobStatus = 'discovered' | 'investigating' | 'applied' | 'interview' | 'offer' | 'rejected' | 'closed';
+export type EntityType = 'project' | 'decision' | 'action' | 'job';
+export type RelationType = 'relates_to' | 'blocks' | 'depends_on' | 'supports' | 'generated_by';
 
 export interface Project {
   id: string;
@@ -56,10 +58,26 @@ export interface JobOpportunity {
   updatedAt: string;
 }
 
+export interface ContextRelation {
+  id: string;
+  sourceType: EntityType;
+  sourceId: string;
+  type: RelationType;
+  targetType: EntityType;
+  targetId: string;
+  createdAt: string;
+}
+
+export interface RelatedContext {
+  entityId: string;
+  incoming: ContextRelation[];
+  outgoing: ContextRelation[];
+}
+
 export interface MuninEvent {
   id: string;
   type: string;
-  entityType: 'project' | 'decision' | 'action' | 'job' | 'system';
+  entityType: EntityType | 'relation' | 'system';
   entityId: string;
   timestamp: string;
   payload: Record<string, unknown>;
@@ -70,4 +88,5 @@ export interface MuninState {
   decisions: Decision[];
   actions: Action[];
   jobs: JobOpportunity[];
+  relations: ContextRelation[];
 }
