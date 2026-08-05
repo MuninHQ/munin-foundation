@@ -2,16 +2,28 @@
 import { MuninService } from './service.js';
 import { ContextStore } from './store.js';
 import { generateCommandCenter } from './dashboard.js';
+import { ExecutionEngine } from './runtime.js';
 import type { EntityType, JobStatus, Priority, RelationType, Status } from './types.js';
 
 const store = new ContextStore();
 const service = new MuninService(store);
+const runtime = new ExecutionEngine();
 const [command, subcommand, ...args] = process.argv.slice(2);
 
 async function main(): Promise<void> {
-  if (command === 'dashboard' || (command === 'command-center' && !subcommand)) {
-    return console.log(generateCommandCenter(await store.load(), await store.events()));
+  if (command === 'runtime' && subcommand === 'plan') {
+    if (!args.length) throw new Error('Usage: munin runtime plan <objective>');
+    return console.log(JSON.stringify(await runtime.createPlan(args.join(' ')), null, 2));
   }
+  if (command === 'runtime' && subcommand === 'run') {
+    const [planId] = args;
+    if (!planId) throw new Error('Usage: munin runtime run <plan-id>');
+    return console.log(JSON.stringify(await runtime.run(planId), null, 2));
+  }
+  if (command === 'runtime' && subcommand === 'list') return console.log(JSON.stringify(await runtime.listPlans(), null, 2));
+  if (command === 'runtime' && subcommand === 'agents') return console.log(JSON.stringify(runtime.agents(), null, 2));
+  if (command === 'runtime' && subcommand === 'telemetry') return console.log(JSON.stringify(await runtime.telemetry(), null, 2));
+  if (command === 'dashboard' || (command === 'command-center' && !subcommand)) return console.log(generateCommandCenter(await store.load(), await store.events()));
   if (command === 'sitrep') {
     if (subcommand === '--since') {
       const value = args[0];
@@ -102,7 +114,7 @@ async function main(): Promise<void> {
     return console.log(await service.closeJob(jobId, status as 'rejected' | 'closed', reason.join(' ')));
   }
 
-  console.log(`Munin v0.6\n\nCommands:\n  dashboard\n  command-center\n  sitrep [--since <ISO-date>]\n  career sitrep\n  career queue\n  research add <project-id|-> <question>\n  research list\n  research evidence <research-id> <primary|secondary> <url> <title>\n  research synthesize <research-id> <summary>\n  research report <research-id>\n  context inspect\n  context export\n  context related <entity-id>\n  relation add <source-type> <source-id> <relation-type> <target-type> <target-id>\n  project list\n  project add [P0|P1|P2] <name>\n  project update <project-id> <status> [next-action]\n  decision add <title>\n  decision resolve <decision-id> <accepted|rejected> [rationale]\n  action add [P0|P1|P2] <title>\n  execute <action-id> <outcome>\n  job add <company> <role> [description]\n  job list\n  job update <job-id> <status> [next-action]\n  job touch <job-id> [note]\n  job close <job-id> <rejected|closed> <reason>`);
+  console.log(`Munin v0.7\n\nCommands:\n  runtime plan <objective>\n  runtime run <plan-id>\n  runtime list\n  runtime agents\n  runtime telemetry\n  dashboard\n  command-center\n  sitrep [--since <ISO-date>]\n  career sitrep\n  career queue\n  research add <project-id|-> <question>\n  research list\n  research evidence <research-id> <primary|secondary> <url> <title>\n  research synthesize <research-id> <summary>\n  research report <research-id>\n  context inspect\n  context export\n  context related <entity-id>\n  relation add <source-type> <source-id> <relation-type> <target-type> <target-id>\n  project list\n  project add [P0|P1|P2] <name>\n  project update <project-id> <status> [next-action]\n  decision add <title>\n  decision resolve <decision-id> <accepted|rejected> [rationale]\n  action add [P0|P1|P2] <title>\n  execute <action-id> <outcome>\n  job add <company> <role> [description]\n  job list\n  job update <job-id> <status> [next-action]\n  job touch <job-id> [note]\n  job close <job-id> <rejected|closed> <reason>`);
 }
 
 main().catch(error => {
