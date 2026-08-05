@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { MuninService } from './service.js';
-import type { JobStatus, Priority, Status } from './types.js';
+import type { EntityType, JobStatus, Priority, RelationType, Status } from './types.js';
 
 const service = new MuninService();
 const [command, subcommand, ...args] = process.argv.slice(2);
@@ -10,6 +10,19 @@ async function main(): Promise<void> {
   if (command === 'career' && subcommand === 'sitrep') return console.log(await service.careerSitrep());
   if (command === 'context' && subcommand === 'inspect') return console.log(await service.inspect());
   if (command === 'context' && subcommand === 'export') return console.log(await service.exportContext());
+  if (command === 'context' && subcommand === 'related') {
+    const [entityId] = args;
+    if (!entityId) throw new Error('Usage: munin context related <entity-id>');
+    return console.log(JSON.stringify(await service.relatedContext(entityId), null, 2));
+  }
+
+  if (command === 'relation' && subcommand === 'add') {
+    const [sourceType, sourceId, relationType, targetType, targetId] = args;
+    if (!sourceType || !sourceId || !relationType || !targetType || !targetId) {
+      throw new Error('Usage: munin relation add <source-type> <source-id> <relation-type> <target-type> <target-id>');
+    }
+    return console.log(await service.addRelation(sourceType as EntityType, sourceId, relationType as RelationType, targetType as EntityType, targetId));
+  }
 
   if (command === 'project' && subcommand === 'list') return console.log(JSON.stringify(await service.listProjects(), null, 2));
   if (command === 'project' && subcommand === 'add') {
@@ -51,13 +64,15 @@ async function main(): Promise<void> {
     return console.log(await service.updateJob(jobId, status as JobStatus, nextAction.join(' ') || undefined));
   }
 
-  console.log(`Munin v0.1
+  console.log(`Munin v0.2
 
 Commands:
   sitrep
   career sitrep
   context inspect
   context export
+  context related <entity-id>
+  relation add <source-type> <source-id> <relation-type> <target-type> <target-id>
   project list
   project add [P0|P1|P2] <name>
   project update <project-id> <status> [next-action]

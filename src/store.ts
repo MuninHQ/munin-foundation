@@ -3,7 +3,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { MuninEvent, MuninState } from './types.js';
 
-const emptyState: MuninState = { projects: [], decisions: [], actions: [], jobs: [] };
+const emptyState: MuninState = { projects: [], decisions: [], actions: [], jobs: [], relations: [] };
 
 export class ContextStore {
   constructor(private readonly root = process.env.MUNIN_DATA_DIR ?? path.resolve('data/runtime')) {}
@@ -25,6 +25,7 @@ export class ContextStore {
       decisions: state.decisions ?? [],
       actions: state.actions ?? [],
       jobs: state.jobs ?? [],
+      relations: state.relations ?? [],
     };
   }
 
