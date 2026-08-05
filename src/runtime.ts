@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { DeterministicProvider, type ExecutionProvider } from './providers.js';
+import { reviewOutput, type ReviewReport } from './review.js';
 
 export type TaskStatus = 'READY' | 'RUNNING' | 'WAITING' | 'BLOCKED' | 'FAILED' | 'DONE';
 export type AgentId = 'planner' | 'research' | 'writer' | 'career' | 'git' | 'reviewer';
@@ -23,6 +25,9 @@ export interface ExecutionTask {
   expectedOutput: string;
   result?: string;
   error?: string;
+  providerId?: string;
+  providerMetadata?: Record<string, unknown>;
+  review?: ReviewReport;
   startedAt?: string;
   finishedAt?: string;
 }
@@ -42,8 +47,11 @@ export interface RuntimeTelemetry {
   done: number;
   failed: number;
   blocked: number;
+  rejectedByQualityGate: number;
   averageDurationMs: number;
+  averageReviewScore: number;
   byAgent: Record<string, number>;
+  byProvider: Record<string, number>;
 }
 
 const registry: AgentDefinition[] = [
@@ -90,7 +98,10 @@ function inferWorkflow(objective: string): Array<{ title: string; capability: st
 }
 
 export class ExecutionEngine {
-  constructor(private readonly root = process.env.MUNIN_DATA_DIR ?? path.resolve('data/runtime')) {}
+  constructor(
+    private readonly root = process.env.MUNIN_DATA_DIR ?? path.resolve('data/runtime'),
+    private readonly provider: ExecutionProvider = new DeterministicProvider(),
+  ) {}
 
   private file(): string { return path.join(this.root, 'executions.json'); }
 
@@ -106,6 +117,7 @@ export class ExecutionEngine {
   }
 
   agents(): AgentDefinition[] { return registry; }
+  providers(): Array<{ id: string; active: boolean }> { return [{ id: this.provider.id, active: true }]; }
 
   async createPlan(objective: string): Promise<ExecutionPlan> {
     if (!objective.trim()) throw new Error('Objective is required');
@@ -120,7 +132,7 @@ export class ExecutionEngine {
       owner: selectAgent(step.capability),
       status: index === 0 ? 'READY' : 'WAITING',
       priority: index,
-      dependencies: index === 0 ? [] : [],
+      dependencies: [],
       expectedOutput: step.expectedOutput,
     }));
     for (let index = 1; index < tasks.length; index += 1) tasks[index].dependencies = [tasks[index - 1].id];
@@ -140,8 +152,27 @@ export class ExecutionEngine {
       if (!dependenciesDone) { task.status = 'BLOCKED'; continue; }
       task.status = 'RUNNING'; task.startedAt = new Date().toISOString();
       try {
-        task.result = `${task.owner} completed: ${task.expectedOutput}`;
-        task.status = 'DONE';
+        const dependencyResults = task.dependencies
+          .map(id => plan.tasks.find(item => item.id === id)?.result)
+          .filter((value): value is string => Boolean(value));
+        const response = await this.provider.execute({
+          taskId: task.id,
+          objective: plan.objective,
+          title: task.title,
+          capability: task.capability,
+          expectedOutput: task.expectedOutput,
+          context: { dependencyResults },
+        });
+        task.result = response.output;
+        task.providerId = response.providerId;
+        task.providerMetadata = response.metadata;
+        task.review = reviewOutput(task.expectedOutput, response.output);
+        if (!task.review.accepted) {
+          task.status = 'FAILED';
+          task.error = `Quality gate rejected output with score ${task.review.score}`;
+        } else {
+          task.status = 'DONE';
+        }
       } catch (error) {
         task.status = 'FAILED'; task.error = error instanceof Error ? error.message : String(error);
       }
@@ -154,16 +185,24 @@ export class ExecutionEngine {
   async telemetry(): Promise<RuntimeTelemetry> {
     const plans = await this.load(); const tasks = plans.flatMap(plan => plan.tasks);
     const durations = tasks.filter(task => task.startedAt && task.finishedAt).map(task => new Date(task.finishedAt!).getTime() - new Date(task.startedAt!).getTime());
+    const reviewScores = tasks.map(task => task.review?.score).filter((score): score is number => score !== undefined);
     const byAgent: Record<string, number> = {};
-    for (const task of tasks) byAgent[task.owner] = (byAgent[task.owner] ?? 0) + 1;
+    const byProvider: Record<string, number> = {};
+    for (const task of tasks) {
+      byAgent[task.owner] = (byAgent[task.owner] ?? 0) + 1;
+      if (task.providerId) byProvider[task.providerId] = (byProvider[task.providerId] ?? 0) + 1;
+    }
     return {
       plans: plans.length,
       tasks: tasks.length,
       done: tasks.filter(task => task.status === 'DONE').length,
       failed: tasks.filter(task => task.status === 'FAILED').length,
       blocked: tasks.filter(task => task.status === 'BLOCKED').length,
+      rejectedByQualityGate: tasks.filter(task => task.error?.startsWith('Quality gate rejected')).length,
       averageDurationMs: durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : 0,
+      averageReviewScore: reviewScores.length ? Math.round(reviewScores.reduce((a, b) => a + b, 0) / reviewScores.length) : 0,
       byAgent,
+      byProvider,
     };
   }
 }
