@@ -1,4 +1,4 @@
-import type { ExecutionProvider, ProviderRequest } from './providers.js';
+import { DeterministicProvider, type ExecutionProvider, type ProviderRequest } from './providers.js';
 
 export interface ProviderProfile {
   id: string;
@@ -18,10 +18,30 @@ export interface ProviderPolicy {
 }
 
 export interface ProviderDecision {
-  selectedProviderId: string;
+  selectedProviderId?: string;
   consideredProviderIds: string[];
   rejected: Array<{ providerId: string; reason: string }>;
   rationale: string[];
+}
+
+export class ProviderSelectionError extends Error {
+  constructor(readonly decision: ProviderDecision, capability: string) {
+    super(`No provider satisfies policy for capability: ${capability}`);
+    this.name = 'ProviderSelectionError';
+  }
+}
+
+export function defaultProviderProfiles(): ProviderProfile[] {
+  const local = new DeterministicProvider();
+  return [{
+    id: local.id,
+    provider: local,
+    capabilities: ['*'],
+    mode: 'offline',
+    estimatedCostPerCall: 0,
+    estimatedLatencyMs: 1,
+    enabled: true,
+  }];
 }
 
 export class ProviderRegistry {
@@ -75,6 +95,10 @@ export class ProviderRegistry {
       };
     }
 
-    throw new Error(`No provider satisfies policy for capability: ${request.capability}`);
+    throw new ProviderSelectionError({
+      consideredProviderIds: ordered.map(item => item.id),
+      rejected,
+      rationale: ['No eligible provider remained after policy evaluation.'],
+    }, request.capability);
   }
 }
