@@ -28,7 +28,7 @@ const careerSignals = [
 function scoreOpportunity(text: string): { fitScore: number; matchedSignals: string[] } {
   const normalized = text.toLowerCase();
   const matchedSignals = careerSignals.filter(signal => normalized.includes(signal));
-  const fitScore = Math.min(100, 45 + matchedSignals.length * 5);
+  const fitScore = Math.min(100, 50 + matchedSignals.length * 5);
   return { fitScore, matchedSignals };
 }
 
