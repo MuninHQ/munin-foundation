@@ -76,3 +76,37 @@ export class ProviderResilience {
     throw Object.assign(lastError ?? new Error(`Provider execution failed: ${provider.id}`), { attempts });
   }
 }
+
+export class ResilientProvider implements ExecutionProvider {
+  readonly id: string;
+
+  constructor(
+    private readonly inner: ExecutionProvider,
+    private readonly resilience = new ProviderResilience(),
+  ) {
+    this.id = inner.id;
+  }
+
+  async execute(request: ProviderRequest): Promise<ProviderResponse> {
+    try {
+      const { response, attempts } = await this.resilience.execute(this.inner, request);
+      return {
+        ...response,
+        metadata: {
+          ...response.metadata,
+          attempts,
+          attemptCount: attempts.length,
+          circuitState: this.resilience.status(this.inner.id),
+        },
+      };
+    } catch (error) {
+      const attempts = (error as { attempts?: ExecutionAttempt[] }).attempts ?? [];
+      const wrapped = error instanceof Error ? error : new Error(String(error));
+      throw Object.assign(wrapped, {
+        attempts,
+        providerId: this.inner.id,
+        circuitState: this.resilience.status(this.inner.id),
+      });
+    }
+  }
+}
