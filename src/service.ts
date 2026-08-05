@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { ContextStore } from './store.js';
 import { generateSitrep } from './sitrep.js';
-import type { Action, CareerQueueItem, ContextRelation, Decision, EntityType, JobOpportunity, JobStatus, Priority, Project, RelatedContext, RelationType, Status } from './types.js';
+import type { Action, CareerQueueItem, ContextRelation, Decision, EntityType, JobOpportunity, JobStatus, Priority, Project, RelatedContext, RelationType, ResearchEvidence, ResearchRecord, ResearchSynthesis, Status } from './types.js';
 
 const careerSignals = ['payments', 'open finance', 'open banking', 'artificial intelligence', 'ai', 'blockchain', 'digital assets', 'product', 'leadership', 'financial infrastructure', 'fintech'];
 const terminalJobStatuses: JobStatus[] = ['offer', 'rejected', 'closed'];
@@ -34,8 +34,7 @@ export class MuninService {
   async listProjects(): Promise<Project[]> { return (await this.store.load()).projects; }
 
   async addProject(name: string, priority: Priority = 'P1'): Promise<Project> {
-    const state = await this.store.load();
-    const project: Project = { id: `prj-${randomUUID().slice(0, 8)}`, name, priority, status: 'planned', currentOutcome: 'Project created', blockers: [], updatedAt: new Date().toISOString() };
+    const state = await this.store.load(); const project: Project = { id: `prj-${randomUUID().slice(0, 8)}`, name, priority, status: 'planned', currentOutcome: 'Project created', blockers: [], updatedAt: new Date().toISOString() };
     state.projects.push(project); await this.store.save(state); await this.store.event('project.created', 'project', project.id, { name, priority }); return project;
   }
   async updateProject(projectId: string, status: Status, nextAction?: string): Promise<Project> {
@@ -68,8 +67,7 @@ export class MuninService {
   async listJobs(): Promise<JobOpportunity[]> { return (await this.store.load()).jobs.sort((a, b) => b.fitScore - a.fitScore); }
   async updateJob(jobId: string, status: JobStatus, nextAction?: string): Promise<JobOpportunity> {
     const state = await this.store.load(); const job = state.jobs.find(item => item.id === jobId); if (!job) throw new Error(`Job not found: ${jobId}`);
-    job.status = status; job.nextAction = nextAction ?? job.nextAction; job.updatedAt = new Date().toISOString();
-    if (status === 'applied' && !job.appliedAt) { job.appliedAt = job.updatedAt; const followUp = new Date(); followUp.setDate(followUp.getDate() + 7); job.followUpAt = followUp.toISOString(); }
+    job.status = status; job.nextAction = nextAction ?? job.nextAction; job.updatedAt = new Date().toISOString(); if (status === 'applied' && !job.appliedAt) { job.appliedAt = job.updatedAt; const followUp = new Date(); followUp.setDate(followUp.getDate() + 7); job.followUpAt = followUp.toISOString(); }
     await this.store.save(state); await this.store.event('job.updated', 'job', job.id, { status, nextAction, followUpAt: job.followUpAt }); return job;
   }
   async touchJob(jobId: string, note = 'Contact recorded'): Promise<JobOpportunity> {
@@ -79,13 +77,43 @@ export class MuninService {
   }
   async closeJob(jobId: string, status: 'rejected' | 'closed', reason: string): Promise<JobOpportunity> {
     const state = await this.store.load(); const job = state.jobs.find(item => item.id === jobId); if (!job) throw new Error(`Job not found: ${jobId}`);
-    job.status = status; job.closedReason = reason; job.nextAction = undefined; job.followUpAt = undefined; job.updatedAt = new Date().toISOString();
-    await this.store.save(state); await this.store.event('job.closed', 'job', job.id, { status, reason }); return job;
+    job.status = status; job.closedReason = reason; job.nextAction = undefined; job.followUpAt = undefined; job.updatedAt = new Date().toISOString(); await this.store.save(state); await this.store.event('job.closed', 'job', job.id, { status, reason }); return job;
   }
   async careerQueue(now = new Date()): Promise<CareerQueueItem[]> { return (await this.store.load()).jobs.map(job => careerPriority(job, now)).sort((a, b) => b.priorityScore - a.priorityScore); }
 
+  async addResearch(question: string, projectId?: string): Promise<ResearchRecord> {
+    const state = await this.store.load();
+    if (projectId && !state.projects.some(project => project.id === projectId)) throw new Error(`Project not found: ${projectId}`);
+    const now = new Date().toISOString();
+    const research: ResearchRecord = { id: `res-${randomUUID().slice(0, 8)}`, question, projectId, status: 'open', evidence: [], syntheses: [], createdAt: now, updatedAt: now };
+    state.research.push(research);
+    await this.store.save(state);
+    await this.store.event('research.created', 'research', research.id, { question, projectId });
+    if (projectId) await this.addRelation('research', research.id, 'supports', 'project', projectId);
+    return research;
+  }
+  async listResearch(): Promise<ResearchRecord[]> { return (await this.store.load()).research; }
+  async addEvidence(researchId: string, title: string, url: string, sourceType: 'primary' | 'secondary', note?: string): Promise<ResearchEvidence> {
+    try { new URL(url); } catch { throw new Error(`Invalid evidence URL: ${url}`); }
+    const state = await this.store.load(); const research = state.research.find(item => item.id === researchId); if (!research) throw new Error(`Research not found: ${researchId}`);
+    const evidence: ResearchEvidence = { id: `evd-${randomUUID().slice(0, 8)}`, title, url, sourceType, note, capturedAt: new Date().toISOString() };
+    research.evidence.push(evidence); research.updatedAt = evidence.capturedAt; await this.store.save(state); await this.store.event('research.evidence_added', 'research', research.id, { evidenceId: evidence.id, title, url, sourceType }); return evidence;
+  }
+  async synthesizeResearch(researchId: string, summary: string, evidenceIds: string[] = []): Promise<ResearchSynthesis> {
+    const state = await this.store.load(); const research = state.research.find(item => item.id === researchId); if (!research) throw new Error(`Research not found: ${researchId}`);
+    const selected = evidenceIds.length ? evidenceIds : research.evidence.map(item => item.id); const missing = selected.filter(id => !research.evidence.some(item => item.id === id)); if (missing.length) throw new Error(`Evidence not found: ${missing.join(', ')}`);
+    const synthesis: ResearchSynthesis = { version: research.syntheses.length + 1, summary, evidenceIds: selected, createdAt: new Date().toISOString() };
+    research.syntheses.push(synthesis); research.status = 'synthesized'; research.updatedAt = synthesis.createdAt; await this.store.save(state); await this.store.event('research.synthesized', 'research', research.id, { version: synthesis.version, evidenceIds: selected }); return synthesis;
+  }
+  async researchReport(researchId: string): Promise<string> {
+    const research = (await this.store.load()).research.find(item => item.id === researchId); if (!research) throw new Error(`Research not found: ${researchId}`);
+    const latest = research.syntheses.at(-1);
+    return [`RESEARCH — ${research.question}`, `Status: ${research.status}`, `Evidence: ${research.evidence.length}`, `Synthesis versions: ${research.syntheses.length}`, '', 'Sources:', ...research.evidence.map(item => `- [${item.sourceType}] ${item.title} — ${item.url}`), '', 'Latest synthesis:', latest ? `v${latest.version}: ${latest.summary}` : 'No synthesis yet.'].join('\n');
+  }
+
   private entityExists(state: Awaited<ReturnType<ContextStore['load']>>, type: EntityType, id: string): boolean {
-    const collection = type === 'project' ? state.projects : type === 'decision' ? state.decisions : type === 'action' ? state.actions : state.jobs; return collection.some(item => item.id === id);
+    const collection = type === 'project' ? state.projects : type === 'decision' ? state.decisions : type === 'action' ? state.actions : type === 'job' ? state.jobs : state.research;
+    return collection.some(item => item.id === id);
   }
   async addRelation(sourceType: EntityType, sourceId: string, type: RelationType, targetType: EntityType, targetId: string): Promise<ContextRelation> {
     const state = await this.store.load(); if (!this.entityExists(state, sourceType, sourceId)) throw new Error(`Source not found: ${sourceType}/${sourceId}`); if (!this.entityExists(state, targetType, targetId)) throw new Error(`Target not found: ${targetType}/${targetId}`);
