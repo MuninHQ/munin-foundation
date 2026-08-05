@@ -15,6 +15,7 @@
     "start": "npm run build:core && node dist/cli.js",
     "api": "npm run build:core && node dist/api.js",
     "web": "vite --config apps/web/vite.config.ts",
+    "workspace": "node scripts/launch.mjs",
     "provider-policy": "npm run build:core && node dist/provider-cli.js"
   },
   "dependencies": {
