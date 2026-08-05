@@ -1,4 +1,5 @@
 import { DeterministicProvider, type ExecutionProvider, type ProviderRequest } from './providers.js';
+import { ResilientProvider } from './resilience.js';
 
 export interface ProviderProfile {
   id: string;
@@ -32,7 +33,7 @@ export class ProviderSelectionError extends Error {
 }
 
 export function defaultProviderProfiles(): ProviderProfile[] {
-  const local = new DeterministicProvider();
+  const local = new ResilientProvider(new DeterministicProvider());
   return [{
     id: local.id,
     provider: local,
