@@ -6,7 +6,14 @@ const service = new MuninService();
 const [command, subcommand, ...args] = process.argv.slice(2);
 
 async function main(): Promise<void> {
-  if (command === 'sitrep') return console.log(await service.sitrep());
+  if (command === 'sitrep') {
+    if (subcommand === '--since') {
+      const value = args[0];
+      if (!value || Number.isNaN(new Date(value).getTime())) throw new Error('Usage: munin sitrep --since <ISO-date>');
+      return console.log(await service.sitrep(new Date(value)));
+    }
+    return console.log(await service.sitrep());
+  }
   if (command === 'career' && subcommand === 'sitrep') return console.log(await service.careerSitrep());
   if (command === 'context' && subcommand === 'inspect') return console.log(await service.inspect());
   if (command === 'context' && subcommand === 'export') return console.log(await service.exportContext());
@@ -64,25 +71,7 @@ async function main(): Promise<void> {
     return console.log(await service.updateJob(jobId, status as JobStatus, nextAction.join(' ') || undefined));
   }
 
-  console.log(`Munin v0.2
-
-Commands:
-  sitrep
-  career sitrep
-  context inspect
-  context export
-  context related <entity-id>
-  relation add <source-type> <source-id> <relation-type> <target-type> <target-id>
-  project list
-  project add [P0|P1|P2] <name>
-  project update <project-id> <status> [next-action]
-  decision add <title>
-  decision resolve <decision-id> <accepted|rejected> [rationale]
-  action add [P0|P1|P2] <title>
-  execute <action-id> <outcome>
-  job add <company> <role> [description]
-  job list
-  job update <job-id> <status> [next-action]`);
+  console.log(`Munin v0.3\n\nCommands:\n  sitrep [--since <ISO-date>]\n  career sitrep\n  context inspect\n  context export\n  context related <entity-id>\n  relation add <source-type> <source-id> <relation-type> <target-type> <target-id>\n  project list\n  project add [P0|P1|P2] <name>\n  project update <project-id> <status> [next-action]\n  decision add <title>\n  decision resolve <decision-id> <accepted|rejected> [rationale]\n  action add [P0|P1|P2] <title>\n  execute <action-id> <outcome>\n  job add <company> <role> [description]\n  job list\n  job update <job-id> <status> [next-action]`);
 }
 
 main().catch(error => {

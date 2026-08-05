@@ -67,3 +67,30 @@ test('context relation rejects missing endpoints', async () => {
     await assert.rejects(() => service.addRelation('project', 'missing', 'blocks', 'action', 'missing'), /Source not found/);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
+
+test('incremental SITREP filters old events', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'munin-'));
+  try {
+    const service = new MuninService(new ContextStore(dir));
+    await service.addProject('Old project');
+    const boundary = new Date(Date.now() + 1000);
+    const report = await service.sitrep(boundary);
+    assert.match(report, /Nenhuma mudança registrada/);
+    assert.match(report, /Janela: mudanças desde/);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('SITREP ranks blocked action above same-priority action', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'munin-'));
+  try {
+    const service = new MuninService(new ContextStore(dir));
+    const blocker = await service.addDecision('Approve dependency');
+    const normal = await service.addAction('Normal action', 'P1');
+    const blocked = await service.addAction('Blocked action', 'P1');
+    await service.addRelation('decision', blocker.id, 'blocks', 'action', blocked.id);
+    const report = await service.sitrep();
+    const prioritized = report.split('Próximas ações priorizadas:')[1] ?? '';
+    assert.ok(prioritized.indexOf(blocked.id) < prioritized.indexOf(normal.id));
+    assert.match(report, new RegExp(`decision/${blocker.id} blocks action/${blocked.id}`));
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});

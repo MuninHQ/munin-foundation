@@ -29,7 +29,7 @@ function scoreOpportunity(text: string): { fitScore: number; matchedSignals: str
 export class MuninService {
   constructor(private readonly store = new ContextStore()) {}
 
-  async sitrep(): Promise<string> { return generateSitrep(await this.store.load(), await this.store.events()); }
+  async sitrep(since?: Date): Promise<string> { return generateSitrep(await this.store.load(), await this.store.events(), since); }
   async inspect(): Promise<string> { return JSON.stringify(await this.store.load(), null, 2); }
   async exportContext(): Promise<string> {
     return JSON.stringify({ exportedAt: new Date().toISOString(), state: await this.store.load(), events: await this.store.events() }, null, 2);
@@ -146,7 +146,7 @@ export class MuninService {
     const relation: ContextRelation = { id: `rel-${randomUUID().slice(0, 8)}`, sourceType, sourceId, type, targetType, targetId, createdAt: new Date().toISOString() };
     state.relations.push(relation);
     await this.store.save(state);
-    await this.store.event('relation.created', 'relation', relation.id, relation);
+    await this.store.event('relation.created', 'relation', relation.id, { ...relation });
     return relation;
   }
 
