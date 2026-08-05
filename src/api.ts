@@ -36,46 +36,30 @@ export async function handleApi(request: IncomingMessage, response: ServerRespon
   try {
     if (request.method === 'GET' && url.pathname === '/api/health') return json(response, 200, { status: 'ok', service: 'munin-workspace' });
     if (request.method === 'GET' && url.pathname === '/api/workspace') {
-      const state = await store.load();
-      const events = await store.events();
-      const careerQueue = await service.careerQueue();
+      const state = await store.load(); const events = await store.events(); const careerQueue = await service.careerQueue();
       return json(response, 200, { state, events: events.slice(-20).reverse(), careerQueue });
     }
-    if (request.method === 'POST' && url.pathname === '/api/projects') {
-      const input = await body(request);
-      return json(response, 201, await service.addProject(text(input.name, 'name'), (input.priority as Priority | undefined) ?? 'P1'));
-    }
-    if (request.method === 'POST' && url.pathname === '/api/actions') {
-      const input = await body(request);
-      return json(response, 201, await service.addAction(text(input.title, 'title'), (input.priority as Priority | undefined) ?? 'P1', typeof input.projectId === 'string' ? input.projectId : undefined));
-    }
-    if (request.method === 'POST' && url.pathname === '/api/jobs') {
-      const input = await body(request);
-      return json(response, 201, await service.addJob(text(input.company, 'company'), text(input.role, 'role'), typeof input.description === 'string' ? input.description : ''));
-    }
-    if (request.method === 'POST' && url.pathname === '/api/research') {
-      const input = await body(request);
-      return json(response, 201, await service.addResearch(text(input.question, 'question'), typeof input.projectId === 'string' ? input.projectId : undefined));
-    }
+    if (request.method === 'GET' && url.pathname === '/api/sitrep') return json(response, 200, { report: await service.sitrep() });
+    if (request.method === 'POST' && url.pathname === '/api/projects') { const input = await body(request); return json(response, 201, await service.addProject(text(input.name, 'name'), (input.priority as Priority | undefined) ?? 'P1')); }
+    if (request.method === 'POST' && url.pathname === '/api/actions') { const input = await body(request); return json(response, 201, await service.addAction(text(input.title, 'title'), (input.priority as Priority | undefined) ?? 'P1', typeof input.projectId === 'string' && input.projectId ? input.projectId : undefined)); }
+    if (request.method === 'POST' && url.pathname === '/api/jobs') { const input = await body(request); return json(response, 201, await service.addJob(text(input.company, 'company'), text(input.role, 'role'), typeof input.description === 'string' ? input.description : '')); }
+    if (request.method === 'POST' && url.pathname === '/api/research') { const input = await body(request); return json(response, 201, await service.addResearch(text(input.question, 'question'), typeof input.projectId === 'string' && input.projectId ? input.projectId : undefined)); }
+
     const project = url.pathname.match(/^\/api\/projects\/([^/]+)$/);
-    if (request.method === 'PATCH' && project) {
-      const input = await body(request);
-      return json(response, 200, await service.updateProject(project[1], text(input.status, 'status') as Status, typeof input.nextAction === 'string' ? input.nextAction : undefined));
-    }
+    if (request.method === 'PATCH' && project) { const input = await body(request); return json(response, 200, await service.updateProject(project[1], text(input.status, 'status') as Status, typeof input.nextAction === 'string' ? input.nextAction : undefined)); }
     const job = url.pathname.match(/^\/api\/jobs\/([^/]+)$/);
-    if (request.method === 'PATCH' && job) {
-      const input = await body(request);
-      return json(response, 200, await service.updateJob(job[1], text(input.status, 'status') as JobStatus, typeof input.nextAction === 'string' ? input.nextAction : undefined));
-    }
+    if (request.method === 'PATCH' && job) { const input = await body(request); return json(response, 200, await service.updateJob(job[1], text(input.status, 'status') as JobStatus, typeof input.nextAction === 'string' ? input.nextAction : undefined)); }
+    const touch = url.pathname.match(/^\/api\/jobs\/([^/]+)\/touch$/);
+    if (request.method === 'POST' && touch) { const input = await body(request); return json(response, 200, await service.touchJob(touch[1], typeof input.note === 'string' ? input.note : undefined)); }
+    const action = url.pathname.match(/^\/api\/actions\/([^/]+)\/complete$/);
+    if (request.method === 'POST' && action) { const input = await body(request); return json(response, 200, await service.execute(action[1], typeof input.outcome === 'string' && input.outcome.trim() ? input.outcome.trim() : 'Completed')); }
+    const evidence = url.pathname.match(/^\/api\/research\/([^/]+)\/evidence$/);
+    if (request.method === 'POST' && evidence) { const input = await body(request); return json(response, 201, await service.addEvidence(evidence[1], text(input.title, 'title'), text(input.url, 'url'), (input.sourceType as 'primary' | 'secondary' | undefined) ?? 'secondary', typeof input.note === 'string' ? input.note : undefined)); }
+    const synthesis = url.pathname.match(/^\/api\/research\/([^/]+)\/synthesize$/);
+    if (request.method === 'POST' && synthesis) { const input = await body(request); return json(response, 201, await service.synthesizeResearch(synthesis[1], text(input.summary, 'summary'))); }
     return json(response, 404, { error: 'Not found' });
-  } catch (error) {
-    return json(response, 400, { error: error instanceof Error ? error.message : String(error) });
-  }
+  } catch (error) { return json(response, 400, { error: error instanceof Error ? error.message : String(error) }); }
 }
 
 export function createApiServer() { return createServer((request, response) => void handleApi(request, response)); }
-
-if (process.argv[1]?.endsWith('api.js')) {
-  const port = Number(process.env.MUNIN_API_PORT ?? 4310);
-  createApiServer().listen(port, '127.0.0.1', () => console.log(`Munin API running at http://127.0.0.1:${port}`));
-}
+if (process.argv[1]?.endsWith('api.js')) { const port = Number(process.env.MUNIN_API_PORT ?? 4310); createApiServer().listen(port, '127.0.0.1', () => console.log(`Munin API running at http://127.0.0.1:${port}`)); }
