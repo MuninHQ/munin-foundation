@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { type ProviderRequest } from './providers.js';
+import { type ExecutionProvider, type ProviderRequest } from './providers.js';
 import {
   defaultProviderProfiles,
   ProviderRegistry,
@@ -114,10 +114,21 @@ export class ExecutionEngine {
 
   constructor(
     private readonly root = process.env.MUNIN_DATA_DIR ?? path.resolve('data/runtime'),
-    providerProfiles: ProviderProfile[] = defaultProviderProfiles(),
+    providerProfilesOrProvider: ProviderProfile[] | ExecutionProvider = defaultProviderProfiles(),
     private readonly providerPolicy: ProviderPolicy = defaultPolicy,
   ) {
-    this.providerRegistry = new ProviderRegistry(providerProfiles);
+    const profiles = Array.isArray(providerProfilesOrProvider)
+      ? providerProfilesOrProvider
+      : [{
+          id: providerProfilesOrProvider.id,
+          provider: providerProfilesOrProvider,
+          capabilities: ['*'],
+          mode: 'offline' as const,
+          estimatedCostPerCall: 0,
+          estimatedLatencyMs: 1,
+          enabled: true,
+        }];
+    this.providerRegistry = new ProviderRegistry(profiles);
   }
 
   private file(): string { return path.join(this.root, 'executions.json'); }
