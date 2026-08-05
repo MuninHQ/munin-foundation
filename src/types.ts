@@ -58,7 +58,7 @@ export interface JobOpportunity {
   updatedAt: string;
 }
 
-export interface ContextRelation {
+export interface ContextRelation extends Record<string, unknown> {
   id: string;
   sourceType: EntityType;
   sourceId: string;
