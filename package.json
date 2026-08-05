@@ -8,14 +8,25 @@
     "provider-policy": "dist/provider-cli.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build:core": "tsc -p tsconfig.json",
+    "build:web": "vite build --config apps/web/vite.config.ts",
+    "build": "npm run build:core && npm run build:web",
     "test": "npm run build && node --test dist/tests/*.test.js",
-    "start": "npm run build && node dist/cli.js",
-    "provider-policy": "npm run build && node dist/provider-cli.js"
+    "start": "npm run build:core && node dist/cli.js",
+    "web": "vite --config apps/web/vite.config.ts",
+    "provider-policy": "npm run build:core && node dist/provider-cli.js"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.0.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "typescript": "^5.6.3",
-    "@types/node": "^22.10.2"
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.3",
+    "@types/react-dom": "^19.0.2"
   },
   "engines": {
     "node": ">=20"
