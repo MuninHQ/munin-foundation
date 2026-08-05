@@ -10,7 +10,7 @@ interface LeaseDocument {
 export interface PersistentLeaseResult {
   acquired: boolean;
   lease?: TaskLease;
-  reason?: 'active-lease' | 'invalid-duration';
+  reason?: 'active-lease' | 'invalid-duration' | 'stale-fence';
 }
 
 export class PersistentLeaseStore {
@@ -72,11 +72,36 @@ export class PersistentLeaseStore {
     });
   }
 
-  async release(taskId: string, workerId: string): Promise<boolean> {
+  async renew(taskId: string, workerId: string, version: number, durationMs: number, now = Date.now()): Promise<PersistentLeaseResult> {
+    if (durationMs <= 0) return { acquired: false, reason: 'invalid-duration' };
     return this.withLock(async () => {
       const document = await this.load();
       const current = document.leases.find(lease => lease.taskId === taskId);
-      if (!current || current.workerId !== workerId) return false;
+      if (!current || current.workerId !== workerId || current.version !== version || new Date(current.expiresAt).getTime() <= now) {
+        return { acquired: false, lease: current ? { ...current } : undefined, reason: 'stale-fence' };
+      }
+      current.expiresAt = new Date(now + durationMs).toISOString();
+      await this.save(document);
+      return { acquired: true, lease: { ...current } };
+    });
+  }
+
+  async assertCurrent(taskId: string, workerId: string, version: number, now = Date.now()): Promise<TaskLease> {
+    return this.withLock(async () => {
+      const document = await this.load();
+      const current = document.leases.find(lease => lease.taskId === taskId);
+      if (!current || current.workerId !== workerId || current.version !== version || new Date(current.expiresAt).getTime() <= now) {
+        throw new Error(`Stale fencing token for lease: ${taskId}`);
+      }
+      return { ...current };
+    });
+  }
+
+  async release(taskId: string, workerId: string, version?: number): Promise<boolean> {
+    return this.withLock(async () => {
+      const document = await this.load();
+      const current = document.leases.find(lease => lease.taskId === taskId);
+      if (!current || current.workerId !== workerId || (version !== undefined && current.version !== version)) return false;
       document.leases = document.leases.filter(lease => lease.taskId !== taskId);
       await this.save(document);
       return true;
