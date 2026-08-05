@@ -89,7 +89,8 @@ test('SITREP ranks blocked action above same-priority action', async () => {
     const blocked = await service.addAction('Blocked action', 'P1');
     await service.addRelation('decision', blocker.id, 'blocks', 'action', blocked.id);
     const report = await service.sitrep();
-    assert.ok(report.indexOf(blocked.id) < report.indexOf(normal.id));
+    const prioritized = report.split('Próximas ações priorizadas:')[1] ?? '';
+    assert.ok(prioritized.indexOf(blocked.id) < prioritized.indexOf(normal.id));
     assert.match(report, new RegExp(`decision/${blocker.id} blocks action/${blocked.id}`));
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
