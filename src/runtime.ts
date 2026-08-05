@@ -1,7 +1,15 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { DeterministicProvider, type ExecutionProvider } from './providers.js';
+import { type ProviderRequest } from './providers.js';
+import {
+  defaultProviderProfiles,
+  ProviderRegistry,
+  ProviderSelectionError,
+  type ProviderDecision,
+  type ProviderPolicy,
+  type ProviderProfile,
+} from './provider-policy.js';
 import { reviewOutput, type ReviewReport } from './review.js';
 
 export type TaskStatus = 'READY' | 'RUNNING' | 'WAITING' | 'BLOCKED' | 'FAILED' | 'DONE';
@@ -27,6 +35,7 @@ export interface ExecutionTask {
   error?: string;
   providerId?: string;
   providerMetadata?: Record<string, unknown>;
+  providerDecision?: ProviderDecision;
   review?: ReviewReport;
   startedAt?: string;
   finishedAt?: string;
@@ -48,6 +57,7 @@ export interface RuntimeTelemetry {
   failed: number;
   blocked: number;
   rejectedByQualityGate: number;
+  rejectedByProviderPolicy: number;
   averageDurationMs: number;
   averageReviewScore: number;
   byAgent: Record<string, number>;
@@ -97,11 +107,18 @@ function inferWorkflow(objective: string): Array<{ title: string; capability: st
   ];
 }
 
+const defaultPolicy: ProviderPolicy = { offlineOnly: true };
+
 export class ExecutionEngine {
+  private readonly providerRegistry: ProviderRegistry;
+
   constructor(
     private readonly root = process.env.MUNIN_DATA_DIR ?? path.resolve('data/runtime'),
-    private readonly provider: ExecutionProvider = new DeterministicProvider(),
-  ) {}
+    providerProfiles: ProviderProfile[] = defaultProviderProfiles(),
+    private readonly providerPolicy: ProviderPolicy = defaultPolicy,
+  ) {
+    this.providerRegistry = new ProviderRegistry(providerProfiles);
+  }
 
   private file(): string { return path.join(this.root, 'executions.json'); }
 
@@ -117,7 +134,9 @@ export class ExecutionEngine {
   }
 
   agents(): AgentDefinition[] { return registry; }
-  providers(): Array<{ id: string; active: boolean }> { return [{ id: this.provider.id, active: true }]; }
+  providers(): Array<{ id: string; active: boolean; mode: string }> {
+    return this.providerRegistry.list().map(profile => ({ id: profile.id, active: profile.enabled, mode: profile.mode }));
+  }
 
   async createPlan(objective: string): Promise<ExecutionPlan> {
     if (!objective.trim()) throw new Error('Objective is required');
@@ -151,18 +170,21 @@ export class ExecutionEngine {
       const dependenciesDone = task.dependencies.every(id => plan.tasks.find(item => item.id === id)?.status === 'DONE');
       if (!dependenciesDone) { task.status = 'BLOCKED'; continue; }
       task.status = 'RUNNING'; task.startedAt = new Date().toISOString();
+      const dependencyResults = task.dependencies
+        .map(id => plan.tasks.find(item => item.id === id)?.result)
+        .filter((value): value is string => Boolean(value));
+      const request: ProviderRequest = {
+        taskId: task.id,
+        objective: plan.objective,
+        title: task.title,
+        capability: task.capability,
+        expectedOutput: task.expectedOutput,
+        context: { dependencyResults },
+      };
       try {
-        const dependencyResults = task.dependencies
-          .map(id => plan.tasks.find(item => item.id === id)?.result)
-          .filter((value): value is string => Boolean(value));
-        const response = await this.provider.execute({
-          taskId: task.id,
-          objective: plan.objective,
-          title: task.title,
-          capability: task.capability,
-          expectedOutput: task.expectedOutput,
-          context: { dependencyResults },
-        });
+        const selection = this.providerRegistry.select(request, this.providerPolicy);
+        task.providerDecision = selection.decision;
+        const response = await selection.provider.execute(request);
         task.result = response.output;
         task.providerId = response.providerId;
         task.providerMetadata = response.metadata;
@@ -174,7 +196,9 @@ export class ExecutionEngine {
           task.status = 'DONE';
         }
       } catch (error) {
-        task.status = 'FAILED'; task.error = error instanceof Error ? error.message : String(error);
+        task.status = 'FAILED';
+        if (error instanceof ProviderSelectionError) task.providerDecision = error.decision;
+        task.error = error instanceof Error ? error.message : String(error);
       }
       task.finishedAt = new Date().toISOString();
     }
@@ -199,6 +223,7 @@ export class ExecutionEngine {
       failed: tasks.filter(task => task.status === 'FAILED').length,
       blocked: tasks.filter(task => task.status === 'BLOCKED').length,
       rejectedByQualityGate: tasks.filter(task => task.error?.startsWith('Quality gate rejected')).length,
+      rejectedByProviderPolicy: tasks.filter(task => task.error?.startsWith('No provider satisfies policy')).length,
       averageDurationMs: durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : 0,
       averageReviewScore: reviewScores.length ? Math.round(reviewScores.reduce((a, b) => a + b, 0) / reviewScores.length) : 0,
       byAgent,
