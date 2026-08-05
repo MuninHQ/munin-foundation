@@ -94,3 +94,30 @@ test('SITREP ranks blocked action above same-priority action', async () => {
     assert.match(report, new RegExp(`decision/${blocker.id} blocks action/${blocked.id}`));
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
+
+test('research captures evidence, versions synthesis and links to project', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'munin-'));
+  try {
+    const service = new MuninService(new ContextStore(dir));
+    const project = await service.addProject('Research Engine');
+    const research = await service.addResearch('How should evidence be governed?', project.id);
+    const evidence = await service.addEvidence(research.id, 'Primary specification', 'https://example.com/spec', 'primary');
+    const first = await service.synthesizeResearch(research.id, 'Use attributable evidence.');
+    const second = await service.synthesizeResearch(research.id, 'Use attributable, versioned evidence.', [evidence.id]);
+    assert.equal(first.version, 1);
+    assert.equal(second.version, 2);
+    const context = await service.relatedContext(research.id);
+    assert.equal(context.outgoing[0].targetId, project.id);
+    assert.match(await service.researchReport(research.id), /v2: Use attributable, versioned evidence/);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('research rejects invalid evidence URLs and missing evidence references', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'munin-'));
+  try {
+    const service = new MuninService(new ContextStore(dir));
+    const research = await service.addResearch('Validation rules');
+    await assert.rejects(() => service.addEvidence(research.id, 'Bad source', 'not-a-url', 'secondary'), /Invalid evidence URL/);
+    await assert.rejects(() => service.synthesizeResearch(research.id, 'Unsupported synthesis', ['missing']), /Evidence not found/);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
