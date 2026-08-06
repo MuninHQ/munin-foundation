@@ -1,6 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { ContextStore } from './store.js';
 import { MuninService } from './service.js';
+import { buildKnowledgeGraph, buildTimeline, generateDailyBrief, resolveContext } from './intelligence.js';
 import type { JobStatus, Priority, Status } from './types.js';
 
 const store = new ContextStore();
@@ -37,9 +38,13 @@ export async function handleApi(request: IncomingMessage, response: ServerRespon
     if (request.method === 'GET' && url.pathname === '/api/health') return json(response, 200, { status: 'ok', service: 'munin-workspace' });
     if (request.method === 'GET' && url.pathname === '/api/workspace') {
       const state = await store.load(); const events = await store.events(); const careerQueue = await service.careerQueue();
-      return json(response, 200, { state, events: events.slice(-20).reverse(), careerQueue });
+      return json(response, 200, { state, events: events.slice(-20).reverse(), careerQueue, intelligence: { dailyBrief: generateDailyBrief(state), timeline: buildTimeline(state, events, 30), graph: buildKnowledgeGraph(state) } });
     }
     if (request.method === 'GET' && url.pathname === '/api/sitrep') return json(response, 200, { report: await service.sitrep() });
+    if (request.method === 'GET' && url.pathname === '/api/intelligence/timeline') { const state = await store.load(); return json(response, 200, { items: buildTimeline(state, await store.events(), Number(url.searchParams.get('limit') ?? 100)) }); }
+    if (request.method === 'GET' && url.pathname === '/api/intelligence/graph') return json(response, 200, buildKnowledgeGraph(await store.load()));
+    if (request.method === 'GET' && url.pathname === '/api/intelligence/daily-brief') return json(response, 200, generateDailyBrief(await store.load()));
+    if (request.method === 'GET' && url.pathname === '/api/intelligence/context') return json(response, 200, { query: url.searchParams.get('q') ?? '', matches: resolveContext(await store.load(), url.searchParams.get('q') ?? '') });
     if (request.method === 'POST' && url.pathname === '/api/projects') { const input = await body(request); return json(response, 201, await service.addProject(text(input.name, 'name'), (input.priority as Priority | undefined) ?? 'P1')); }
     if (request.method === 'POST' && url.pathname === '/api/actions') { const input = await body(request); return json(response, 201, await service.addAction(text(input.title, 'title'), (input.priority as Priority | undefined) ?? 'P1', typeof input.projectId === 'string' && input.projectId ? input.projectId : undefined)); }
     if (request.method === 'POST' && url.pathname === '/api/jobs') { const input = await body(request); return json(response, 201, await service.addJob(text(input.company, 'company'), text(input.role, 'role'), typeof input.description === 'string' ? input.description : '')); }
