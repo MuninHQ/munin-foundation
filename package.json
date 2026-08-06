@@ -4,19 +4,19 @@
   "private": true,
   "type": "module",
   "bin": {
-    "munin": "dist/cli.js",
-    "provider-policy": "dist/provider-cli.js"
+    "munin": "dist/src/cli.js",
+    "provider-policy": "dist/src/provider-cli.js"
   },
   "scripts": {
     "build:core": "tsc -p tsconfig.json",
     "build:web": "vite build --config apps/web/vite.config.ts",
     "build": "npm run build:core && npm run build:web",
     "test": "npm run build && node --test dist/tests/*.test.js",
-    "start": "npm run build:core && node dist/cli.js",
-    "api": "npm run build:core && node dist/api.js",
+    "start": "npm run build:core && node dist/src/cli.js",
+    "api": "npm run build:core && node dist/src/api.js",
     "web": "vite --config apps/web/vite.config.ts",
     "workspace": "node scripts/launch.mjs",
-    "provider-policy": "npm run build:core && node dist/provider-cli.js"
+    "provider-policy": "npm run build:core && node dist/src/provider-cli.js"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
