@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { generateInsights } from '../intelligence.js';
+import type { MuninState } from '../types.js';
+
+const now = new Date('2026-08-06T12:00:00-03:00');
+const base: MuninState = { projects: [], decisions: [], actions: [], jobs: [], research: [], relations: [] };
+
+test('prioritizes overdue career follow-ups', () => {
+  const state: MuninState = { ...base, jobs: [{ id:'job-1', company:'B3', role:'Digital Assets', status:'interview', fitScore:95, matchedSignals:['digital assets'], followUpAt:'2026-08-05T12:00:00-03:00', createdAt:'2026-08-01T12:00:00-03:00', updatedAt:'2026-08-05T12:00:00-03:00' }] };
+  const insights = generateInsights(state, now);
+  assert.equal(insights[0].id, 'followup-job-1');
+  assert.equal(insights[0].severity, 'critical');
+});
+
+test('detects stale and blocked projects', () => {
+  const state: MuninState = { ...base, projects: [{ id:'prj-1', name:'Munin', priority:'P0', status:'blocked', currentOutcome:'Waiting', blockers:['API decision'], updatedAt:'2026-07-20T12:00:00-03:00' }] };
+  const ids = generateInsights(state, now).map(x => x.id);
+  assert.ok(ids.includes('stale-prj-1'));
+  assert.ok(ids.includes('blocked-prj-1'));
+});
+
+test('recommends synthesis and flags P0 overload', () => {
+  const state: MuninState = { ...base,
+    actions: [1,2,3].map(i => ({ id:`act-${i}`, title:`Critical ${i}`, priority:'P0' as const, status:'active' as const, createdAt:'2026-08-01T12:00:00-03:00', updatedAt:'2026-08-01T12:00:00-03:00' })),
+    research: [{ id:'res-1', question:'Drex', status:'open', evidence:[{id:'e1',title:'A',url:'https://a.test',sourceType:'primary',capturedAt:'2026-08-01T12:00:00-03:00'},{id:'e2',title:'B',url:'https://b.test',sourceType:'secondary',capturedAt:'2026-08-01T12:00:00-03:00'}], syntheses:[], createdAt:'2026-08-01T12:00:00-03:00', updatedAt:'2026-08-01T12:00:00-03:00' }]
+  };
+  const ids = generateInsights(state, now).map(x => x.id);
+  assert.ok(ids.includes('synthesis-res-1'));
+  assert.ok(ids.includes('focus-p0-overload'));
+});
