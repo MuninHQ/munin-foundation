@@ -16,6 +16,7 @@
     "api": "npm run build:core && node dist/src/api.js",
     "web": "vite --config apps/web/vite.config.ts",
     "workspace": "node scripts/launch.mjs",
+    "import:lovable": "npm run build:core && node dist/src/lovable-import-cli.js",
     "provider-policy": "npm run build:core && node dist/src/provider-cli.js"
   },
   "dependencies": {
