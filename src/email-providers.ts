@@ -1,0 +1,34 @@
+import { randomUUID } from 'node:crypto';
+import { CareerInboxStore, classifyCareerEmail, type CareerEmail, type EmailProvider } from './career-inbox.js';
+import { ContextStore } from './store.js';
+
+type GmailList = { messages?: Array<{id:string;threadId?:string}> };
+type GmailMessage = { id:string; threadId?:string; internalDate?:string; snippet?:string; payload?:{headers?:Array<{name:string;value:string}>} };
+type GraphList = { value?: Array<{id:string;conversationId?:string;subject?:string;bodyPreview?:string;receivedDateTime?:string;from?:{emailAddress?:{name?:string;address?:string}}}> };
+
+function header(message:GmailMessage,name:string):string|undefined { return message.payload?.headers?.find(h=>h.name.toLowerCase()===name.toLowerCase())?.value; }
+function bearer(token:string):Record<string,string>{ return {authorization:`Bearer ${token}`}; }
+
+export async function fetchGmail(token:string,max=100):Promise<CareerEmail[]> {
+  const list=await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${max}&q=newer_than:90d+-in:spam+-in:trash`,{headers:bearer(token)});
+  if(!list.ok) throw new Error(`Gmail sync failed: ${list.status}`);
+  const refs=(await list.json() as GmailList).messages??[]; const messages:CareerEmail[]=[]; const jobs=(await new ContextStore().load()).jobs;
+  for(const ref of refs){ const response=await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${ref.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date`,{headers:bearer(token)}); if(!response.ok) continue; const raw=await response.json() as GmailMessage; const from=header(raw,'From')??''; const address=from.match(/<([^>]+)>/)?.[1]??from; const subject=header(raw,'Subject')??'(sem assunto)'; const classified=classifyCareerEmail({subject,snippet:raw.snippet??'',fromEmail:address},jobs); messages.push({id:randomUUID(),provider:'gmail',providerMessageId:raw.id,threadId:raw.threadId,fromName:from.replace(/<[^>]+>/,'').trim()||undefined,fromEmail:address,receivedAt:new Date(Number(raw.internalDate??Date.now())).toISOString(),handled:false,...classified}); }
+  return messages;
+}
+
+export async function fetchOutlook(token:string,max=100):Promise<CareerEmail[]> {
+  const select='$select=id,conversationId,subject,bodyPreview,receivedDateTime,from';
+  const response=await fetch(`https://graph.microsoft.com/v1.0/me/messages?$top=${max}&$orderby=receivedDateTime%20desc&${select}`,{headers:bearer(token)});
+  if(!response.ok) throw new Error(`Outlook sync failed: ${response.status}`);
+  const rows=(await response.json() as GraphList).value??[]; const jobs=(await new ContextStore().load()).jobs;
+  return rows.map(raw=>{ const subject=raw.subject??'(sem assunto)'; const address=raw.from?.emailAddress?.address; const classified=classifyCareerEmail({subject,snippet:raw.bodyPreview??'',fromEmail:address},jobs); return {id:randomUUID(),provider:'outlook' as EmailProvider,providerMessageId:raw.id,threadId:raw.conversationId,fromName:raw.from?.emailAddress?.name,fromEmail:address,receivedAt:raw.receivedDateTime??new Date().toISOString(),handled:false,...classified}; });
+}
+
+export async function syncCareerInbox():Promise<{providers:string[];added:number;duplicates:number;totalFetched:number}> {
+  const messages:CareerEmail[]=[]; const providers:string[]=[];
+  if(process.env.MUNIN_GMAIL_ACCESS_TOKEN){ messages.push(...await fetchGmail(process.env.MUNIN_GMAIL_ACCESS_TOKEN)); providers.push('gmail'); }
+  if(process.env.MUNIN_OUTLOOK_ACCESS_TOKEN){ messages.push(...await fetchOutlook(process.env.MUNIN_OUTLOOK_ACCESS_TOKEN)); providers.push('outlook'); }
+  if(!providers.length) throw new Error('No provider token configured. Set MUNIN_GMAIL_ACCESS_TOKEN and/or MUNIN_OUTLOOK_ACCESS_TOKEN.');
+  const result=await new CareerInboxStore().upsert(messages); return {...result,providers,totalFetched:messages.length};
+}
