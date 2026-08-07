@@ -27,6 +27,6 @@ export function parseCapturedMessage(input:CaptureInput):{subject:string;fromNam
 
 export async function captureCareerMessage(input:CaptureInput):Promise<{message:CareerEmail;added:boolean}> {
   const parsed=parseCapturedMessage(input); const jobs=(await new ContextStore().load()).jobs; const classified=classifyCareerEmail({subject:parsed.subject,snippet:parsed.snippet,fromEmail:parsed.fromEmail},jobs);
-  const message:CareerEmail={id:randomUUID(),provider:'gmail',providerMessageId:parsed.providerMessageId,fromName:parsed.fromName,fromEmail:parsed.fromEmail,subject:parsed.subject,snippet:parsed.snippet,receivedAt:parsed.receivedAt,handled:false,...classified};
+  const message:CareerEmail={id:randomUUID(),provider:'capture',providerMessageId:parsed.providerMessageId,fromName:parsed.fromName,fromEmail:parsed.fromEmail,subject:parsed.subject,snippet:parsed.snippet,receivedAt:parsed.receivedAt,handled:false,...classified};
   const result=await new CareerInboxStore().upsert([message]); return {message,added:result.added===1};
 }
