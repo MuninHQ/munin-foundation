@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { JobOpportunity, JobStatus } from './types.js';
 
-export type EmailProvider = 'gmail' | 'outlook';
+export type EmailProvider = 'gmail' | 'outlook' | 'capture';
 export type CareerEmailCategory = 'application_confirmation' | 'interview_invite' | 'recruiter_reply' | 'information_request' | 'rejection' | 'offer' | 'assessment' | 'job_alert' | 'other';
 
 export interface CareerEmail {
