@@ -6,10 +6,11 @@ import type { JobStatus, Priority, Status } from './types.js';
 import { CareerInboxStore } from './career-inbox.js';
 import { syncCareerInbox } from './email-providers.js';
 import { beginOAuth, completeOAuth, connectionStatus, disconnect, type OAuthProvider } from './oauth.js';
+import { captureCareerMessage, type CaptureFormat } from './career-capture.js';
 const store=new ContextStore(); const service=new MuninService(store); const inbox=new CareerInboxStore();
 function json(response:ServerResponse,status:number,body:unknown){response.writeHead(status,{'content-type':'application/json; charset=utf-8','access-control-allow-origin':'*','access-control-allow-headers':'content-type','access-control-allow-methods':'GET,POST,PATCH,DELETE,OPTIONS'});response.end(JSON.stringify(body));}
 function redirect(response:ServerResponse,url:string){response.writeHead(302,{location:url});response.end();}
-async function body(request:IncomingMessage):Promise<Record<string,unknown>>{const chunks:Buffer[]=[];for await(const chunk of request)chunks.push(Buffer.from(chunk));if(!chunks.length)return{};const parsed=JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown;if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('JSON object body required');return parsed as Record<string,unknown>;}
+async function body(request:IncomingMessage):Promise<Record<string,unknown>>{const chunks:Buffer[]=[];let size=0;for await(const chunk of request){const value=Buffer.from(chunk);size+=value.length;if(size>5_000_000)throw new Error('Payload too large');chunks.push(value);}if(!chunks.length)return{};const parsed=JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown;if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('JSON object body required');return parsed as Record<string,unknown>;}
 function text(value:unknown,field:string){if(typeof value!=='string'||!value.trim())throw new Error(`${field} is required`);return value.trim();}
 export async function handleApi(request:IncomingMessage,response:ServerResponse):Promise<void>{if(request.method==='OPTIONS')return json(response,204,{});const url=new URL(request.url??'/','http://localhost');try{
 if(request.method==='GET'&&url.pathname==='/api/health')return json(response,200,{status:'ok',service:'munin-workspace'});
@@ -22,6 +23,7 @@ if(request.method==='GET'&&url.pathname==='/api/intelligence/insights')return js
 if(request.method==='GET'&&url.pathname==='/api/intelligence/context')return json(response,200,{query:url.searchParams.get('q')??'',matches:resolveContext(await store.load(),url.searchParams.get('q')??'')});
 if(request.method==='GET'&&url.pathname==='/api/career-inbox'){const state=await inbox.load();return json(response,200,{...state,connections:await connectionStatus()});}
 if(request.method==='POST'&&url.pathname==='/api/career-inbox/sync')return json(response,200,await syncCareerInbox());
+if(request.method==='POST'&&url.pathname==='/api/career-inbox/capture'){const input=await body(request);const format=text(input.format,'format') as CaptureFormat;if(!['eml','text','txt','msg'].includes(format))throw new Error('Unsupported capture format');return json(response,201,await captureCareerMessage({format,filename:typeof input.filename==='string'?input.filename:undefined,content:text(input.content,'content')}));}
 if(request.method==='GET'&&url.pathname==='/api/oauth/status')return json(response,200,{connections:await connectionStatus()});
 const connect=url.pathname.match(/^\/api\/oauth\/(gmail|outlook)\/connect$/);if(request.method==='GET'&&connect)return redirect(response,await beginOAuth(connect[1] as OAuthProvider));
 const remove=url.pathname.match(/^\/api\/oauth\/(gmail|outlook)$/);if(request.method==='DELETE'&&remove){await disconnect(remove[1] as OAuthProvider);return json(response,200,{ok:true});}
