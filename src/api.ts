@@ -9,6 +9,7 @@ import { beginOAuth, completeOAuth, connectionStatus, disconnect, type OAuthProv
 import { captureCareerMessage, type CaptureFormat } from './career-capture.js';
 import { CareerWatchFolder } from './watch-folder.js';
 import { executeAssistantCommand } from './assistant.js';
+import { clearAssistantMemory, loadAssistantMemory } from './assistant-memory.js';
 const store=new ContextStore(); const service=new MuninService(store); const inbox=new CareerInboxStore(); const watchFolder=new CareerWatchFolder();
 function json(response:ServerResponse,status:number,body:unknown){response.writeHead(status,{'content-type':'application/json; charset=utf-8','access-control-allow-origin':'*','access-control-allow-headers':'content-type','access-control-allow-methods':'GET,POST,PATCH,DELETE,OPTIONS'});response.end(JSON.stringify(body));}
 function redirect(response:ServerResponse,url:string){response.writeHead(302,{location:url});response.end();}
@@ -18,6 +19,8 @@ export async function handleApi(request:IncomingMessage,response:ServerResponse)
 if(request.method==='GET'&&url.pathname==='/api/health')return json(response,200,{status:'ok',service:'munin-workspace'});
 if(request.method==='GET'&&url.pathname==='/api/workspace'){const state=await store.load();const events=await store.events();const careerQueue=await service.careerQueue();return json(response,200,{state,events:events.slice(-20).reverse(),careerQueue,intelligence:{dailyBrief:generateDailyBrief(state),timeline:buildTimeline(state,events,30),graph:buildKnowledgeGraph(state),insights:generateInsights(state).slice(0,20)}});}
 if(request.method==='POST'&&url.pathname==='/api/assistant'){const input=await body(request);return json(response,200,await executeAssistantCommand(text(input.command,'command')));}
+if(request.method==='GET'&&url.pathname==='/api/assistant/history')return json(response,200,await loadAssistantMemory());
+if(request.method==='DELETE'&&url.pathname==='/api/assistant/history')return json(response,200,await clearAssistantMemory());
 if(request.method==='GET'&&url.pathname==='/api/sitrep')return json(response,200,{report:await service.sitrep()});
 if(request.method==='GET'&&url.pathname==='/api/intelligence/timeline'){const state=await store.load();return json(response,200,{items:buildTimeline(state,await store.events(),Number(url.searchParams.get('limit')??100))});}
 if(request.method==='GET'&&url.pathname==='/api/intelligence/graph')return json(response,200,buildKnowledgeGraph(await store.load()));
