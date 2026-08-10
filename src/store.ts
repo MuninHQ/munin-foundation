@@ -1,12 +1,14 @@
-import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { dataDir } from './config.js';
+import { writeJsonAtomic } from './storage.js';
 import { randomUUID } from 'node:crypto';
 import type { MuninEvent, MuninState } from './types.js';
 
 const emptyState: MuninState = { projects: [], decisions: [], actions: [], jobs: [], research: [], relations: [] };
 
 export class ContextStore {
-  constructor(private readonly root = process.env.MUNIN_DATA_DIR ?? path.resolve('data/runtime')) {}
+  constructor(private readonly root = dataDir()) {}
 
   private statePath(): string { return path.join(this.root, 'state.json'); }
   private eventsPath(): string { return path.join(this.root, 'events.jsonl'); }
@@ -14,7 +16,7 @@ export class ContextStore {
   async ensure(): Promise<void> {
     await mkdir(this.root, { recursive: true });
     try { await readFile(this.statePath(), 'utf8'); }
-    catch { await writeFile(this.statePath(), JSON.stringify(emptyState, null, 2) + '\n', 'utf8'); }
+    catch { await writeJsonAtomic(this.statePath(), emptyState); }
   }
 
   async load(): Promise<MuninState> {
@@ -32,7 +34,7 @@ export class ContextStore {
 
   async save(state: MuninState): Promise<void> {
     await this.ensure();
-    await writeFile(this.statePath(), JSON.stringify(state, null, 2) + '\n', 'utf8');
+    await writeJsonAtomic(this.statePath(), state);
   }
 
   async event(type: string, entityType: MuninEvent['entityType'], entityId: string, payload: Record<string, unknown> = {}): Promise<MuninEvent> {

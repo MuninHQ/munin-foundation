@@ -1,5 +1,7 @@
-import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
+import { dataDir } from './config.js';
+import { writeJsonAtomic } from './storage.js';
 import { captureCareerMessage } from './career-capture.js';
 
 export interface WatchFolderConfig { folder?: string; enabled: boolean; intervalMs: number; }
@@ -11,10 +13,10 @@ const DEFAULT_STATE: WatchFolderState = { config: { enabled: false, intervalMs: 
 export class CareerWatchFolder {
   private timer?: NodeJS.Timeout;
   private scanning = false;
-  constructor(private readonly root = process.env.MUNIN_DATA_DIR ?? path.resolve('data/runtime')) {}
+  constructor(private readonly root = dataDir()) {}
   private file(){ return path.join(this.root,'career-watch-folder.json'); }
   async load():Promise<WatchFolderState>{ await mkdir(this.root,{recursive:true}); try { const parsed=JSON.parse(await readFile(this.file(),'utf8')) as WatchFolderState; return {...DEFAULT_STATE,...parsed,config:{...DEFAULT_STATE.config,...parsed.config},processed:parsed.processed??{},log:parsed.log??[]}; } catch { return structuredClone(DEFAULT_STATE); } }
-  private async save(state:WatchFolderState){ await mkdir(this.root,{recursive:true}); await writeFile(this.file(),JSON.stringify(state,null,2)+'\n','utf8'); }
+  private async save(state:WatchFolderState){ await writeJsonAtomic(this.file(),state); }
   async status(){ const state=await this.load(); return {config:state.config,lastScanAt:state.lastScanAt,recent:state.log.slice(-20).reverse()}; }
   async configure(folder:string|undefined,enabled:boolean){ const state=await this.load(); if(folder){ const resolved=path.resolve(folder); const info=await stat(resolved); if(!info.isDirectory()) throw new Error('Watch folder must be a directory'); state.config.folder=resolved; } state.config.enabled=enabled; await this.save(state); this.restart(state.config); if(enabled) void this.scan(); return this.status(); }
   start(){ void this.load().then(state=>this.restart(state.config)); }

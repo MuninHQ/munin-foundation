@@ -1,15 +1,16 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { runtimePath } from './config.js';
+import { writeJsonAtomic } from './storage.js';
 import { loadImageSettings } from './image-settings.js';
 import { loadLinkedInContent, type VisualReference } from './linkedin-content.js';
 
 export type VisualAnalysis={objects:string[];composition:string;palette:string[];materials:string[];motifs:string[];style:string[];lighting:string;background:string;textPresence:'none'|'minimal'|'prominent';peoplePresence:boolean;description:string;confidence:number;analyzedAt:string};
 export type VisualAnalysisRecord={referenceId:string;analysis:VisualAnalysis;similar:{id:string;label:string;score:number}[];noveltyScore:number;model:string;updatedAt:string};
 type VisualIntelligenceState={records:Record<string,VisualAnalysisRecord>;updatedAt:string};
-const file=join(process.cwd(),'data','runtime','visual-intelligence.json');
+const file=()=>runtimePath('visual-intelligence.json');
 const empty=():VisualIntelligenceState=>({records:{},updatedAt:new Date(0).toISOString()});
-async function loadState(){try{return {...empty(),...(JSON.parse(await readFile(file,'utf8')) as VisualIntelligenceState)};}catch{return empty();}}
-async function saveState(state:VisualIntelligenceState){state.updatedAt=new Date().toISOString();await mkdir(dirname(file),{recursive:true});await writeFile(file,JSON.stringify(state,null,2),'utf8');return state;}
+async function loadState(){try{return {...empty(),...(JSON.parse(await readFile(file(),'utf8')) as VisualIntelligenceState)};}catch{return empty();}}
+async function saveState(state:VisualIntelligenceState){state.updatedAt=new Date().toISOString();await writeJsonAtomic(file(),state);return state;}
 function safeBase(url:string){return url.replace(/\/$/,'');}
 function uniq(values:unknown){return Array.isArray(values)?[...new Set(values.filter((x):x is string=>typeof x==='string').map(x=>x.trim()).filter(Boolean))].slice(0,12):[];}
 function text(value:unknown,fallback=''){return typeof value==='string'&&value.trim()?value.trim():fallback;}
