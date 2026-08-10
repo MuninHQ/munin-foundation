@@ -4,19 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Munin Image AI</title>
+    <link rel="stylesheet" href="/munin.css" />
     <style>
-      :root {
-        font-family: Inter, system-ui;
-        color: #eef6ff;
-        background: #050b13;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        background: #050b13;
-      }
       .shell {
         max-width: 900px;
         margin: auto;
@@ -35,18 +24,9 @@
         justify-content: space-between;
         align-items: center;
       }
-      .eyebrow {
-        color: #4ba6df;
-        font-size: 10px;
-        letter-spacing: 0.18em;
-        font-weight: 700;
-      }
-      h1 {
-        margin: 6px 0;
-      }
       .muted,
       p {
-        color: #7e94a8;
+        color: var(--text-muted);
       }
       .grid {
         display: grid;
@@ -65,7 +45,7 @@
       input,
       select {
         background: #06101a;
-        color: #eef6ff;
+        color: var(--text);
         border: 1px solid #203b50;
         border-radius: 8px;
         padding: 11px;
@@ -81,7 +61,7 @@
         cursor: pointer;
       }
       .primary {
-        background: #126a9f;
+        background: var(--accent-strong);
       }
       .notice {
         position: fixed;
@@ -97,7 +77,7 @@
         padding: 6px 9px;
         border: 1px solid #4d2d35;
         border-radius: 20px;
-        color: #ff9eaa;
+        color: var(--danger);
       }
       .status.on {
         border-color: #265b43;
@@ -116,6 +96,7 @@
         }
       }
     </style>
+    <script defer src="/munin-nav.js"></script>
   </head>
   <body>
     <main class="shell">

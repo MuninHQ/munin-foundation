@@ -4,20 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Munin LinkedIn Composer</title>
+    <link rel="stylesheet" href="/munin.css" />
     <style>
-      :root {
-        font-family: Inter, system-ui;
-        color: #eef6ff;
-        background: #050b13;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        background: radial-gradient(circle at 80% 0, #12385a55, transparent 34%), #050b13;
-        min-height: 100vh;
-      }
       .shell {
         max-width: 1320px;
         margin: auto;
@@ -30,23 +18,13 @@
         align-items: center;
         gap: 14px;
       }
-      .eyebrow {
-        color: #55b4ee;
-        font-size: 10px;
-        letter-spacing: 0.18em;
-        font-weight: 700;
-      }
-      h1 {
-        font-size: 34px;
-        margin: 6px 0;
-      }
       h2,
       h3 {
         margin: 7px 0;
       }
       p,
       .muted {
-        color: #7890a5;
+        color: var(--text-muted);
       }
       .grid {
         display: grid;
@@ -75,7 +53,7 @@
         cursor: pointer;
       }
       .card.selected {
-        border-color: #55b4ee;
+        border-color: var(--accent);
         background: #0c2131;
       }
       .tag {
@@ -107,7 +85,7 @@
         cursor: pointer;
       }
       .primary {
-        background: #126a9f;
+        background: var(--accent-strong);
       }
       .hero {
         font-size: 20px;
@@ -156,7 +134,7 @@
       .empty {
         text-align: center;
         padding: 45px;
-        color: #7890a5;
+        color: var(--text-muted);
       }
       .option {
         display: flex;
@@ -200,6 +178,7 @@
         }
       }
     </style>
+    <script defer src="/munin-nav.js"></script>
   </head>
   <body>
     <main class="shell">
@@ -273,8 +252,8 @@
       </div>
     </main>
     <script>
-      const MAIN = "http://127.0.0.1:4310",
-        COMPOSER = "http://127.0.0.1:4313";
+      const MAIN = "",
+        COMPOSER = "";
       let data = { suggestions: [], signals: [], sourceMode: "unavailable" },
         selected = null,
         current = null;

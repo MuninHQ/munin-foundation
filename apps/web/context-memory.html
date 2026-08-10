@@ -4,20 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Munin Context Memory</title>
+    <link rel="stylesheet" href="/munin.css" />
     <style>
-      :root {
-        font-family: Inter, system-ui;
-        color: #eef6ff;
-        background: #050b13;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        background: radial-gradient(circle at 80% 0, #12385a55, transparent 34%), #050b13;
-        min-height: 100vh;
-      }
       .shell {
         max-width: 1300px;
         margin: auto;
@@ -30,23 +18,13 @@
         align-items: center;
         gap: 14px;
       }
-      .eyebrow {
-        color: #55b4ee;
-        font-size: 10px;
-        letter-spacing: 0.18em;
-        font-weight: 700;
-      }
-      h1 {
-        font-size: 34px;
-        margin: 6px 0;
-      }
       h2,
       h3 {
         margin: 7px 0;
       }
       p,
       .muted {
-        color: #7890a5;
+        color: var(--text-muted);
       }
       .grid {
         display: grid;
@@ -89,7 +67,7 @@
         cursor: pointer;
       }
       .primary {
-        background: #126a9f;
+        background: var(--accent-strong);
       }
       .danger {
         border-color: #74404c;
@@ -139,7 +117,7 @@
       }
       .meta {
         font-size: 11px;
-        color: #7890a5;
+        color: var(--text-muted);
       }
       .warning {
         border: 1px solid #6d532d;
@@ -170,7 +148,7 @@
       .search {
         width: 100%;
         background: #06101a;
-        color: #eef6ff;
+        color: var(--text);
         border: 1px solid #203b50;
         border-radius: 8px;
         padding: 11px;
@@ -204,6 +182,7 @@
         }
       }
     </style>
+    <script defer src="/munin-nav.js"></script>
   </head>
   <body>
     <main class="shell">
@@ -279,7 +258,7 @@
       </div>
     </main>
     <script>
-      const API = "http://127.0.0.1:4314";
+      const API = "";
       let state = null,
         seed = null;
       async function api(path, options) {

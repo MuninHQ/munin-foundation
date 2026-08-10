@@ -4,20 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Munin Career Inbox</title>
+    <link rel="stylesheet" href="/munin.css" />
     <style>
-      :root {
-        font-family: Inter, system-ui;
-        color: #eef6ff;
-        background: #050b13;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        background: radial-gradient(circle at 80% 0, #12385a55, transparent 34%), #050b13;
-        min-height: 100vh;
-      }
       .shell {
         max-width: 1400px;
         margin: auto;
@@ -30,18 +18,8 @@
         justify-content: space-between;
         align-items: center;
       }
-      .eyebrow {
-        color: #4ba6df;
-        font-size: 11px;
-        letter-spacing: 0.18em;
-        font-weight: 700;
-      }
-      h1 {
-        margin: 6px 0;
-        font-size: 34px;
-      }
       p {
-        color: #7e94a8;
+        color: var(--text-muted);
       }
       .buttons,
       .filters {
@@ -60,7 +38,7 @@
         cursor: pointer;
       }
       button.primary {
-        background: #126a9f;
+        background: var(--accent-strong);
         color: white;
       }
       .connections {
@@ -93,7 +71,7 @@
       }
       .drop.over {
         background: #0d2638;
-        border-color: #67c7ff;
+        border-color: var(--accent-bright);
       }
       .paste textarea,
       .watch input {
@@ -116,12 +94,12 @@
         font-size: 11px;
         padding: 5px 9px;
         border-radius: 20px;
-        background: #321d22;
-        color: #ff9eaa;
+        background: var(--danger-bg);
+        color: var(--danger);
       }
       .status.on {
-        background: #123222;
-        color: #78dda5;
+        background: var(--ok-bg);
+        color: var(--ok);
       }
       .toolbar {
         margin: 24px 0 14px;
@@ -144,7 +122,7 @@
         align-items: center;
         flex-wrap: wrap;
         font-size: 11px;
-        color: #7790a5;
+        color: var(--text-muted);
       }
       .tag {
         border: 1px solid #285a78;
@@ -226,6 +204,7 @@
         }
       }
     </style>
+    <script defer src="/munin-nav.js"></script>
   </head>
   <body>
     <main class="shell">
@@ -332,7 +311,7 @@
         document.getElementById("connections").innerHTML = data.connections
           .map(
             (c) =>
-              `<article class="panel provider"><div><strong>${c.provider === "gmail" ? "Gmail" : "Outlook / Hotmail"}</strong><p>${c.configured ? (c.connected ? "Conta conectada" : "Pronto para conectar") : "OAuth opcional não configurado"}</p></div><div class="buttons"><span class="status ${c.connected ? "on" : ""}">${c.connected ? "CONECTADO" : "OPCIONAL"}</span>${c.connected ? `<button onclick="disconnect('${c.provider}')">Desconectar</button>` : c.configured ? `<a class="btn" href="http://127.0.0.1:4310/api/oauth/${c.provider}/connect">Conectar</a>` : ""}</div></article>`,
+              `<article class="panel provider"><div><strong>${c.provider === "gmail" ? "Gmail" : "Outlook / Hotmail"}</strong><p>${c.configured ? (c.connected ? "Conta conectada" : "Pronto para conectar") : "OAuth opcional não configurado"}</p></div><div class="buttons"><span class="status ${c.connected ? "on" : ""}">${c.connected ? "CONECTADO" : "OPCIONAL"}</span>${c.connected ? `<button onclick="disconnect('${c.provider}')">Desconectar</button>` : c.configured ? `<a class="btn" href="/api/oauth/${c.provider}/connect">Conectar</a>` : ""}</div></article>`,
           )
           .join("");
         const w = data.watchFolder;

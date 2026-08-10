@@ -4,20 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Munin Editorial History</title>
+    <link rel="stylesheet" href="/munin.css" />
     <style>
-      :root {
-        font-family: Inter, system-ui;
-        color: #edf6ff;
-        background: #050b13;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        background: radial-gradient(circle at 80% 0, #10365a55, transparent 34%), #050b13;
-        min-height: 100vh;
-      }
       .shell {
         max-width: 1380px;
         margin: auto;
@@ -30,23 +18,13 @@
         align-items: center;
         gap: 14px;
       }
-      .eyebrow {
-        font-size: 10px;
-        letter-spacing: 0.18em;
-        color: #55b4ee;
-        font-weight: 700;
-      }
-      h1 {
-        font-size: 34px;
-        margin: 6px 0;
-      }
       h2,
       h3 {
         margin: 7px 0;
       }
       p,
       .muted {
-        color: #7890a5;
+        color: var(--text-muted);
       }
       .grid {
         display: grid;
@@ -132,7 +110,7 @@
         cursor: pointer;
       }
       .primary {
-        background: #126a9f;
+        background: var(--accent-strong);
       }
       .posts {
         display: grid;
@@ -183,6 +161,7 @@
         }
       }
     </style>
+    <script defer src="/munin-nav.js"></script>
   </head>
   <body>
     <main class="shell">

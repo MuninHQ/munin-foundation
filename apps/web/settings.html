@@ -4,20 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Munin Settings</title>
+    <link rel="stylesheet" href="/munin.css" />
     <style>
-      :root {
-        font-family: Inter, system-ui;
-        color: #eef6ff;
-        background: #050b13;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        min-height: 100vh;
-        background: radial-gradient(circle at 80% 0, #12385a55, transparent 34%), #050b13;
-      }
       .shell {
         max-width: 1040px;
         margin: auto;
@@ -29,19 +17,9 @@
         align-items: center;
         margin-bottom: 28px;
       }
-      .eyebrow {
-        color: #4ba6df;
-        font-size: 10px;
-        letter-spacing: 0.18em;
-        font-weight: 700;
-      }
-      h1 {
-        margin: 6px 0;
-        font-size: 34px;
-      }
       .muted,
       p {
-        color: #7e94a8;
+        color: var(--text-muted);
       }
       .panel {
         border: 1px solid #193149;
@@ -56,7 +34,7 @@
         border-radius: 20px;
         border: 1px solid #4d2d35;
         background: #25131a;
-        color: #ff9eaa;
+        color: var(--danger);
         font-size: 11px;
       }
       .status.on {
@@ -96,7 +74,7 @@
       }
       .field label {
         font-size: 11px;
-        color: #7890a5;
+        color: var(--text-muted);
       }
       .field input,
       .field select {
@@ -125,7 +103,7 @@
         cursor: pointer;
       }
       .primary {
-        background: #126a9f;
+        background: var(--accent-strong);
         color: white;
       }
       .danger {
@@ -188,6 +166,7 @@
         }
       }
     </style>
+    <script defer src="/munin-nav.js"></script>
   </head>
   <body>
     <main class="shell">

@@ -4,20 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Munin LinkedIn Intelligence</title>
+    <link rel="stylesheet" href="/munin.css" />
     <style>
-      :root {
-        font-family: Inter, system-ui;
-        color: #eef6ff;
-        background: #050b13;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        background: radial-gradient(circle at 82% 0, #10365a55, transparent 34%), #050b13;
-        min-height: 100vh;
-      }
       .shell {
         max-width: 1420px;
         margin: auto;
@@ -30,23 +18,13 @@
         align-items: center;
         gap: 16px;
       }
-      .eyebrow {
-        color: #4ba6df;
-        font-size: 10px;
-        letter-spacing: 0.18em;
-        font-weight: 700;
-      }
-      h1 {
-        font-size: 34px;
-        margin: 6px 0;
-      }
       h2,
       h3 {
         margin: 7px 0;
       }
       .muted,
       p {
-        color: #7890a5;
+        color: var(--text-muted);
       }
       .grid {
         display: grid;
@@ -102,7 +80,7 @@
         cursor: pointer;
       }
       .primary {
-        background: #126a9f;
+        background: var(--accent-strong);
         color: white;
       }
       .generate {
@@ -118,7 +96,7 @@
         width: 100%;
         border: 1px solid #203b50;
         background: #06101a;
-        color: #eef6ff;
+        color: var(--text);
         border-radius: 8px;
         padding: 11px;
       }
@@ -197,6 +175,7 @@
         }
       }
     </style>
+    <script defer src="/munin-nav.js"></script>
   </head>
   <body>
     <main class="shell">

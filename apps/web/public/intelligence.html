@@ -4,20 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Munin Intelligence</title>
+    <link rel="stylesheet" href="/munin.css" />
     <style>
-      :root {
-        font-family: Inter, system-ui, sans-serif;
-        color: #eef6ff;
-        background: #050b13;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        background: radial-gradient(circle at 80% 0, rgba(30, 118, 190, 0.14), transparent 28%), #050b13;
-        min-height: 100vh;
-      }
       .shell {
         display: grid;
         grid-template-columns: 230px 1fr;
@@ -65,12 +53,6 @@
         align-items: end;
         border-bottom: 1px solid #172738;
         padding-bottom: 22px;
-      }
-      .eyebrow {
-        color: #4ba6df;
-        font-size: 10px;
-        letter-spacing: 0.18em;
-        font-weight: 700;
       }
       .top h1 {
         margin: 5px 0 0;
@@ -220,6 +202,7 @@
         }
       }
     </style>
+    <script defer src="/munin-nav.js"></script>
   </head>
   <body>
     <div class="shell">

@@ -29,6 +29,11 @@ export function App() {
     const handler = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setPalette(v => !v); }
       if (event.key === 'Escape') { setPalette(false); setEditor(null); setSitrep(''); }
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey) {
+        const shortcuts: Record<string, string> = { i: '/intelligence.html', m: '/context-memory.html', l: '/linkedin.html', p: '/linkedin-compose.html', h: '/linkedin-history.html', a: '/linkedin-assets.html' };
+        const target = shortcuts[event.key.toLowerCase()];
+        if (target) { event.preventDefault(); window.location.assign(target); }
+      }
     };
     window.addEventListener('keydown', handler); return () => window.removeEventListener('keydown', handler);
   }, []);
@@ -46,7 +51,17 @@ export function App() {
   async function generateSitrep() { try { const data = await request('/api/sitrep'); setSitrep(data.report); setPalette(false); } catch (e) { setError(e instanceof Error ? e.message : String(e)); } }
 
   return <div className="shell">
-    <aside className="sidebar"><div className="brand"><span className="brand-mark">ᛗ</span><div><strong>MUNIN</strong><small>Interactive Workspace</small></div></div><nav>{nav.map(item => <button key={item} className={section === item ? 'active' : ''} onClick={() => setSection(item)}>{item}</button>)}</nav><div className="sidebar-foot"><span className="status-dot" /> {error ? 'API desconectada' : 'Dados ao vivo'}</div></aside>
+    <aside className="sidebar"><div className="brand"><span className="brand-mark">ᛗ</span><div><strong>MUNIN</strong><small>Interactive Workspace</small></div></div><nav>{nav.map(item => <button key={item} className={section === item ? 'active' : ''} onClick={() => setSection(item)}>{item}</button>)}</nav><p className="nav-group">MODULES</p><nav className="nav-modules">
+      <a href="/executive-briefing.html">Executive Briefing</a>
+      <a href="/intelligence.html">Intelligence</a>
+      <a href="/career-inbox.html">Career Inbox</a>
+      <a href="/context-memory.html">Context Memory</a>
+      <a href="/linkedin.html">LinkedIn Studio</a>
+      <a href="/linkedin-compose.html">Post Composer</a>
+      <a href="/linkedin-history.html">Editorial History</a>
+      <a href="/linkedin-assets.html">Visual Assets</a>
+      <a href="/settings.html">Settings</a>
+    </nav><div className="sidebar-foot"><span className="status-dot" /> {error ? 'API desconectada' : 'Dados ao vivo'}</div></aside>
     <main><header><div><p className="eyebrow">WORKSPACE LOCAL</p><h1>{section}</h1></div><div className="tools"><div className="search"><span>⌕</span><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Pesquisar no Munin" />{matches.length > 0 && <div className="search-results">{matches.map(item => <button key={item}>{item}</button>)}</div>}</div><button className="command" onClick={() => setPalette(true)}>⌘ Comandos <kbd>Ctrl K</kbd></button></div></header>
       {notice && <div className="toast">{notice}</div>}
       {error && <div className="content"><article className="panel"><strong>Não foi possível concluir a operação.</strong><p>{error}</p><button className="secondary" onClick={() => setError('')}>Fechar</button></article></div>}
