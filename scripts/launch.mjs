@@ -2,6 +2,9 @@ import { spawn } from 'node:child_process';
 import { platform } from 'node:os';
 import net from 'node:net';
 
+const API_PORT = Number(process.env.MUNIN_API_PORT ?? 4310);
+const WEB_PORT = Number(process.env.MUNIN_WEB_PORT ?? 5173);
+
 const children = [];
 let shuttingDown = false;
 
@@ -18,6 +21,14 @@ function run(command, args, label) {
     }
   });
   return child;
+}
+
+function runToCompletion(command, args, label) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio: 'inherit', shell: platform() === 'win32', env: process.env });
+    child.on('exit', code => (code === 0 ? resolve() : reject(new Error(`${label} failed with code ${code}`))));
+    child.on('error', reject);
+  });
 }
 
 function portOpen(port, host = '127.0.0.1') {
@@ -50,14 +61,6 @@ function openBrowser(url) {
   child.unref();
 }
 
-async function startService({ port, command, args, label }) {
-  if (await portOpen(port)) {
-    console.log(`[Munin] ${label} already running on 127.0.0.1:${port}; reusing it.`);
-    return;
-  }
-  run(command, args, label);
-}
-
 function shutdown(code = 0) {
   shuttingDown = true;
   for (const child of children) {
@@ -70,23 +73,32 @@ process.on('SIGINT', () => shutdown(0));
 process.on('SIGTERM', () => shutdown(0));
 
 console.log('Starting Munin Workspace...');
-await startService({ port: 4310, command: 'npm', args: ['run', 'api'], label: 'Core API' });
-await startService({ port: 4312, command: 'npm', args: ['run', 'visual-assets-api'], label: 'Visual Assets API' });
-await startService({ port: 4313, command: 'npm', args: ['run', 'linkedin-composer-api'], label: 'LinkedIn Composer API' });
-await startService({ port: 4314, command: 'npm', args: ['run', 'context-memory-api'], label: 'Context Memory API' });
-await startService({ port: 4315, command: 'npm', args: ['run', 'executive-briefing-api'], label: 'Executive Briefing API' });
 
-if (await portOpen(5173)) {
-  console.log('[Munin] Web UI already running at http://127.0.0.1:5173; reusing it.');
+// One unified API process serves every module (core, visual assets, composer,
+// context memory, executive briefing) on a single port. TypeScript is compiled
+// once here instead of once per service, which is what previously made startup
+// slow (5 sequential tsc runs through npm).
+if (await portOpen(API_PORT)) {
+  console.log(`[Munin] API already running on 127.0.0.1:${API_PORT}; reusing it.`);
 } else {
-  run('npm', ['run', 'web', '--', '--host', '127.0.0.1', '--port', '5173', '--strictPort'], 'Web UI');
+  await runToCompletion('npm', ['run', 'build:core'], 'TypeScript build');
+  run('node', ['dist/src/server.js'], 'Munin API');
+  if (!(await waitForPort(API_PORT))) {
+    console.error(`[Munin] API did not become ready on port ${API_PORT}.`);
+  }
 }
 
-const ready = await waitForPort(5173);
-if (ready) {
-  console.log('[Munin] Workspace ready: http://127.0.0.1:5173');
-  openBrowser('http://127.0.0.1:5173');
+if (await portOpen(WEB_PORT)) {
+  console.log(`[Munin] Web UI already running at http://127.0.0.1:${WEB_PORT}; reusing it.`);
 } else {
-  console.error('[Munin] Web UI did not become ready on port 5173. Check the messages above.');
+  run('npm', ['run', 'web', '--', '--host', '127.0.0.1', '--port', String(WEB_PORT), '--strictPort'], 'Web UI');
+}
+
+const ready = await waitForPort(WEB_PORT);
+if (ready) {
+  console.log(`[Munin] Workspace ready: http://127.0.0.1:${WEB_PORT}`);
+  openBrowser(`http://127.0.0.1:${WEB_PORT}`);
+} else {
+  console.error(`[Munin] Web UI did not become ready on port ${WEB_PORT}. Check the messages above.`);
   process.exitCode = 1;
 }

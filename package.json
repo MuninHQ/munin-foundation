@@ -13,6 +13,7 @@
     "build": "npm run build:core && npm run build:web",
     "test": "npm run build && node --test dist/tests/*.test.js",
     "start": "npm run build:core && node dist/src/cli.js",
+    "serve": "npm run build:core && node dist/src/server.js",
     "api": "npm run build:core && node dist/src/api.js",
     "visual-assets-api": "npm run build:core && node dist/src/visual-assets-api.js",
     "linkedin-composer-api": "npm run build:core && node dist/src/linkedin-composer-api.js",
