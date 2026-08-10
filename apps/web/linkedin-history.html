@@ -1,9 +1,398 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Munin Editorial History</title><style>:root{font-family:Inter,system-ui;color:#edf6ff;background:#050b13}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 0,#10365a55,transparent 34%),#050b13;min-height:100vh}.shell{max-width:1380px;margin:auto;padding:32px}.top,.row{display:flex;justify-content:space-between;align-items:center;gap:14px}.eyebrow{font-size:10px;letter-spacing:.18em;color:#55b4ee;font-weight:700}h1{font-size:34px;margin:6px 0}h2,h3{margin:7px 0}p,.muted{color:#7890a5}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.panel,.card{border:1px solid #193149;background:#08131f;border-radius:14px;padding:20px}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.metric{border:1px solid #17364b;background:#071725;border-radius:12px;padding:16px}.metric strong{font-size:26px}.lists{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.bar{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #10283a}.bar:last-child{border:0}.tag{display:inline-block;border:1px solid #2b607e;color:#7bd0ff;border-radius:20px;padding:4px 8px;font-size:10px;margin:3px}.danger{color:#ffb2bd}.ok{color:#88ddb0}.form textarea{width:100%;min-height:230px;background:#06101a;color:#edf6ff;border:1px solid #203b50;border-radius:9px;padding:12px;resize:vertical}.buttons{display:flex;gap:8px;flex-wrap:wrap}button,a.btn{border:1px solid #28506c;background:#0d1d2b;color:#d8ecfa;border-radius:9px;padding:10px 13px;text-decoration:none;cursor:pointer}.primary{background:#126a9f}.posts{display:grid;gap:10px}.post{border-top:1px solid #153149;padding:12px 0}.post:first-child{border:0}.sig{font-size:11px;color:#93aec0}.notice{position:fixed;right:22px;top:22px;padding:12px 16px;background:#0f2b20;border:1px solid #39795a;border-radius:9px}.sample{font-size:11px;white-space:pre-wrap;color:#6f8da2;background:#050e17;border-radius:8px;padding:10px}@media(max-width:900px){.grid,.lists{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}.top{align-items:flex-start;flex-direction:column}.shell{padding:18px}}</style></head><body><main class="shell"><div class="top"><div><div class="eyebrow">MUNIN EDITORIAL MEMORY</div><h1>Editorial & Visual History</h1><p>O que já foi dito, quais territórios visuais já foram usados e onde existe espaço para novidade.</p></div><div class="buttons"><a class="btn" href="/linkedin.html">← LinkedIn Studio</a><button onclick="load()">Reanalisar</button></div></div><section class="metrics"><div class="metric"><div class="eyebrow">PUBLICADOS</div><strong id="mPosts">0</strong></div><div class="metric"><div class="eyebrow">TEMAS</div><strong id="mThemes">0</strong></div><div class="metric"><div class="eyebrow">OBJETOS VISUAIS</div><strong id="mObjects">0</strong></div><div class="metric"><div class="eyebrow">REPETIÇÕES</div><strong id="mRepeat">0</strong></div></section><div class="grid"><section><article class="panel"><div class="eyebrow">VISUAL TERRITORY MAP</div><h2>Memória de objetos e composição</h2><p>O Munin penaliza automaticamente objetos já usados no ranking do próximo post.</p><div class="lists"><div><h3>Objetos / símbolos</h3><div id="objects"></div></div><div><h3>Temas editoriais</h3><div id="themes"></div></div></div></article><article class="panel" style="margin-top:16px"><div class="eyebrow">RECENT MEMORY</div><h2>Últimos posts</h2><div id="posts" class="posts"></div></article></section><aside><article class="panel"><div class="eyebrow">BULK IMPORT</div><h2>Importar histórico em lote</h2><p>Cole um array JSON com posts anteriores. Até 100 itens por operação. Duplicatas são ignoradas pelo título + data.</p><div class="sample">[
-  {
-    "title": "Drex: da experimentação à infraestrutura",
-    "body": "Texto publicado...",
-    "publishedAt": "2026-08-05T12:00:00.000Z",
-    "visualConcept": "objeto central translúcido com trilhos financeiros",
-    "themes": ["Drex", "Digital Assets"]
-  }
-]</div><div class="form" style="margin-top:12px"><textarea id="bulk" placeholder="Cole o JSON aqui..."></textarea></div><div class="buttons" style="margin-top:10px"><button class="primary" onclick="importBulk()">Importar histórico</button><button onclick="bulk.value=''">Limpar</button></div></article><article class="panel" style="margin-top:16px"><div class="eyebrow">VISUAL RULE</div><h2>Como a novidade é calculada</h2><p class="muted">O score combina repetição temática + repetição dos objetos inferidos do conceito visual. Uma ideia pode continuar relevante, mas receber um conceito visual diferente para preservar consistência sem parecer repetitiva.</p><div id="warning" class="sig"></div></article></aside></div></main><script>let state={posts:[],visualReferences:[]};async function api(path,options){const r=await fetch(path,{headers:{'content-type':'application/json'},...options});const d=await r.json();if(!r.ok)throw new Error(d.error||'Falha');return d}function esc(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}function toast(t){const n=document.createElement('div');n.className='notice';n.textContent=t;document.body.appendChild(n);setTimeout(()=>n.remove(),4200)}function count(values){const m=new Map;values.forEach(x=>m.set(x,(m.get(x)||0)+1));return [...m.entries()].map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count)}function signature(p){return p.visualSignature||{objects:['objeto abstrato'],composition:'editorial minimalista',motifs:[]}}function bars(target,items){document.getElementById(target).innerHTML=items.length?items.slice(0,12).map(x=>`<div class="bar"><span>${esc(x.name)}</span><strong class="${x.count>1?'danger':'ok'}">${x.count}×</strong></div>`).join(''):'<p class="muted">Sem dados ainda.</p>'}async function load(){try{state=await api('/api/linkedin-content');const published=state.posts.filter(p=>p.status==='published');const themeCounts=count(published.flatMap(p=>p.themes||[]));const objectCounts=count([...published.flatMap(p=>signature(p).objects||[]),...(state.visualReferences||[]).flatMap(r=>r.objects||[])]);mPosts.textContent=published.length;mThemes.textContent=themeCounts.length;mObjects.textContent=objectCounts.length;mRepeat.textContent=objectCounts.filter(x=>x.count>1).length;bars('objects',objectCounts);bars('themes',themeCounts);posts.innerHTML=published.slice(0,12).map(p=>`<div class="post"><div class="row"><strong>${esc(p.title)}</strong><span class="muted">${p.publishedAt?new Date(p.publishedAt).toLocaleDateString():'sem data'}</span></div><div>${(p.themes||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div><div class="sig">Visual: ${(signature(p).objects||[]).map(esc).join(' · ')} · ${esc(signature(p).composition)}</div></div>`).join('')||'<p class="muted">Importe seus posts anteriores para formar a memória editorial.</p>';const repeated=objectCounts.filter(x=>x.count>1).slice(0,5);warning.innerHTML=repeated.length?`Territórios mais saturados agora: <b>${repeated.map(x=>`${esc(x.name)} (${x.count}×)`).join(' · ')}</b>`:'Nenhuma repetição visual relevante detectada ainda.'}catch(e){toast(e.message)}}async function importBulk(){let items;try{items=JSON.parse(bulk.value)}catch{return toast('JSON inválido')}if(!Array.isArray(items)||!items.length)return toast('Cole um array de posts');if(items.length>100)return toast('Máximo de 100 posts por operação');let added=0,failed=0;for(const item of items){try{if(!item||!item.title||!item.body){failed++;continue}await api('/api/linkedin-content/posts',{method:'POST',body:JSON.stringify({title:item.title,body:item.body,publishedAt:item.publishedAt,status:'published',themes:Array.isArray(item.themes)?item.themes:undefined,visualConcept:item.visualConcept,imagePrompt:item.imagePrompt,sourceUrl:item.sourceUrl,notes:item.notes})});added++}catch{failed++}}toast(`${added} posts importados${failed?` · ${failed} com erro`:''}`);bulk.value='';await load()}load();</script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Munin Editorial History</title>
+    <style>
+      :root {
+        font-family: Inter, system-ui;
+        color: #edf6ff;
+        background: #050b13;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at 80% 0, #10365a55, transparent 34%), #050b13;
+        min-height: 100vh;
+      }
+      .shell {
+        max-width: 1380px;
+        margin: auto;
+        padding: 32px;
+      }
+      .top,
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+      }
+      .eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        color: #55b4ee;
+        font-weight: 700;
+      }
+      h1 {
+        font-size: 34px;
+        margin: 6px 0;
+      }
+      h2,
+      h3 {
+        margin: 7px 0;
+      }
+      p,
+      .muted {
+        color: #7890a5;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .panel,
+      .card {
+        border: 1px solid #193149;
+        background: #08131f;
+        border-radius: 14px;
+        padding: 20px;
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin: 18px 0;
+      }
+      .metric {
+        border: 1px solid #17364b;
+        background: #071725;
+        border-radius: 12px;
+        padding: 16px;
+      }
+      .metric strong {
+        font-size: 26px;
+      }
+      .lists {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+      .bar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #10283a;
+      }
+      .bar:last-child {
+        border: 0;
+      }
+      .tag {
+        display: inline-block;
+        border: 1px solid #2b607e;
+        color: #7bd0ff;
+        border-radius: 20px;
+        padding: 4px 8px;
+        font-size: 10px;
+        margin: 3px;
+      }
+      .danger {
+        color: #ffb2bd;
+      }
+      .ok {
+        color: #88ddb0;
+      }
+      .form textarea {
+        width: 100%;
+        min-height: 230px;
+        background: #06101a;
+        color: #edf6ff;
+        border: 1px solid #203b50;
+        border-radius: 9px;
+        padding: 12px;
+        resize: vertical;
+      }
+      .buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      button,
+      a.btn {
+        border: 1px solid #28506c;
+        background: #0d1d2b;
+        color: #d8ecfa;
+        border-radius: 9px;
+        padding: 10px 13px;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .primary {
+        background: #126a9f;
+      }
+      .posts {
+        display: grid;
+        gap: 10px;
+      }
+      .post {
+        border-top: 1px solid #153149;
+        padding: 12px 0;
+      }
+      .post:first-child {
+        border: 0;
+      }
+      .sig {
+        font-size: 11px;
+        color: #93aec0;
+      }
+      .notice {
+        position: fixed;
+        right: 22px;
+        top: 22px;
+        padding: 12px 16px;
+        background: #0f2b20;
+        border: 1px solid #39795a;
+        border-radius: 9px;
+      }
+      .sample {
+        font-size: 11px;
+        white-space: pre-wrap;
+        color: #6f8da2;
+        background: #050e17;
+        border-radius: 8px;
+        padding: 10px;
+      }
+      @media (max-width: 900px) {
+        .grid,
+        .lists {
+          grid-template-columns: 1fr;
+        }
+        .metrics {
+          grid-template-columns: 1fr 1fr;
+        }
+        .top {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .shell {
+          padding: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <div class="top">
+        <div>
+          <div class="eyebrow">MUNIN EDITORIAL MEMORY</div>
+          <h1>Editorial & Visual History</h1>
+          <p>
+            O que já foi dito, quais territórios visuais já foram usados e onde existe espaço para novidade.
+          </p>
+        </div>
+        <div class="buttons">
+          <a class="btn" href="/linkedin.html">← LinkedIn Studio</a
+          ><button onclick="load()">Reanalisar</button>
+        </div>
+      </div>
+      <section class="metrics">
+        <div class="metric">
+          <div class="eyebrow">PUBLICADOS</div>
+          <strong id="mPosts">0</strong>
+        </div>
+        <div class="metric">
+          <div class="eyebrow">TEMAS</div>
+          <strong id="mThemes">0</strong>
+        </div>
+        <div class="metric">
+          <div class="eyebrow">OBJETOS VISUAIS</div>
+          <strong id="mObjects">0</strong>
+        </div>
+        <div class="metric">
+          <div class="eyebrow">REPETIÇÕES</div>
+          <strong id="mRepeat">0</strong>
+        </div>
+      </section>
+      <div class="grid">
+        <section>
+          <article class="panel">
+            <div class="eyebrow">VISUAL TERRITORY MAP</div>
+            <h2>Memória de objetos e composição</h2>
+            <p>O Munin penaliza automaticamente objetos já usados no ranking do próximo post.</p>
+            <div class="lists">
+              <div>
+                <h3>Objetos / símbolos</h3>
+                <div id="objects"></div>
+              </div>
+              <div>
+                <h3>Temas editoriais</h3>
+                <div id="themes"></div>
+              </div>
+            </div>
+          </article>
+          <article class="panel" style="margin-top: 16px">
+            <div class="eyebrow">RECENT MEMORY</div>
+            <h2>Últimos posts</h2>
+            <div id="posts" class="posts"></div>
+          </article>
+        </section>
+        <aside>
+          <article class="panel">
+            <div class="eyebrow">BULK IMPORT</div>
+            <h2>Importar histórico em lote</h2>
+            <p>
+              Cole um array JSON com posts anteriores. Até 100 itens por operação. Duplicatas são ignoradas
+              pelo título + data.
+            </p>
+            <div class="sample">
+              [ { "title": "Drex: da experimentação à infraestrutura", "body": "Texto publicado...",
+              "publishedAt": "2026-08-05T12:00:00.000Z", "visualConcept": "objeto central translúcido com
+              trilhos financeiros", "themes": ["Drex", "Digital Assets"] } ]
+            </div>
+            <div class="form" style="margin-top: 12px">
+              <textarea id="bulk" placeholder="Cole o JSON aqui..."></textarea>
+            </div>
+            <div class="buttons" style="margin-top: 10px">
+              <button class="primary" onclick="importBulk()">Importar histórico</button
+              ><button onclick="bulk.value = ''">Limpar</button>
+            </div>
+          </article>
+          <article class="panel" style="margin-top: 16px">
+            <div class="eyebrow">VISUAL RULE</div>
+            <h2>Como a novidade é calculada</h2>
+            <p class="muted">
+              O score combina repetição temática + repetição dos objetos inferidos do conceito visual. Uma
+              ideia pode continuar relevante, mas receber um conceito visual diferente para preservar
+              consistência sem parecer repetitiva.
+            </p>
+            <div id="warning" class="sig"></div>
+          </article>
+        </aside>
+      </div>
+    </main>
+    <script>
+      let state = { posts: [], visualReferences: [] };
+      async function api(path, options) {
+        const r = await fetch(path, { headers: { "content-type": "application/json" }, ...options });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || "Falha");
+        return d;
+      }
+      function esc(v) {
+        return String(v ?? "").replace(
+          /[&<>'"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[c],
+        );
+      }
+      function toast(t) {
+        const n = document.createElement("div");
+        n.className = "notice";
+        n.textContent = t;
+        document.body.appendChild(n);
+        setTimeout(() => n.remove(), 4200);
+      }
+      function count(values) {
+        const m = new Map();
+        values.forEach((x) => m.set(x, (m.get(x) || 0) + 1));
+        return [...m.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+      }
+      function signature(p) {
+        return (
+          p.visualSignature || {
+            objects: ["objeto abstrato"],
+            composition: "editorial minimalista",
+            motifs: [],
+          }
+        );
+      }
+      function bars(target, items) {
+        document.getElementById(target).innerHTML = items.length
+          ? items
+              .slice(0, 12)
+              .map(
+                (x) =>
+                  `<div class="bar"><span>${esc(x.name)}</span><strong class="${x.count > 1 ? "danger" : "ok"}">${x.count}×</strong></div>`,
+              )
+              .join("")
+          : '<p class="muted">Sem dados ainda.</p>';
+      }
+      async function load() {
+        try {
+          state = await api("/api/linkedin-content");
+          const published = state.posts.filter((p) => p.status === "published");
+          const themeCounts = count(published.flatMap((p) => p.themes || []));
+          const objectCounts = count([
+            ...published.flatMap((p) => signature(p).objects || []),
+            ...(state.visualReferences || []).flatMap((r) => r.objects || []),
+          ]);
+          mPosts.textContent = published.length;
+          mThemes.textContent = themeCounts.length;
+          mObjects.textContent = objectCounts.length;
+          mRepeat.textContent = objectCounts.filter((x) => x.count > 1).length;
+          bars("objects", objectCounts);
+          bars("themes", themeCounts);
+          posts.innerHTML =
+            published
+              .slice(0, 12)
+              .map(
+                (p) =>
+                  `<div class="post"><div class="row"><strong>${esc(p.title)}</strong><span class="muted">${p.publishedAt ? new Date(p.publishedAt).toLocaleDateString() : "sem data"}</span></div><div>${(p.themes || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div><div class="sig">Visual: ${(signature(p).objects || []).map(esc).join(" · ")} · ${esc(signature(p).composition)}</div></div>`,
+              )
+              .join("") ||
+            '<p class="muted">Importe seus posts anteriores para formar a memória editorial.</p>';
+          const repeated = objectCounts.filter((x) => x.count > 1).slice(0, 5);
+          warning.innerHTML = repeated.length
+            ? `Territórios mais saturados agora: <b>${repeated.map((x) => `${esc(x.name)} (${x.count}×)`).join(" · ")}</b>`
+            : "Nenhuma repetição visual relevante detectada ainda.";
+        } catch (e) {
+          toast(e.message);
+        }
+      }
+      async function importBulk() {
+        let items;
+        try {
+          items = JSON.parse(bulk.value);
+        } catch {
+          return toast("JSON inválido");
+        }
+        if (!Array.isArray(items) || !items.length) return toast("Cole um array de posts");
+        if (items.length > 100) return toast("Máximo de 100 posts por operação");
+        let added = 0,
+          failed = 0;
+        for (const item of items) {
+          try {
+            if (!item || !item.title || !item.body) {
+              failed++;
+              continue;
+            }
+            await api("/api/linkedin-content/posts", {
+              method: "POST",
+              body: JSON.stringify({
+                title: item.title,
+                body: item.body,
+                publishedAt: item.publishedAt,
+                status: "published",
+                themes: Array.isArray(item.themes) ? item.themes : undefined,
+                visualConcept: item.visualConcept,
+                imagePrompt: item.imagePrompt,
+                sourceUrl: item.sourceUrl,
+                notes: item.notes,
+              }),
+            });
+            added++;
+          } catch {
+            failed++;
+          }
+        }
+        toast(`${added} posts importados${failed ? ` · ${failed} com erro` : ""}`);
+        bulk.value = "";
+        await load();
+      }
+      load();
+    </script>
+  </body>
+</html>
