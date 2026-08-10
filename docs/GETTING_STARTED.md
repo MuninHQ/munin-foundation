@@ -39,7 +39,7 @@ Open `http://127.0.0.1:5173` manually.
 Confirm that port `4310` is free. You may start the services separately:
 
 ```bash
-npm run api
+npm run serve   # unified API (all modules on port 4310)
 npm run web
 ```
 
