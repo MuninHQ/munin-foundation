@@ -21,6 +21,16 @@ function addIntelligenceNavigation(): void {
     linkedin.addEventListener('click', () => window.location.assign('/linkedin.html'));
     nav.appendChild(linkedin);
   }
+
+  if (!nav.querySelector('[data-munin-editorial-history]')) {
+    const history = document.createElement('button');
+    history.type = 'button';
+    history.dataset.muninEditorialHistory = 'true';
+    history.textContent = 'Editorial History';
+    history.title = 'Memória temática e territórios visuais já usados';
+    history.addEventListener('click', () => window.location.assign('/linkedin-history.html'));
+    nav.appendChild(history);
+  }
 }
 
 const observer = new MutationObserver(() => addIntelligenceNavigation());
@@ -35,5 +45,9 @@ window.addEventListener('keydown', event => {
   if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'l') {
     event.preventDefault();
     window.location.assign('/linkedin.html');
+  }
+  if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'h') {
+    event.preventDefault();
+    window.location.assign('/linkedin-history.html');
   }
 });
