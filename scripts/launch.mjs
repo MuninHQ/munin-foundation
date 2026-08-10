@@ -40,5 +40,6 @@ console.log('Starting Munin Workspace...');
 run('npm', ['run', 'api']);
 run('npm', ['run', 'visual-assets-api']);
 run('npm', ['run', 'linkedin-composer-api']);
+run('npm', ['run', 'context-memory-api']);
 run('npm', ['run', 'web', '--', '--host', '127.0.0.1']);
 setTimeout(() => openBrowser('http://127.0.0.1:5173'), 2500);
