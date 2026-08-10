@@ -10,7 +10,7 @@ import { captureCareerMessage, type CaptureFormat } from './career-capture.js';
 import { CareerWatchFolder } from './watch-folder.js';
 import { executeAssistantCommand } from './assistant.js';
 import { clearAssistantMemory, loadAssistantMemory } from './assistant-memory.js';
-import { deleteLlmSettings, loadLlmSettings, publicLlmSettings, saveLlmSettings } from './llm-settings.js';
+import { deleteLlmSettings, loadLlmSettings, publicLlmSettings, saveLlmSettings, type LlmProviderType } from './llm-settings.js';
 import { llmProviderStatus, testLlmProvider } from './llm-provider.js';
 const store=new ContextStore(); const service=new MuninService(store); const inbox=new CareerInboxStore(); const watchFolder=new CareerWatchFolder();
 function json(response:ServerResponse,status:number,body:unknown){response.writeHead(status,{'content-type':'application/json; charset=utf-8','access-control-allow-origin':'*','access-control-allow-headers':'content-type','access-control-allow-methods':'GET,POST,PATCH,PUT,DELETE,OPTIONS'});response.end(JSON.stringify(body));}
@@ -24,7 +24,7 @@ if(request.method==='POST'&&url.pathname==='/api/assistant'){const input=await b
 if(request.method==='GET'&&url.pathname==='/api/assistant/history')return json(response,200,await loadAssistantMemory());
 if(request.method==='DELETE'&&url.pathname==='/api/assistant/history')return json(response,200,await clearAssistantMemory());
 if(request.method==='GET'&&url.pathname==='/api/settings/llm')return json(response,200,{settings:publicLlmSettings(await loadLlmSettings()),status:await llmProviderStatus()});
-if(request.method==='PUT'&&url.pathname==='/api/settings/llm'){const input=await body(request);const settings=await saveLlmSettings({enabled:typeof input.enabled==='boolean'?input.enabled:undefined,baseUrl:typeof input.baseUrl==='string'?input.baseUrl:undefined,apiKey:typeof input.apiKey==='string'?input.apiKey:undefined,model:typeof input.model==='string'?input.model:undefined});return json(response,200,{settings,status:await llmProviderStatus()});}
+if(request.method==='PUT'&&url.pathname==='/api/settings/llm'){const input=await body(request);const provider=input.provider==='anthropic'?'anthropic':input.provider==='openai-compatible'?'openai-compatible':undefined;const settings=await saveLlmSettings({enabled:typeof input.enabled==='boolean'?input.enabled:undefined,provider:provider as LlmProviderType|undefined,baseUrl:typeof input.baseUrl==='string'?input.baseUrl:undefined,apiKey:typeof input.apiKey==='string'?input.apiKey:undefined,model:typeof input.model==='string'?input.model:undefined});return json(response,200,{settings,status:await llmProviderStatus()});}
 if(request.method==='DELETE'&&url.pathname==='/api/settings/llm'){const settings=await deleteLlmSettings();return json(response,200,{settings,status:await llmProviderStatus()});}
 if(request.method==='POST'&&url.pathname==='/api/settings/llm/test')return json(response,200,await testLlmProvider());
 if(request.method==='GET'&&url.pathname==='/api/sitrep')return json(response,200,{report:await service.sitrep()});

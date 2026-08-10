@@ -1,8 +1,11 @@
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
+export type LlmProviderType = 'openai-compatible' | 'anthropic';
+
 export type LlmSettings = {
   enabled: boolean;
+  provider: LlmProviderType;
   baseUrl: string;
   apiKey: string;
   model: string;
@@ -12,13 +15,14 @@ export type LlmSettings = {
 export type PublicLlmSettings = Omit<LlmSettings, 'apiKey'> & { hasApiKey: boolean; apiKeyHint?: string };
 
 const file = join(process.cwd(), 'data', 'runtime', 'llm-settings.json');
-const empty = (): LlmSettings => ({ enabled: false, baseUrl: '', apiKey: '', model: '', updatedAt: new Date(0).toISOString() });
+const empty = (): LlmSettings => ({ enabled: false, provider: 'openai-compatible', baseUrl: '', apiKey: '', model: '', updatedAt: new Date(0).toISOString() });
 
 export async function loadLlmSettings(): Promise<LlmSettings> {
   try {
     const parsed = JSON.parse(await readFile(file, 'utf8')) as Partial<LlmSettings>;
     return {
       enabled: parsed.enabled === true,
+      provider: parsed.provider === 'anthropic' ? 'anthropic' : 'openai-compatible',
       baseUrl: typeof parsed.baseUrl === 'string' ? parsed.baseUrl : '',
       apiKey: typeof parsed.apiKey === 'string' ? parsed.apiKey : '',
       model: typeof parsed.model === 'string' ? parsed.model : '',
@@ -35,10 +39,11 @@ export function publicLlmSettings(settings: LlmSettings): PublicLlmSettings {
   return { ...safe, hasApiKey: Boolean(settings.apiKey), apiKeyHint };
 }
 
-export async function saveLlmSettings(input: { enabled?: boolean; baseUrl?: string; apiKey?: string; model?: string }): Promise<PublicLlmSettings> {
+export async function saveLlmSettings(input: { enabled?: boolean; provider?: LlmProviderType; baseUrl?: string; apiKey?: string; model?: string }): Promise<PublicLlmSettings> {
   const current = await loadLlmSettings();
   const next: LlmSettings = {
     enabled: input.enabled ?? current.enabled,
+    provider: input.provider ?? current.provider,
     baseUrl: input.baseUrl === undefined ? current.baseUrl : input.baseUrl.trim(),
     apiKey: input.apiKey === undefined || input.apiKey === '' ? current.apiKey : input.apiKey.trim(),
     model: input.model === undefined ? current.model : input.model.trim(),
