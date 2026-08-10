@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildKnowledgeGraph, buildTimeline, generateDailyBrief, resolveContext } from '../intelligence.js';
-import type { MuninEvent, MuninState } from '../types.js';
+import { buildKnowledgeGraph, buildTimeline, generateDailyBrief, resolveContext } from '../src/intelligence.js';
+import type { MuninEvent, MuninState } from '../src/types.js';
 
 const state: MuninState = {
   projects: [{ id: 'prj-1', name: 'Munin Workspace', priority: 'P0', status: 'active', currentOutcome: 'Live', nextAction: 'Ship intelligence', blockers: [], updatedAt: '2026-08-01T10:00:00.000Z' }],

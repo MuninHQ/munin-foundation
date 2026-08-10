@@ -39,9 +39,17 @@ export function buildKnowledgeGraph(state: MuninState): KnowledgeGraph {
 }
 
 export function resolveContext(state: MuninState, query: string): ContextMatch[] {
-  const terms = normalize(query).split(/\s+/).filter(x => x.length > 2);
+  // Keep short tokens (length >= 2): entity names like "B3" must be matchable.
+  const terms = normalize(query).split(/\s+/).filter(x => x.length >= 2);
   return buildKnowledgeGraph(state).nodes.map(node => {
-    const label = normalize(node.label); const matched = terms.filter(term => label.includes(term)); const exact = terms.length > 0 && matched.length === terms.length; const score = matched.length * 20 + (exact ? 40 : 0);
+    const label = normalize(node.label);
+    const matched = terms.filter(term => label.includes(term));
+    const labelWords = label.split(/[^\p{L}\p{N}]+/u).filter(x => x.length >= 2);
+    // Full-coverage bonus: every word of the entity label appears in the query,
+    // which makes references like "atualiza B3 digital assets" resolve
+    // deterministically to the "B3 — Digital Assets" entity.
+    const covered = labelWords.length > 0 && labelWords.every(word => terms.some(term => term === word || word.includes(term) && term.length > 2));
+    const score = matched.length * 20 + (covered ? 40 : 0);
     return { entityType: node.type, entityId: node.id, label: node.label, score, reasons: matched.map(x => `matched: ${x}`) };
   }).filter(x => x.score > 0).sort((a, b) => b.score - a.score || a.label.localeCompare(b.label)).slice(0, 10);
 }

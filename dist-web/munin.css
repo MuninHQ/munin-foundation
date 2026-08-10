@@ -1,0 +1,162 @@
+/*
+ * Munin Design System — shared tokens and base styles.
+ *
+ * Every screen (React Command Center and the standalone module pages) links
+ * this file so the product has ONE palette, ONE typography scale and ONE set
+ * of core components. Page-level styles may extend, but must not redefine,
+ * these tokens.
+ */
+:root {
+  /* Color tokens — executive dark, low-noise */
+  --bg: #050b13;
+  --bg-glow: radial-gradient(circle at 80% 0, rgba(18, 56, 90, 0.33), transparent 34%), var(--bg);
+  --surface: #08121d;
+  --surface-raised: #0d1b29;
+  --surface-input: #06101a;
+  --border: #172b3d;
+  --border-strong: #28506c;
+  --text: #eef6ff;
+  --text-soft: #b9cbd8;
+  --text-muted: #7890a5;
+  --text-faint: #58748a;
+  --accent: #4ba6df;
+  --accent-bright: #67c7ff;
+  --accent-strong: #126a9f;
+  --accent-border: #248cc7;
+  --ok: #78dda5;
+  --ok-bg: #123222;
+  --warn: #e8c46b;
+  --warn-bg: #2a2210;
+  --danger: #ff9eaa;
+  --danger-bg: #321d22;
+
+  /* Shape + depth */
+  --radius-sm: 6px;
+  --radius: 9px;
+  --radius-lg: 13px;
+  --shadow-pop: 0 20px 40px rgba(0, 0, 0, 0.5);
+
+  /* Type scale */
+  --font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --text-eyebrow: 10px;
+  --text-small: 11px;
+  --text-body: 13px;
+  --text-h1: 34px;
+
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-glow);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.eyebrow {
+  color: var(--accent);
+  font-size: var(--text-eyebrow);
+  letter-spacing: 0.18em;
+  font-weight: 700;
+}
+
+h1 {
+  font-size: var(--text-h1);
+  margin: 6px 0;
+  font-weight: 600;
+}
+
+/* ---- Shared product bar (module pages) ------------------------------- */
+.munin-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid var(--border);
+  background: rgba(6, 13, 23, 0.94);
+  backdrop-filter: blur(8px);
+}
+
+.munin-bar-inner {
+  max-width: 1420px;
+  margin: auto;
+  padding: 10px 32px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.munin-bar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  text-decoration: none;
+  margin-right: 6px;
+}
+
+.munin-bar-brand span {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--accent-border);
+  display: grid;
+  place-items: center;
+  transform: rotate(45deg);
+  color: var(--accent-bright);
+  font-size: 13px;
+}
+
+.munin-bar-brand span > i {
+  transform: rotate(-45deg);
+  font-style: normal;
+}
+
+.munin-bar-brand strong {
+  letter-spacing: 0.24em;
+  font-size: 11px;
+}
+
+.munin-bar nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.munin-bar nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: var(--text-small);
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.munin-bar nav a:hover {
+  background: #0e1d2c;
+  color: var(--text);
+}
+
+.munin-bar nav a.active {
+  background: #0e1d2c;
+  color: var(--accent-bright);
+}
+
+.munin-bar nav .sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  margin: 0 8px;
+}

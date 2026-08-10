@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { generateInsights } from '../intelligence.js';
-import type { MuninState } from '../types.js';
+import { generateInsights } from '../src/intelligence.js';
+import type { MuninState } from '../src/types.js';
 
 const now = new Date('2026-08-06T12:00:00-03:00');
 const base: MuninState = { projects: [], decisions: [], actions: [], jobs: [], research: [], relations: [] };

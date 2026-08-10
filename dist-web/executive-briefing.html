@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Munin Executive Briefing</title>
+    <link rel="stylesheet" href="/munin.css" />
+    <style>
+      .shell {
+        max-width: 1320px;
+        margin: auto;
+        padding: 32px;
+      }
+      .top,
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+      }
+      h2,
+      h3 {
+        margin: 7px 0;
+      }
+      p,
+      .muted {
+        color: var(--text-muted);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 16px;
+      }
+      .panel,
+      .card {
+        border: 1px solid #193149;
+        background: #08131f;
+        border-radius: 14px;
+        padding: 20px;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+      }
+      .stat {
+        border: 1px solid #17364b;
+        background: #071725;
+        border-radius: 10px;
+        padding: 13px;
+      }
+      .num {
+        font-size: 24px;
+      }
+      .list {
+        display: grid;
+        gap: 10px;
+      }
+      .card {
+        background: #071725;
+      }
+      .tag {
+        display: inline-block;
+        border: 1px solid #2d607e;
+        color: #7acbfa;
+        padding: 4px 8px;
+        border-radius: 20px;
+        font-size: 10px;
+        margin-right: 5px;
+      }
+      .warn {
+        border-color: #7a5528;
+        color: #f0c57d;
+      }
+      .danger {
+        border-color: #75404b;
+        color: #ff9daa;
+      }
+      .buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      button,
+      a.btn {
+        border: 1px solid #28506c;
+        background: #0d1d2b;
+        color: #d8ecfa;
+        border-radius: 9px;
+        padding: 10px 13px;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .primary {
+        background: var(--accent-strong);
+      }
+      .headline {
+        font-size: 22px;
+        line-height: 1.4;
+      }
+      .notice {
+        position: fixed;
+        right: 24px;
+        top: 24px;
+        background: #0f2b20;
+        border: 1px solid #39795a;
+        padding: 12px 16px;
+        border-radius: 9px;
+        z-index: 5;
+      }
+      @media (max-width: 900px) {
+        .grid,
+        .stats {
+          grid-template-columns: 1fr;
+        }
+        .top {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .shell {
+          padding: 18px;
+        }
+      }
+    </style>
+    <script defer src="/munin-nav.js"></script>
+  </head>
+  <body>
+    <main class="shell">
+      <div class="top">
+        <div>
+          <div class="eyebrow">MUNIN EXECUTIVE OPERATING BRIEF</div>
+          <h1>Executive Briefing</h1>
+          <p>Career OS + Inbox + Projects + Actions + Research + governed memory.</p>
+        </div>
+        <div class="buttons">
+          <a class="btn" href="/">← Command Center</a
+          ><button class="primary" onclick="load()">Atualizar briefing</button>
+        </div>
+      </div>
+      <section class="panel" style="margin: 18px 0">
+        <div class="eyebrow">TOP FOCUS</div>
+        <div id="headline" class="headline">Carregando...</div>
+      </section>
+      <section class="stats" id="stats"></section>
+      <div class="grid" style="margin-top: 16px">
+        <section>
+          <article class="panel">
+            <div class="eyebrow">PRIORITY QUEUE</div>
+            <h2>O que merece atenção agora</h2>
+            <div id="priorities" class="list"></div>
+          </article>
+          <article class="panel" style="margin-top: 16px">
+            <div class="eyebrow">CAREER PIPELINE</div>
+            <h2>Top oportunidades</h2>
+            <div id="jobs" class="list"></div>
+          </article>
+        </section>
+        <aside>
+          <article class="panel">
+            <div class="eyebrow">SIGNALS & RISKS</div>
+            <h2>Mudanças relevantes</h2>
+            <div id="signals" class="list"></div>
+          </article>
+          <article class="panel" style="margin-top: 16px">
+            <div class="eyebrow">MEMORY GOVERNANCE</div>
+            <h2>Freshness</h2>
+            <div id="governance"></div>
+          </article>
+        </aside>
+      </div>
+    </main>
+    <script>
+      const API = "";
+      function esc(v) {
+        return String(v ?? "").replace(
+          /[&<>'"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[c],
+        );
+      }
+      function toast(t) {
+        const n = document.createElement("div");
+        n.className = "notice";
+        n.textContent = t;
+        document.body.appendChild(n);
+        setTimeout(() => n.remove(), 4200);
+      }
+      async function load() {
+        try {
+          const r = await fetch(API + "/api/executive-briefing");
+          const d = await r.json();
+          if (!r.ok) throw new Error(d.error || "Falha");
+          headline.textContent = d.headline;
+          stats.innerHTML = [
+            ["PIPELINE", d.career.pipeline],
+            ["INTERVIEWS", d.career.interviews],
+            ["FOLLOW-UPS", d.career.followUpsDue],
+            ["P0 ACTIONS", d.execution.p0Actions],
+          ]
+            .map(
+              (x) =>
+                `<div class="stat"><div class="eyebrow">${x[0]}</div><div class="num">${x[1]}</div></div>`,
+            )
+            .join("");
+          priorities.innerHTML = d.priorities.length
+            ? d.priorities
+                .map(
+                  (x, i) =>
+                    `<div class="card"><div><span class="tag">#${i + 1}</span><span class="tag">${esc(x.type)}</span><span class="tag">score ${x.score}</span></div><h3>${esc(x.title)}</h3><p>${esc(x.reason)}</p></div>`,
+                )
+                .join("")
+            : '<p class="muted">Sem urgências detectadas.</p>';
+          jobs.innerHTML = d.career.topOpportunities.length
+            ? d.career.topOpportunities
+                .map(
+                  (x) =>
+                    `<div class="card"><div><span class="tag">${esc(x.status)}</span><span class="tag">${x.score}</span></div><h3>${esc(x.company)} — ${esc(x.role)}</h3><p>${esc(x.nextAction || "Sem próximo passo")}</p></div>`,
+                )
+                .join("")
+            : '<p class="muted">Sem oportunidades registradas.</p>';
+          signals.innerHTML = d.signals.length
+            ? d.signals
+                .map(
+                  (x) =>
+                    `<div class="card"><span class="tag warn">${esc(x.kind)}</span><p>${esc(x.message)}</p></div>`,
+                )
+                .join("")
+            : '<p class="muted">Nenhum sinal material.</p>';
+          governance.innerHTML = d.governance.staleContext.length
+            ? `<p>Contexto que precisa refresh antes de ações externas:</p>${d.governance.staleContext.map((x) => `<span class="tag danger">${esc(x)}</span>`).join("")}`
+            : '<p class="muted">Contexto operacional sem alerta de freshness.</p>';
+        } catch (e) {
+          toast(e.message);
+        }
+      }
+      load();
+    </script>
+  </body>
+</html>

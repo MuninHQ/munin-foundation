@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Munin Image AI</title>
+    <link rel="stylesheet" href="/munin.css" />
+    <style>
+      .shell {
+        max-width: 900px;
+        margin: auto;
+        padding: 36px;
+      }
+      .panel {
+        border: 1px solid #193149;
+        background: #08131f;
+        border-radius: 14px;
+        padding: 24px;
+      }
+      .top,
+      .buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .muted,
+      p {
+        color: var(--text-muted);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-top: 18px;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+      .full {
+        grid-column: 1/-1;
+      }
+      input,
+      select {
+        background: #06101a;
+        color: var(--text);
+        border: 1px solid #203b50;
+        border-radius: 8px;
+        padding: 11px;
+      }
+      button,
+      a {
+        border: 1px solid #28506c;
+        background: #0d1d2b;
+        color: #d8ecfa;
+        border-radius: 9px;
+        padding: 10px 13px;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .primary {
+        background: var(--accent-strong);
+      }
+      .notice {
+        position: fixed;
+        right: 24px;
+        top: 24px;
+        background: #0f2b20;
+        border: 1px solid #39795a;
+        padding: 12px 16px;
+        border-radius: 9px;
+      }
+      .status {
+        display: inline-block;
+        padding: 6px 9px;
+        border: 1px solid #4d2d35;
+        border-radius: 20px;
+        color: var(--danger);
+      }
+      .status.on {
+        border-color: #265b43;
+        color: #79dda5;
+      }
+      @media (max-width: 700px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .full {
+          grid-column: auto;
+        }
+        .top {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+    <script defer src="/munin-nav.js"></script>
+  </head>
+  <body>
+    <main class="shell">
+      <div class="top">
+        <div>
+          <div class="eyebrow">MUNIN VISUAL GENERATION</div>
+          <h1>Image AI</h1>
+          <p>Configuração separada da IA de texto.</p>
+        </div>
+        <a href="/linkedin.html">← LinkedIn Studio</a>
+      </div>
+      <section class="panel">
+        <span id="status" class="status">DESATIVADO</span>
+        <div class="grid">
+          <label class="field full"><span>Ativar geração</span><input id="enabled" type="checkbox" /></label
+          ><label class="field full"
+            ><span>Base URL</span><input id="baseUrl" value="https://api.openai.com/v1" /></label
+          ><label class="field"><span>Modelo</span><input id="model" value="gpt-image-1" /></label
+          ><label class="field"
+            ><span>Formato</span
+            ><select id="size">
+              <option value="1024x1536">1024×1536 · 4:5-ish portrait</option>
+              <option value="1024x1024">1024×1024 · square</option>
+            </select></label
+          ><label class="field"
+            ><span>Qualidade</span
+            ><select id="quality">
+              <option>low</option>
+              <option selected>medium</option>
+              <option>high</option>
+            </select></label
+          ><label class="field"
+            ><span>API Key</span
+            ><input id="apiKey" type="password" placeholder="Cole apenas para cadastrar/alterar" /><small
+              id="keyHint"
+              class="muted"
+            ></small
+          ></label>
+        </div>
+        <div class="buttons" style="justify-content: flex-start; margin-top: 20px">
+          <button class="primary" onclick="save()">Salvar</button
+          ><button onclick="testProvider()">Testar conexão</button
+          ><button onclick="removeProvider()">Remover</button>
+        </div>
+        <p class="muted">
+          A chave fica somente em <code>data\runtime\image-settings.json</code>. As imagens ficam em
+          <code>data\runtime\linkedin-images\</code>.
+        </p>
+      </section>
+    </main>
+    <script>
+      async function api(path, options) {
+        const r = await fetch(path, { headers: { "content-type": "application/json" }, ...options });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || "Falha");
+        return d;
+      }
+      function toast(t) {
+        const n = document.createElement("div");
+        n.className = "notice";
+        n.textContent = t;
+        document.body.appendChild(n);
+        setTimeout(() => n.remove(), 4000);
+      }
+      async function load() {
+        try {
+          const d = await api("/api/settings/image");
+          const s = d.settings;
+          enabled.checked = s.enabled;
+          baseUrl.value = s.baseUrl;
+          model.value = s.model;
+          size.value = s.size;
+          quality.value = s.quality;
+          keyHint.textContent = s.hasApiKey ? `Chave salva: ${s.apiKeyHint}` : "Nenhuma chave salva";
+          status.className = "status " + (d.status.enabled ? "on" : "");
+          status.textContent = d.status.enabled ? `ATIVO · ${d.status.model}` : "DESATIVADO";
+        } catch (e) {
+          toast(e.message);
+        }
+      }
+      async function save() {
+        try {
+          await api("/api/settings/image", {
+            method: "PUT",
+            body: JSON.stringify({
+              enabled: enabled.checked,
+              baseUrl: baseUrl.value,
+              model: model.value,
+              size: size.value,
+              quality: quality.value,
+              apiKey: apiKey.value,
+            }),
+          });
+          apiKey.value = "";
+          toast("Configuração salva");
+          await load();
+        } catch (e) {
+          toast(e.message);
+        }
+      }
+      async function testProvider() {
+        try {
+          const r = await api("/api/settings/image/test", { method: "POST" });
+          toast(`Conexão OK · ${r.model}`);
+        } catch (e) {
+          toast(e.message);
+        }
+      }
+      async function removeProvider() {
+        try {
+          await api("/api/settings/image", { method: "DELETE" });
+          toast("Configuração removida");
+          await load();
+        } catch (e) {
+          toast(e.message);
+        }
+      }
+      load();
+    </script>
+  </body>
+</html>
