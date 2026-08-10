@@ -1,38 +1,47 @@
-# AJ Rune / Munin — Brand Canon
+# André Jardim / Munin — Brand Canon v2
 
-Status: LOCKED
-Version: AJ-RUNE-2026.08
-Owner: André Jardim
+**Status:** LOCKED  
+**Version:** AJ-BRAND-CANON-2.0  
+**Effective:** 2026-08-10
 
-This document is the canonical visual identity reference used by Munin. Future image prompts, LinkedIn visuals, white papers, presentations and product surfaces must not invent alternative AJ or Munin marks.
+## The correction
 
-## Canonical marks
+The previous system mixed brand identity with illustration style. This created inconsistent posts: consulting-style infographics, blue digital illustrations, cyberpunk AI advertising and gold Nordic/fantasy compositions, while the AJ mark itself changed between generations.
 
-1. **AJ Rune — Marca Principal** — runic/angled AJ monogram inside a broken circular frame, lateral runic marks, branch/rune above and raven detail below.
-2. **Selo Munin** — geometric raven/crow seal representing memory, knowledge and consciousness.
-3. **Símbolo Odin** — vertical spear/arrow and Nordic knot/runic geometry representing vision, strategy and transformation.
-4. **Marca Executiva — Monograma AJ** — simplified canonical AJ rune monogram for small, subtle applications.
-5. **Selo de Documentos** — formal circular seal for articles, white papers and presentations.
+Brand Canon v2 separates two layers permanently:
 
-## Element meanings
+### 1. Brand Identity — immutable
 
-- Mountain / spear: direction, overcoming obstacles and ambition with purpose.
-- Branch / rune: growth, vision and continuous evolution.
-- Raven (Munin): memory, knowledge and consciousness.
-- Runic marks: protection, balance and connection to the essential.
-- Incomplete circle: continuous journey; always under construction.
-- Central diamond: focus, clarity and intention.
+- The approved **AJ Master Mark** is the only personal mark.
+- The approved **Munin Raven Seal** is the only Munin product mark.
+- Odin and Document Seal are specialist marks, not default social marks.
+- Logos are **assets, not prompts**. AI image models must never redraw or reinterpret them.
+- If the exact approved asset is unavailable, the image is published **without a logo**. No placeholder, improvised AJ, compass, rune or bird is allowed.
 
-## Visual language
+### 2. Editorial System — flexible within strict boundaries
 
-Near-black / charcoal backgrounds, brushed silver / gunmetal / stone-metal marks, restrained electric-blue accents, high negative space, one dominant symbolic object, premium editorial/cinematic lighting, clean spaced uppercase typography.
+The content metaphor changes from post to post. The visual language does not.
 
-## Social usage
+**Core:** near-black / charcoal / deep navy-black; off-white, cool gray, gunmetal and brushed silver; restrained cold/electric-blue accent. Bronze/gold is exceptional, below ~10% of the composition and only when conceptually justified.
 
-For LinkedIn, prefer the **Executive AJ Monogram** as a small secondary signature. Use the full AJ Rune only when the brand itself is part of the concept. Munin uses the raven seal, never a compass.
+**Composition:** 4:5 portrait; one dominant physical/architectural metaphor; generous negative space; controlled cinematic lighting; premium executive-magazine finish; no text in the generated artwork by default.
 
-## Hard prohibitions
+**Allowed visual families:** architectural precision, machined objects, glass/metal structures, abstract physical metaphors, restrained infrastructure/network geometry.
 
-Do not invent a new AJ logo; do not replace Munin with a compass; do not substitute the raven with a generic eagle/bird; do not mix multiple marks in one social visual unless explicitly requested; do not use generic crypto-gold/cyberpunk treatments; do not generate random runes unrelated to this canon.
+**Never:** white consulting infographic as the default; cyberpunk advertising; AI hologram clichés; fantasy Nordic scenes; decorative runes; compass imagery; crypto coins; generic blockchain hexagons; HUD/UI overlays; generic business people; gold-dominant luxury styling; multiple unrelated icons.
 
-If an image model does not have the exact canonical asset available as an input reference, reserve the brand area or use a subtle plain `AJ` placeholder rather than hallucinating a new logo geometry. The final production asset should then be overlaid from the canonical source file.
+## Production workflow
+
+1. Select the editorial thesis and metaphor.
+2. Generate **clean artwork only** — no logo, initials, runes, signature or watermark.
+3. Validate the artwork against the Editorial System exclusions.
+4. Composite the exact approved AJ Master asset in a fixed safe area, normally bottom-left or bottom-right, max ~7% of image width.
+5. If the asset is not available, ship unbranded rather than hallucinating a mark.
+
+## Munin implementation rule
+
+Historical visual profiles may inform subject matter, but **Brand Canon v2 always overrides conflicting historical palette/style/logo instructions**. New generations from 2026-08-10 onward must follow v2. Previously published posts remain historical and are not retroactively changed.
+
+## Asset registry requirement
+
+The repository must treat the approved logo files as canonical binary/static assets with stable IDs. A future asset-registry step may automate compositing, but no generator may substitute that step by drawing a logo itself.
