@@ -15,6 +15,7 @@
     "start": "npm run build:core && node dist/src/cli.js",
     "api": "npm run build:core && node dist/src/api.js",
     "visual-assets-api": "npm run build:core && node dist/src/visual-assets-api.js",
+    "linkedin-composer-api": "npm run build:core && node dist/src/linkedin-composer-api.js",
     "web": "vite --config apps/web/vite.config.ts",
     "workspace": "node scripts/launch.mjs",
     "import:lovable": "npm run build:core && node dist/src/lovable-import-cli.js",
