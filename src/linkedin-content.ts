@@ -1,5 +1,5 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, extname, join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { ContextStore } from './store.js';
 
 export type LinkedInPostStatus='published'|'draft'|'idea';
