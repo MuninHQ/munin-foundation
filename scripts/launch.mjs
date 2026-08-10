@@ -74,6 +74,7 @@ await startService({ port: 4310, command: 'npm', args: ['run', 'api'], label: 'C
 await startService({ port: 4312, command: 'npm', args: ['run', 'visual-assets-api'], label: 'Visual Assets API' });
 await startService({ port: 4313, command: 'npm', args: ['run', 'linkedin-composer-api'], label: 'LinkedIn Composer API' });
 await startService({ port: 4314, command: 'npm', args: ['run', 'context-memory-api'], label: 'Context Memory API' });
+await startService({ port: 4315, command: 'npm', args: ['run', 'executive-briefing-api'], label: 'Executive Briefing API' });
 
 if (await portOpen(5173)) {
   console.log('[Munin] Web UI already running at http://127.0.0.1:5173; reusing it.');
