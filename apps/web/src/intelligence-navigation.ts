@@ -31,6 +31,16 @@ function addIntelligenceNavigation(): void {
     history.addEventListener('click', () => window.location.assign('/linkedin-history.html'));
     nav.appendChild(history);
   }
+
+  if (!nav.querySelector('[data-munin-visual-assets]')) {
+    const assets = document.createElement('button');
+    assets.type = 'button';
+    assets.dataset.muninVisualAssets = 'true';
+    assets.textContent = 'Visual Assets';
+    assets.title = 'Galeria de imagens e referências visuais do LinkedIn';
+    assets.addEventListener('click', () => window.location.assign('/linkedin-assets.html'));
+    nav.appendChild(assets);
+  }
 }
 
 const observer = new MutationObserver(() => addIntelligenceNavigation());
@@ -49,5 +59,9 @@ window.addEventListener('keydown', event => {
   if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'h') {
     event.preventDefault();
     window.location.assign('/linkedin-history.html');
+  }
+  if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'a') {
+    event.preventDefault();
+    window.location.assign('/linkedin-assets.html');
   }
 });
