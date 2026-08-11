@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Munin HUD</title>
+  <link rel="stylesheet" href="/munin.css" />
+  <link rel="stylesheet" href="/hud.css" />
+</head>
+<body class="hud-body">
+  <div class="hud-grid"></div>
+  <header class="hud-top"><a href="/" class="hud-brand">MUNIN</a><span>AMBIENT COMMAND CENTER</span><span id="hud-status">CONECTANDO</span></header>
+  <main class="hud-shell">
+    <aside class="hud-left">
+      <section class="hud-panel"><span class="hud-label">CHRONO</span><strong id="hud-time">--:--</strong><small id="hud-date">—</small></section>
+      <section class="hud-panel"><span class="hud-label">SYSTEM VITALS</span><div class="hud-stat"><span>API</span><b id="hud-api">—</b></div><div class="hud-stat"><span>Sessão</span><b id="hud-session">00:00</b></div></section>
+    </aside>
+    <section class="hud-core-wrap">
+      <svg id="hud-links" class="hud-links" aria-hidden="true"></svg>
+      <button id="hud-core" class="hud-core" type="button"><span></span><b>MUNIN</b><small>EXECUTIVE INTELLIGENCE</small></button>
+      <a class="hud-node n-briefing" href="/executive-briefing.html" data-node="briefing"><small>OPERATE</small><b>Briefing</b><span data-metric>—</span></a>
+      <a class="hud-node n-intel" href="/intelligence.html" data-node="intel"><small>OPERATE</small><b>Intelligence</b><span data-metric>—</span></a>
+      <a class="hud-node n-career" href="/?section=Career" data-node="career"><small>CAREER</small><b>Career OS</b><span data-metric>—</span></a>
+      <a class="hud-node n-memory" href="/context-memory.html" data-node="memory"><small>MEMORY</small><b>Context</b><span data-metric>—</span></a>
+      <a class="hud-node n-linkedin" href="/linkedin.html" data-node="linkedin"><small>STUDIO</small><b>LinkedIn</b><span data-metric>—</span></a>
+      <a class="hud-node n-projects" href="/?section=Projects" data-node="projects"><small>OPERATE</small><b>Projects</b><span data-metric>—</span></a>
+      <a class="hud-node n-research" href="/?section=Research" data-node="research"><small>RESEARCH</small><b>Research</b><span data-metric>—</span></a>
+    </section>
+    <aside class="hud-right">
+      <section class="hud-panel"><span class="hud-label">EXECUTIVE FEED</span><h2 id="hud-headline">Carregando contexto…</h2><div id="hud-feed"></div></section>
+      <section class="hud-panel"><span class="hud-label">CAREER PIPELINE</span><div id="hud-career"></div></section>
+    </aside>
+  </main>
+  <section class="hud-command"><div id="hud-reply" class="hud-reply"></div><form id="hud-form"><input id="hud-input" autocomplete="off" placeholder="Fale com o Munin…" /><button>Executar</button></form></section>
+  <script src="/munin-client.js"></script>
+  <script src="/hud.js"></script>
+</body>
+</html>
