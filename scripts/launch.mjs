@@ -4,21 +4,17 @@ import net from 'node:net';
 
 const API_PORT = Number(process.env.MUNIN_API_PORT ?? 4310);
 const WEB_PORT = Number(process.env.MUNIN_WEB_PORT ?? 5173);
+const START_PAGE = process.env.MUNIN_START_PAGE ?? '';
+const BROWSER_MODE = process.env.MUNIN_BROWSER_MODE ?? 'browser';
 
 const children = [];
 let shuttingDown = false;
 
 function run(command, args, label) {
-  const child = spawn(command, args, {
-    stdio: 'inherit',
-    shell: platform() === 'win32',
-    env: process.env,
-  });
+  const child = spawn(command, args, { stdio: 'inherit', shell: platform() === 'win32', env: process.env });
   children.push(child);
   child.on('exit', code => {
-    if (!shuttingDown && code && code !== 0) {
-      console.error(`[Munin] ${label} exited with code ${code}. Other services will remain available.`);
-    }
+    if (!shuttingDown && code && code !== 0) console.error(`[Munin] ${label} exited with code ${code}. Other services will remain available.`);
   });
   return child;
 }
@@ -36,68 +32,62 @@ function portOpen(port, host = '127.0.0.1') {
     const socket = net.createConnection({ port, host });
     const done = value => { socket.destroy(); resolve(value); };
     socket.setTimeout(500);
-    socket.once('connect', () => done(true));
-    socket.once('timeout', () => done(false));
-    socket.once('error', () => done(false));
+    socket.once('connect', () => done(true)); socket.once('timeout', () => done(false)); socket.once('error', () => done(false));
   });
 }
 
-async function waitForPort(port, timeoutMs = 20000) {
+async function apiHealthy() {
+  try {
+    const response = await fetch(`http://127.0.0.1:${API_PORT}/api/health`, { signal: AbortSignal.timeout(1200) });
+    if (!response.ok) return false;
+    const data = await response.json();
+    return data?.status === 'ok' && data?.service === 'munin-workspace';
+  } catch { return false; }
+}
+
+async function waitFor(check, timeoutMs = 20000) {
   const started = Date.now();
-  while (Date.now() - started < timeoutMs) {
-    if (await portOpen(port)) return true;
-    await new Promise(resolve => setTimeout(resolve, 250));
-  }
+  while (Date.now() - started < timeoutMs) { if (await check()) return true; await new Promise(resolve => setTimeout(resolve, 250)); }
   return false;
 }
 
-function openBrowser(url) {
-  const target = platform() === 'win32'
-    ? ['cmd', ['/c', 'start', '', url]]
-    : platform() === 'darwin'
-      ? ['open', [url]]
-      : ['xdg-open', [url]];
-  const child = spawn(target[0], target[1], { stdio: 'ignore', detached: true });
-  child.unref();
-}
-
-function shutdown(code = 0) {
-  shuttingDown = true;
-  for (const child of children) {
-    if (!child.killed) child.kill('SIGTERM');
+function openUi(url) {
+  if (platform() === 'win32' && (BROWSER_MODE === 'app' || BROWSER_MODE === 'kiosk')) {
+    const edgeArgs = BROWSER_MODE === 'kiosk' ? `--kiosk ${url} --edge-kiosk-type=fullscreen` : `--app=${url}`;
+    const child = spawn('powershell', ['-NoProfile', '-Command', `Start-Process msedge.exe -ArgumentList '${edgeArgs}'`], { stdio: 'ignore', detached: true });
+    child.unref();
+    return;
   }
-  process.exit(code);
+  const target = platform() === 'win32' ? ['cmd', ['/c', 'start', '', url]] : platform() === 'darwin' ? ['open', [url]] : ['xdg-open', [url]];
+  const child = spawn(target[0], target[1], { stdio: 'ignore', detached: true }); child.unref();
 }
 
-process.on('SIGINT', () => shutdown(0));
-process.on('SIGTERM', () => shutdown(0));
+function shutdown(code = 0) { shuttingDown = true; for (const child of children) if (!child.killed) child.kill('SIGTERM'); process.exit(code); }
+process.on('SIGINT', () => shutdown(0)); process.on('SIGTERM', () => shutdown(0));
 
 console.log('Starting Munin Workspace...');
-
-// One unified API process serves every module (core, visual assets, composer,
-// context memory, executive briefing) on a single port. TypeScript is compiled
-// once here instead of once per service, which is what previously made startup
-// slow (5 sequential tsc runs through npm).
-if (await portOpen(API_PORT)) {
-  console.log(`[Munin] API already running on 127.0.0.1:${API_PORT}; reusing it.`);
+if (await apiHealthy()) {
+  console.log(`[Munin] Healthy API already running on 127.0.0.1:${API_PORT}; reusing it.`);
 } else {
+  if (await portOpen(API_PORT)) {
+    console.error(`[Munin] Port ${API_PORT} is occupied by a process that is not a healthy Munin API.`);
+    console.error('[Munin] Stop that process before starting Munin. Refusing to reuse a stale/foreign service.');
+    process.exit(1);
+  }
   await runToCompletion('npm', ['run', 'build:core'], 'TypeScript build');
   run('node', ['dist/src/server.js'], 'Munin API');
-  if (!(await waitForPort(API_PORT))) {
-    console.error(`[Munin] API did not become ready on port ${API_PORT}.`);
-  }
+  if (!(await waitFor(apiHealthy))) console.error(`[Munin] API did not become healthy on port ${API_PORT}.`);
 }
 
-if (await portOpen(WEB_PORT)) {
-  console.log(`[Munin] Web UI already running at http://127.0.0.1:${WEB_PORT}; reusing it.`);
-} else {
-  run('npm', ['run', 'web', '--', '--host', '127.0.0.1', '--port', String(WEB_PORT), '--strictPort'], 'Web UI');
-}
+if (await portOpen(WEB_PORT)) console.log(`[Munin] Web UI already running at http://127.0.0.1:${WEB_PORT}; reusing it.`);
+else run('npm', ['run', 'web', '--', '--host', '127.0.0.1', '--port', String(WEB_PORT), '--strictPort'], 'Web UI');
 
-const ready = await waitForPort(WEB_PORT);
+const ready = await waitFor(() => portOpen(WEB_PORT));
 if (ready) {
-  console.log(`[Munin] Workspace ready: http://127.0.0.1:${WEB_PORT}`);
-  openBrowser(`http://127.0.0.1:${WEB_PORT}`);
+  const page = START_PAGE ? `/${START_PAGE.replace(/^\//, '')}` : '/';
+  const url = `http://127.0.0.1:${WEB_PORT}${page}`;
+  console.log(`[Munin] Workspace ready: ${url}`);
+  openUi(url);
 } else {
   console.error(`[Munin] Web UI did not become ready on port ${WEB_PORT}. Check the messages above.`);
   process.exitCode = 1;
