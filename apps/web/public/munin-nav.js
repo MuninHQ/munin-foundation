@@ -4,11 +4,12 @@
     { label: 'Home', href: '/' },
     { label: 'Briefing', href: '/executive-briefing.html' },
     { label: 'Intelligence', href: '/intelligence.html' },
-    { label: 'Career', href: '/career-inbox.html' },
+    { label: 'Career', href: '/career-command.html' },
     { label: 'Memory', href: '/context-memory.html' },
     { label: 'LinkedIn', href: '/linkedin.html' },
   ];
   const tools = [
+    ['/career-inbox.html', 'Career Inbox'],
     ['/linkedin-compose.html', 'Composer'],
     ['/linkedin-history.html', 'Editorial History'],
     ['/linkedin-assets.html', 'Visual Assets'],
