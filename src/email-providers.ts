@@ -11,70 +11,43 @@ type GraphList = { value?: GraphRow[]; '@odata.nextLink'?:string };
 const DEFAULT_SYNC_DAYS = 30;
 const DEFAULT_MAX_MESSAGES = 500;
 
-function header(message:GmailMessage,name:string):string|undefined {
-  return message.payload?.headers?.find(h=>h.name.toLowerCase()===name.toLowerCase())?.value;
-}
+function header(message:GmailMessage,name:string):string|undefined { return message.payload?.headers?.find(h=>h.name.toLowerCase()===name.toLowerCase())?.value; }
 function bearer(token:string):Record<string,string>{ return {authorization:`Bearer ${token}`}; }
 function sinceIso(days:number):string { return new Date(Date.now()-days*24*60*60*1000).toISOString(); }
+function mailbox(value:string):{name?:string;email:string}{const email=value.match(/<([^>]+)>/)?.[1]?.trim()??value.trim();const name=value.replace(/<[^>]+>/,'').replace(/^['"]|['"]$/g,'').trim()||undefined;return {name,email};}
+function forwardedIdentity(subject:string,snippet:string,outerFrom:string):{subject:string;snippet:string;fromName?:string;fromEmail:string;forwarded:boolean}{
+  const text=`${subject}\n${snippet}`;
+  const forwardMarker=/\b(?:fw|fwd|enc|encaminhada?)\s*:/i.test(subject)||/(?:forwarded message|mensagem encaminhada|mensagem original)/i.test(text);
+  const originalFrom=text.match(/(?:^|[\n\r]|\s)(?:from|de)\s*:\s*([^\n\r]+?)(?=\s+(?:sent|enviado|date|data|to|para|subject|assunto)\s*:|$)/i)?.[1]?.trim();
+  const originalSubject=text.match(/(?:^|[\n\r]|\s)(?:subject|assunto)\s*:\s*([^\n\r]+)/i)?.[1]?.trim();
+  if(!forwardMarker||!originalFrom)return {subject,snippet,fromEmail:outerFrom,forwarded:false};
+  const parsed=mailbox(originalFrom);
+  return {subject:originalSubject||subject.replace(/^\s*(?:fw|fwd|enc)\s*:\s*/i,''),snippet,fromName:parsed.name,fromEmail:parsed.email,forwarded:true};
+}
 
 export async function fetchGmail(token:string,days=DEFAULT_SYNC_DAYS,max=DEFAULT_MAX_MESSAGES):Promise<CareerEmail[]> {
-  const refs:Array<{id:string;threadId?:string}>=[];
-  let pageToken:string|undefined;
-  while(refs.length<max){
-    const params=new URLSearchParams({maxResults:String(Math.min(100,max-refs.length)),q:`newer_than:${days}d -in:spam -in:trash`});
-    if(pageToken)params.set('pageToken',pageToken);
-    const list=await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?${params.toString()}`,{headers:bearer(token)});
-    if(!list.ok)throw new Error(`Gmail sync failed: ${list.status}`);
-    const payload=await list.json() as GmailList;
-    refs.push(...(payload.messages??[]));
-    pageToken=payload.nextPageToken;
-    if(!pageToken)break;
-  }
-  const messages:CareerEmail[]=[];
-  const jobs=(await new ContextStore().load()).jobs;
+  const refs:Array<{id:string;threadId?:string}>=[]; let pageToken:string|undefined;
+  while(refs.length<max){const params=new URLSearchParams({maxResults:String(Math.min(100,max-refs.length)),q:`newer_than:${days}d -in:spam -in:trash`});if(pageToken)params.set('pageToken',pageToken);const list=await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?${params.toString()}`,{headers:bearer(token)});if(!list.ok)throw new Error(`Gmail sync failed: ${list.status}`);const payload=await list.json() as GmailList;refs.push(...(payload.messages??[]));pageToken=payload.nextPageToken;if(!pageToken)break;}
+  const messages:CareerEmail[]=[]; const jobs=(await new ContextStore().load()).jobs;
   for(const ref of refs.slice(0,max)){
-    const response=await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${ref.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date`,{headers:bearer(token)});
-    if(!response.ok)continue;
-    const raw=await response.json() as GmailMessage;
-    const from=header(raw,'From')??'';
-    const address=from.match(/<([^>]+)>/)?.[1]??from;
-    const subject=header(raw,'Subject')??'(sem assunto)';
-    const classified=classifyCareerEmail({subject,snippet:raw.snippet??'',fromEmail:address},jobs);
-    messages.push({id:randomUUID(),provider:'gmail',providerMessageId:raw.id,threadId:raw.threadId,fromName:from.replace(/<[^>]+>/,'').trim()||undefined,fromEmail:address,receivedAt:new Date(Number(raw.internalDate??Date.now())).toISOString(),handled:false,...classified});
+    const response=await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${ref.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date`,{headers:bearer(token)});if(!response.ok)continue;
+    const raw=await response.json() as GmailMessage; const outer=mailbox(header(raw,'From')??''); const rawSubject=header(raw,'Subject')??'(sem assunto)';
+    const identity=forwardedIdentity(rawSubject,raw.snippet??'',outer.email); const classified=classifyCareerEmail({subject:identity.subject,snippet:identity.snippet,fromEmail:identity.fromEmail},jobs);
+    messages.push({id:randomUUID(),provider:identity.forwarded?'outlook':'gmail',providerMessageId:`gmail:${raw.id}`,threadId:raw.threadId,fromName:identity.fromName??outer.name,fromEmail:identity.fromEmail,receivedAt:new Date(Number(raw.internalDate??Date.now())).toISOString(),handled:false,...classified});
   }
   return messages;
 }
 
 export async function fetchOutlook(token:string,days=DEFAULT_SYNC_DAYS,max=DEFAULT_MAX_MESSAGES):Promise<CareerEmail[]> {
-  const rows:GraphRow[]=[];
-  const select='$select=id,conversationId,subject,bodyPreview,receivedDateTime,from';
-  const filter=`$filter=receivedDateTime ge ${sinceIso(days)}`;
-  let next=`https://graph.microsoft.com/v1.0/me/messages?$top=${Math.min(100,max)}&$orderby=receivedDateTime%20desc&${select}&${encodeURI(filter)}`;
-  while(next&&rows.length<max){
-    const response=await fetch(next,{headers:bearer(token)});
-    if(!response.ok)throw new Error(`Outlook sync failed: ${response.status}`);
-    const payload=await response.json() as GraphList;
-    rows.push(...(payload.value??[]));
-    next=payload['@odata.nextLink']??'';
-  }
+  const rows:GraphRow[]=[]; const select='$select=id,conversationId,subject,bodyPreview,receivedDateTime,from'; const filter=`$filter=receivedDateTime ge ${sinceIso(days)}`; let next=`https://graph.microsoft.com/v1.0/me/messages?$top=${Math.min(100,max)}&$orderby=receivedDateTime%20desc&${select}&${encodeURI(filter)}`;
+  while(next&&rows.length<max){const response=await fetch(next,{headers:bearer(token)});if(!response.ok)throw new Error(`Outlook sync failed: ${response.status}`);const payload=await response.json() as GraphList;rows.push(...(payload.value??[]));next=payload['@odata.nextLink']??'';}
   const jobs=(await new ContextStore().load()).jobs;
-  return rows.slice(0,max).map(raw=>{
-    const subject=raw.subject??'(sem assunto)';
-    const address=raw.from?.emailAddress?.address;
-    const classified=classifyCareerEmail({subject,snippet:raw.bodyPreview??'',fromEmail:address},jobs);
-    return {id:randomUUID(),provider:'outlook' as EmailProvider,providerMessageId:raw.id,threadId:raw.conversationId,fromName:raw.from?.emailAddress?.name,fromEmail:address,receivedAt:raw.receivedDateTime??new Date().toISOString(),handled:false,...classified};
-  });
+  return rows.slice(0,max).map(raw=>{const subject=raw.subject??'(sem assunto)';const address=raw.from?.emailAddress?.address;const classified=classifyCareerEmail({subject,snippet:raw.bodyPreview??'',fromEmail:address},jobs);return {id:randomUUID(),provider:'outlook' as EmailProvider,providerMessageId:raw.id,threadId:raw.conversationId,fromName:raw.from?.emailAddress?.name,fromEmail:address,receivedAt:raw.receivedDateTime??new Date().toISOString(),handled:false,...classified};});
 }
 
 export async function syncCareerInbox(days=DEFAULT_SYNC_DAYS):Promise<{providers:string[];added:number;duplicates:number;totalFetched:number;windowDays:number;needsConnection?:boolean}> {
-  const messages:CareerEmail[]=[];
-  const providers:string[]=[];
-  const status=await connectionStatus();
-  const gmailToken=process.env.MUNIN_GMAIL_ACCESS_TOKEN??(status.find(x=>x.provider==='gmail'&&x.connected)?await accessToken('gmail'):undefined);
-  const outlookToken=process.env.MUNIN_OUTLOOK_ACCESS_TOKEN??(status.find(x=>x.provider==='outlook'&&x.connected)?await accessToken('outlook'):undefined);
-  if(gmailToken){messages.push(...await fetchGmail(gmailToken,days));providers.push('gmail');}
-  if(outlookToken){messages.push(...await fetchOutlook(outlookToken,days));providers.push('outlook');}
-  if(!providers.length)return {providers:[],added:0,duplicates:0,totalFetched:0,windowDays:days,needsConnection:true};
-  const result=await new CareerInboxStore().upsert(messages);
-  return {...result,providers,totalFetched:messages.length,windowDays:days};
+  const messages:CareerEmail[]=[]; const providers:string[]=[]; const status=await connectionStatus();
+  const gmailToken=process.env.MUNIN_GMAIL_ACCESS_TOKEN??(status.find(x=>x.provider==='gmail'&&x.connected)?await accessToken('gmail'):undefined); const outlookToken=process.env.MUNIN_OUTLOOK_ACCESS_TOKEN??(status.find(x=>x.provider==='outlook'&&x.connected)?await accessToken('outlook'):undefined);
+  if(gmailToken){messages.push(...await fetchGmail(gmailToken,days));providers.push('gmail');} if(outlookToken){messages.push(...await fetchOutlook(outlookToken,days));providers.push('outlook');} if(!providers.length)return {providers:[],added:0,duplicates:0,totalFetched:0,windowDays:days,needsConnection:true};
+  const result=await new CareerInboxStore().upsert(messages); return {...result,providers,totalFetched:messages.length,windowDays:days};
 }
