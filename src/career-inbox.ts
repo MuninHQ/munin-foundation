@@ -30,14 +30,14 @@ export interface CareerEmail {
 export interface InboxState { messages: CareerEmail[]; syncedAt?: string; }
 
 const patterns: Array<[CareerEmailCategory, RegExp, JobStatus | undefined, string]> = [
-  ['offer', /\b(offer|proposta|compensation package)\b/i, 'offer', 'Review offer and compensation'],
-  ['rejection', /\b(unfortunately|not moving forward|não seguiremos|não avançaremos|rejeiç|regret to inform)\b/i, 'rejected', 'Review rejection before closing opportunity'],
-  ['interview_invite', /\b(interview|entrevista|schedule a call|agendar.*conversa|availability|disponibilidade)\b/i, 'interview', 'Confirm interview details and prepare war room'],
-  ['assessment', /\b(assessment|case study|take-home|teste|desafio)\b/i, 'interview', 'Complete assessment before deadline'],
-  ['application_confirmation', /\b(application received|application submitted|candidatura recebida|inscrição confirmada|thank you for applying)\b/i, 'applied', 'Confirm application in pipeline'],
-  ['information_request', /\b(send us|provide|additional information|mais informações|salary expectation|pretensão salarial)\b/i, undefined, 'Prepare requested information'],
-  ['recruiter_reply', /\b(recruiter|talent acquisition|recrutador|recrutamento|hiring team)\b/i, undefined, 'Review recruiter message'],
-  ['job_alert', /\b(job alert|vagas para você|new jobs|oportunidades recomendadas)\b/i, undefined, 'Review job alert'],
+  ['offer', /\b(offer|job offer|employment offer|proposta|compensation package)\b/i, 'offer', 'Review offer and compensation'],
+  ['rejection', /\b(unfortunately|not moving forward|not selected|não seguiremos|não avançaremos|rejeiç|regret to inform|decided not to proceed)\b/i, 'rejected', 'Review rejection before closing opportunity'],
+  ['interview_invite', /\b(interview|entrevista|schedule (?:a )?call|agendar.*conversa|availability|disponibilidade|meeting with.*recruit|conversation with.*recruit)\b/i, 'interview', 'Confirm interview details and prepare war room'],
+  ['assessment', /\b(assessment|case study|take-home|technical challenge|teste técnico|teste|desafio|coding challenge)\b/i, 'interview', 'Complete assessment before deadline'],
+  ['application_confirmation', /\b(application (?:received|submitted|confirmed)|application to .+ confirmed|your application|candidatura recebida|candidatura confirmada|inscrição confirmada|thank you for applying|thanks for applying|recebemos sua candidatura)\b/i, 'applied', 'Confirm application in pipeline'],
+  ['information_request', /\b(send us|provide|additional information|mais informações|salary expectation|pretensão salarial|documents required|documentação)\b/i, undefined, 'Prepare requested information'],
+  ['recruiter_reply', /\b(recruiter|talent acquisition|recrutador|recrutamento|hiring team|talent partner|people team)\b/i, undefined, 'Review recruiter message'],
+  ['job_alert', /\b(job alert|vagas para você|new jobs|oportunidades recomendadas|jobs you may be interested in)\b/i, undefined, 'Review job alert'],
 ];
 
 function normalize(value: string): string { return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
@@ -46,7 +46,7 @@ export function classifyCareerEmail(input: Pick<CareerEmail, 'subject' | 'snippe
   const text = `${input.subject}\n${input.snippet}\n${input.fromEmail ?? ''}`;
   const match = patterns.find(([, pattern]) => pattern.test(text));
   const category = match?.[0] ?? 'other';
-  const confidence = match ? 0.86 : 0.35;
+  const confidence = match ? 0.86 : 0.20;
   const normalized = normalize(text);
   const ranked = jobs.map(job => {
     const company = normalize(job.company); const role = normalize(job.role);
@@ -76,8 +76,26 @@ export class CareerInboxStore {
   async load(): Promise<InboxState> { await mkdir(this.root,{recursive:true}); try { return JSON.parse(await readFile(this.file(),'utf8')) as InboxState; } catch { return { messages: [] }; } }
   async save(state: InboxState): Promise<void> { await writeJsonAtomic(this.file(),state); }
   async upsert(messages: CareerEmail[]): Promise<{ added:number; duplicates:number }> {
-    const state = await this.load(); const keys = new Set(state.messages.map(m => `${m.provider}:${m.providerMessageId}`)); let added=0; let duplicates=0;
-    for (const message of messages) { const key=`${message.provider}:${message.providerMessageId}`; if(keys.has(key)){duplicates++;continue;} state.messages.push(message); keys.add(key); added++; }
-    state.messages.sort((a,b)=>new Date(b.receivedAt).getTime()-new Date(a.receivedAt).getTime()); state.syncedAt=new Date().toISOString(); await this.save(state); return {added,duplicates};
+    const state = await this.load();
+    const byKey = new Map(state.messages.map((message,index) => [`${message.provider}:${message.providerMessageId}`, index]));
+    let added=0; let duplicates=0;
+    for (const message of messages) {
+      const key=`${message.provider}:${message.providerMessageId}`;
+      const existingIndex = byKey.get(key);
+      const isNoise = message.category === 'other';
+      if(existingIndex !== undefined){
+        const existing = state.messages[existingIndex];
+        state.messages[existingIndex] = { ...message, id: existing.id, handled: existing.handled || isNoise };
+        duplicates++;
+        continue;
+      }
+      state.messages.push({ ...message, handled: message.handled || isNoise });
+      byKey.set(key,state.messages.length-1);
+      added++;
+    }
+    state.messages.sort((a,b)=>new Date(b.receivedAt).getTime()-new Date(a.receivedAt).getTime());
+    state.syncedAt=new Date().toISOString();
+    await this.save(state);
+    return {added,duplicates};
   }
 }
