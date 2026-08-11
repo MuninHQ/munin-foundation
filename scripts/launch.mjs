@@ -72,15 +72,40 @@ async function waitFor(check, timeoutMs = 20000) {
   return false;
 }
 
+function openDefaultBrowser(url) {
+  const target = platform() === 'win32' ? ['cmd', ['/c', 'start', '', url]] : platform() === 'darwin' ? ['open', [url]] : ['xdg-open', [url]];
+  const child = spawn(target[0], target[1], { stdio: 'ignore', detached: true });
+  child.on('error', error => console.error(`[Munin] Could not open browser automatically: ${error.message}`));
+  child.unref();
+}
+
 function openUi(url) {
-  if (platform() === 'win32' && (BROWSER_MODE === 'app' || BROWSER_MODE === 'kiosk')) {
-    const edgeArgs = BROWSER_MODE === 'kiosk' ? `--kiosk ${url} --edge-kiosk-type=fullscreen` : `--app=${url}`;
-    const child = spawn('powershell', ['-NoProfile', '-Command', `Start-Process msedge.exe -ArgumentList '${edgeArgs}'`], { stdio: 'ignore', detached: true });
-    child.unref();
+  if (platform() !== 'win32' || (BROWSER_MODE !== 'app' && BROWSER_MODE !== 'kiosk')) {
+    openDefaultBrowser(url);
     return;
   }
-  const target = platform() === 'win32' ? ['cmd', ['/c', 'start', '', url]] : platform() === 'darwin' ? ['open', [url]] : ['xdg-open', [url]];
-  const child = spawn(target[0], target[1], { stdio: 'ignore', detached: true }); child.unref();
+
+  const args = BROWSER_MODE === 'kiosk'
+    ? [`--kiosk`, url, '--edge-kiosk-type=fullscreen']
+    : [`--app=${url}`];
+  const escapedArgs = args.map(arg => `'${arg.replace(/'/g, "''")}'`).join(',');
+  const escapedUrl = url.replace(/'/g, "''");
+  const script = [
+    "$edge=(Get-Command msedge.exe -ErrorAction SilentlyContinue).Source",
+    "if(-not $edge){",
+    "  $candidates=@(",
+    "    \"$env:ProgramFiles\\Microsoft\\Edge\\Application\\msedge.exe\"",
+    "    \"${env:ProgramFiles(x86)}\\Microsoft\\Edge\\Application\\msedge.exe\"",
+    "    \"$env:LOCALAPPDATA\\Microsoft\\Edge\\Application\\msedge.exe\"",
+    "  )",
+    "  $edge=$candidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1",
+    "}",
+    `if($edge){ Start-Process -FilePath $edge -ArgumentList @(${escapedArgs}) } else { Start-Process '${escapedUrl}' }`,
+  ].join('; ');
+
+  const child = spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', script], { stdio: 'ignore', detached: true });
+  child.on('error', () => openDefaultBrowser(url));
+  child.unref();
 }
 
 function shutdown(code = 0) { shuttingDown = true; for (const child of children) if (!child.killed) child.kill('SIGTERM'); process.exit(code); }
