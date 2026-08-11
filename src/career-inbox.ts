@@ -70,10 +70,6 @@ export function classifyCareerEmail(input: Pick<CareerEmail, 'subject' | 'snippe
   };
 }
 
-export function careerSignals(state: InboxState): CareerEmail[] {
-  return state.messages.filter(message => message.category !== 'other');
-}
-
 export class CareerInboxStore {
   constructor(private readonly root = dataDir()) {}
   private file(): string { return path.join(this.root, 'career-inbox.json'); }
@@ -86,13 +82,14 @@ export class CareerInboxStore {
     for (const message of messages) {
       const key=`${message.provider}:${message.providerMessageId}`;
       const existingIndex = byKey.get(key);
+      const isNoise = message.category === 'other';
       if(existingIndex !== undefined){
         const existing = state.messages[existingIndex];
-        state.messages[existingIndex] = { ...message, id: existing.id, handled: existing.handled };
+        state.messages[existingIndex] = { ...message, id: existing.id, handled: existing.handled || isNoise };
         duplicates++;
         continue;
       }
-      state.messages.push(message);
+      state.messages.push({ ...message, handled: message.handled || isNoise });
       byKey.set(key,state.messages.length-1);
       added++;
     }
