@@ -12,7 +12,7 @@ Context Memory, Executive Briefing) chegou como um **servidor HTTP próprio**,
 uma **página HTML própria** e um **arquivo de runtime próprio**, sem
 compartilhar infraestrutura com o que já existia.
 
-```
+```text
 ANTES                                          DEPOIS
 ─────────────────────────────────────          ─────────────────────────────────────
 :4310 api.ts            (core)                 :4310 server.ts  ──┬─ /api/*  (core)
