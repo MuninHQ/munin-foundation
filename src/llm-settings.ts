@@ -1,5 +1,6 @@
-import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { readFile, unlink } from 'node:fs/promises';
+import { runtimePath } from './config.js';
+import { writeJsonAtomic } from './storage.js';
 
 export type LlmProviderType = 'openai-compatible' | 'anthropic';
 
@@ -14,12 +15,12 @@ export type LlmSettings = {
 
 export type PublicLlmSettings = Omit<LlmSettings, 'apiKey'> & { hasApiKey: boolean; apiKeyHint?: string };
 
-const file = join(process.cwd(), 'data', 'runtime', 'llm-settings.json');
+const file = () => runtimePath('llm-settings.json');
 const empty = (): LlmSettings => ({ enabled: false, provider: 'openai-compatible', baseUrl: '', apiKey: '', model: '', updatedAt: new Date(0).toISOString() });
 
 export async function loadLlmSettings(): Promise<LlmSettings> {
   try {
-    const parsed = JSON.parse(await readFile(file, 'utf8')) as Partial<LlmSettings>;
+    const parsed = JSON.parse(await readFile(file(), 'utf8')) as Partial<LlmSettings>;
     return {
       enabled: parsed.enabled === true,
       provider: parsed.provider === 'anthropic' ? 'anthropic' : 'openai-compatible',
@@ -53,12 +54,11 @@ export async function saveLlmSettings(input: { enabled?: boolean; provider?: Llm
   if (next.baseUrl) {
     try { new URL(next.baseUrl); } catch { throw new Error('Base URL inválida.'); }
   }
-  await mkdir(dirname(file), { recursive: true });
-  await writeFile(file, JSON.stringify(next, null, 2), 'utf8');
+  await writeJsonAtomic(file(), next);
   return publicLlmSettings(next);
 }
 
 export async function deleteLlmSettings(): Promise<PublicLlmSettings> {
-  try { await unlink(file); } catch { /* already absent */ }
+  try { await unlink(file()); } catch { /* already absent */ }
   return publicLlmSettings(empty());
 }

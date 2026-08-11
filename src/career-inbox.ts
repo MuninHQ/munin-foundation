@@ -1,5 +1,7 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { dataDir } from './config.js';
+import { writeJsonAtomic } from './storage.js';
 import type { JobOpportunity, JobStatus } from './types.js';
 
 export type EmailProvider = 'gmail' | 'outlook' | 'capture';
@@ -69,10 +71,10 @@ export function classifyCareerEmail(input: Pick<CareerEmail, 'subject' | 'snippe
 }
 
 export class CareerInboxStore {
-  constructor(private readonly root = process.env.MUNIN_DATA_DIR ?? path.resolve('data/runtime')) {}
+  constructor(private readonly root = dataDir()) {}
   private file(): string { return path.join(this.root, 'career-inbox.json'); }
   async load(): Promise<InboxState> { await mkdir(this.root,{recursive:true}); try { return JSON.parse(await readFile(this.file(),'utf8')) as InboxState; } catch { return { messages: [] }; } }
-  async save(state: InboxState): Promise<void> { await mkdir(this.root,{recursive:true}); await writeFile(this.file(),JSON.stringify(state,null,2)+'\n','utf8'); }
+  async save(state: InboxState): Promise<void> { await writeJsonAtomic(this.file(),state); }
   async upsert(messages: CareerEmail[]): Promise<{ added:number; duplicates:number }> {
     const state = await this.load(); const keys = new Set(state.messages.map(m => `${m.provider}:${m.providerMessageId}`)); let added=0; let duplicates=0;
     for (const message of messages) { const key=`${message.provider}:${message.providerMessageId}`; if(keys.has(key)){duplicates++;continue;} state.messages.push(message); keys.add(key); added++; }
