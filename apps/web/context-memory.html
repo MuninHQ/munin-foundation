@@ -6,250 +6,90 @@
     <title>Munin Context Memory</title>
     <link rel="stylesheet" href="/munin.css" />
     <style>
-      .shell {
-        max-width: 1300px;
-        margin: auto;
-        padding: 32px;
-      }
-      .top,
-      .row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 14px;
-      }
-      h2,
-      h3 {
-        margin: 7px 0;
-      }
-      p,
-      .muted {
-        color: var(--text-muted);
-      }
-      .grid {
-        display: grid;
-        grid-template-columns: 0.85fr 1.15fr;
-        gap: 16px;
-      }
-      .panel,
-      .card {
-        border: 1px solid #193149;
-        background: #08131f;
-        border-radius: 14px;
-        padding: 20px;
-      }
-      .drop {
-        border: 1px dashed #34769e;
-        min-height: 170px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        border-radius: 12px;
-        background: #06111c;
-      }
-      .drop.over {
-        background: #0d2638;
-      }
-      .buttons {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-      button,
-      a.btn {
-        border: 1px solid #28506c;
-        background: #0d1d2b;
-        color: #d8ecfa;
-        border-radius: 9px;
-        padding: 10px 13px;
-        text-decoration: none;
-        cursor: pointer;
-      }
-      .primary {
-        background: var(--accent-strong);
-      }
-      .danger {
-        border-color: #74404c;
-        color: #ffb6c1;
-      }
-      .stats {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
-      }
-      .stat {
-        border: 1px solid #17364b;
-        background: #071725;
-        border-radius: 10px;
-        padding: 13px;
-      }
-      .num {
-        font-size: 24px;
-      }
-      .tag {
-        display: inline-block;
-        border: 1px solid #2d607e;
-        color: #7acbfa;
-        padding: 4px 8px;
-        border-radius: 20px;
-        font-size: 10px;
-        margin: 3px;
-      }
-      .sensitive {
-        border-color: #73424d;
-        color: #ff9aaa;
-      }
-      .private {
-        border-color: #6e5d2d;
-        color: #ebc977;
-      }
-      .public {
-        border-color: #286748;
-        color: #89dfb1;
-      }
-      .list {
-        display: grid;
-        gap: 10px;
-      }
-      .card {
-        background: #071725;
-      }
-      .meta {
-        font-size: 11px;
-        color: var(--text-muted);
-      }
-      .warning {
-        border: 1px solid #6d532d;
-        background: #241b0d;
-        color: #f1ce89;
-        border-radius: 9px;
-        padding: 10px;
-        margin: 8px 0;
-      }
-      .ok {
-        border: 1px solid #275f44;
-        background: #0d2117;
-        color: #8ee0af;
-        border-radius: 9px;
-        padding: 10px;
-        margin: 8px 0;
-      }
-      .notice {
-        position: fixed;
-        right: 24px;
-        top: 24px;
-        background: #0f2b20;
-        border: 1px solid #39795a;
-        padding: 12px 16px;
-        border-radius: 9px;
-        z-index: 5;
-      }
-      .search {
-        width: 100%;
-        background: #06101a;
-        color: var(--text);
-        border: 1px solid #203b50;
-        border-radius: 8px;
-        padding: 11px;
-      }
-      .results {
-        white-space: pre-wrap;
-        font-size: 12px;
-        line-height: 1.45;
-        max-height: 360px;
-        overflow: auto;
-      }
-      .option {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        margin: 12px 0;
-      }
-      @media (max-width: 900px) {
-        .grid {
-          grid-template-columns: 1fr;
-        }
-        .stats {
-          grid-template-columns: repeat(2, 1fr);
-        }
-        .top {
-          align-items: flex-start;
-          flex-direction: column;
-        }
-        .shell {
-          padding: 18px;
-        }
-      }
+      .row { display:flex; justify-content:space-between; align-items:center; gap:14px; }
+      h2,h3 { margin:7px 0; }
+      p,.muted { color:var(--text-muted); }
+      .grid { display:grid; grid-template-columns:.85fr 1.15fr; gap:16px; }
+      .panel,.card { border:1px solid var(--border); background:var(--surface); border-radius:var(--radius-lg); padding:20px; }
+      .drop { border:1px dashed var(--border-strong); min-height:170px; display:flex; align-items:center; justify-content:center; text-align:center; border-radius:12px; background:var(--surface-input); }
+      .drop.over { background:var(--surface-raised); border-color:var(--accent-border); }
+      .buttons { display:flex; gap:8px; flex-wrap:wrap; }
+      button,a.btn { border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-soft); border-radius:var(--radius); padding:10px 13px; text-decoration:none; cursor:pointer; }
+      button:hover,a.btn:hover { border-color:var(--accent-border); color:var(--text); }
+      button:disabled { opacity:.5; cursor:not-allowed; }
+      .primary { background:var(--accent-strong); color:white; }
+      .danger { border-color:#74404c; color:#ffb6c1; }
+      .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+      .stat { border:1px solid var(--border); background:var(--surface); border-radius:var(--radius); padding:13px; }
+      .num { font-size:24px; }
+      .tag { display:inline-block; border:1px solid #2d607e; color:#7acbfa; padding:4px 8px; border-radius:20px; font-size:10px; margin:3px; }
+      .sensitive { border-color:#73424d; color:#ff9aaa; }
+      .private { border-color:#6e5d2d; color:#ebc977; }
+      .public { border-color:#286748; color:#89dfb1; }
+      .list { display:grid; gap:10px; }
+      .card { background:rgba(7,23,37,.72); }
+      .meta { font-size:11px; color:var(--text-muted); }
+      .warning { border:1px solid #6d532d; background:#241b0d; color:#f1ce89; border-radius:9px; padding:10px; margin:8px 0; }
+      .ok { border:1px solid #275f44; background:#0d2117; color:#8ee0af; border-radius:9px; padding:10px; margin:8px 0; }
+      .results { white-space:pre-wrap; font-size:12px; line-height:1.45; max-height:360px; overflow:auto; }
+      .option { display:flex; gap:8px; align-items:center; margin:12px 0; }
+      @media(max-width:900px){ .grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)} }
     </style>
     <script defer src="/munin-nav.js"></script>
+    <script defer src="/munin-client.js"></script>
+    <script defer src="/context-memory.js"></script>
   </head>
   <body>
-    <main class="shell">
-      <div class="top">
-        <div>
+    <main class="munin-page">
+      <header class="munin-page-header">
+        <div class="munin-page-copy">
           <div class="eyebrow">MUNIN MEMORY GOVERNANCE</div>
           <h1>Context Memory</h1>
           <p>Bootstrap, escopos de privacidade, freshness e governança da memória nativa.</p>
         </div>
-        <div class="buttons">
-          <a class="btn" href="/">← Command Center</a><button onclick="load()">Atualizar</button>
+        <div class="munin-actions">
+          <button onclick="contextMemory.load()">Atualizar</button>
         </div>
-      </div>
-      <section class="stats" id="stats" style="margin: 18px 0"></section>
+      </header>
+      <section class="stats" id="stats" style="margin:18px 0"></section>
       <div class="grid">
         <aside>
-          <article class="panel">
+          <article class="munin-panel">
             <div class="eyebrow">BOOTSTRAP</div>
             <h2>Importar Context Seed</h2>
             <div id="drop" class="drop">
               <div>
                 <strong>Arraste o JSON consolidado aqui</strong>
                 <p><code>munin_context_seed_all.json</code></p>
-                <input id="file" type="file" accept="application/json,.json" hidden /><button
-                  onclick="file.click()"
-                >
-                  Escolher JSON
-                </button>
+                <input id="file" type="file" accept="application/json,.json" hidden />
+                <button onclick="document.getElementById('file').click()">Escolher JSON</button>
               </div>
             </div>
-            <div id="preview" style="margin-top: 14px"></div>
-            <label class="option"
-              ><input id="replace" type="checkbox" /><span>Substituir seções em conflito</span></label
-            >
-            <p class="muted">
-              Desmarcado é o modo seguro: dados já existentes são preservados e conflitos ficam apenas no
-              relatório.
-            </p>
-            <button id="importBtn" class="primary" onclick="doImport()" disabled>IMPORTAR MEMÓRIA</button>
+            <div id="preview" style="margin-top:14px"></div>
+            <label class="option"><input id="replace" type="checkbox" /><span>Substituir seções em conflito</span></label>
+            <p class="muted">Desmarcado é o modo seguro: dados já existentes são preservados e conflitos ficam apenas no relatório.</p>
+            <button id="importBtn" class="primary" onclick="contextMemory.doImport()" disabled>IMPORTAR MEMÓRIA</button>
           </article>
-          <article class="panel" style="margin-top: 16px">
+          <article class="munin-panel" style="margin-top:16px">
             <div class="eyebrow">QUERY TEST</div>
             <h2>Consultar memória</h2>
-            <input
-              id="query"
-              class="search"
-              placeholder="Ex.: posicionamento LinkedIn, salário alvo, Open Finance..."
-            />
-            <div class="buttons" style="margin-top: 10px">
-              <button onclick="searchMemory(false)">Buscar contexto operacional</button
-              ><button class="danger" onclick="searchMemory(true)">Incluir sensível</button>
+            <input id="query" class="munin-input" placeholder="Ex.: posicionamento LinkedIn, salário alvo, Open Finance..." />
+            <div class="buttons" style="margin-top:10px">
+              <button onclick="contextMemory.searchMemory(false)">Buscar contexto operacional</button>
+              <button class="danger" onclick="contextMemory.searchMemory(true)">Incluir sensível</button>
             </div>
-            <div id="queryResults" class="results" style="margin-top: 12px"></div>
+            <div id="queryResults" class="results" style="margin-top:12px"></div>
           </article>
         </aside>
         <section>
-          <article class="panel">
+          <article class="munin-panel">
             <div class="row">
-              <div>
-                <div class="eyebrow">MEMORY MAP</div>
-                <h2>Seções materializadas</h2>
-              </div>
+              <div><div class="eyebrow">MEMORY MAP</div><h2>Seções materializadas</h2></div>
               <span id="updated" class="muted"></span>
             </div>
             <div id="sections" class="list"></div>
           </article>
-          <article class="panel" style="margin-top: 16px">
+          <article class="munin-panel" style="margin-top:16px">
             <div class="eyebrow">IMPORT HISTORY</div>
             <h2>Últimos bootstraps</h2>
             <div id="imports" class="list"></div>
@@ -257,149 +97,5 @@
         </section>
       </div>
     </main>
-    <script>
-      const API = "";
-      let state = null,
-        seed = null;
-      async function api(path, options) {
-        const r = await fetch(API + path, { headers: { "content-type": "application/json" }, ...options });
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error || "Falha");
-        return d;
-      }
-      function esc(v) {
-        return String(v ?? "").replace(
-          /[&<>'"]/g,
-          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[c],
-        );
-      }
-      function toast(t) {
-        const n = document.createElement("div");
-        n.className = "notice";
-        n.textContent = t;
-        document.body.appendChild(n);
-        setTimeout(() => n.remove(), 4200);
-      }
-      function scopeClass(s) {
-        return s === "public-professional" ? "public" : s === "sensitive-private" ? "sensitive" : "private";
-      }
-      async function load() {
-        try {
-          const d = await api("/api/context-memory");
-          state = d.state;
-          stats.innerHTML = [
-            ["SEÇÕES", d.summary.sections],
-            ["PÚBLICO", d.summary.scopes["public-professional"] || 0],
-            ["OPERACIONAL", d.summary.scopes["private-operational"] || 0],
-            ["SENSÍVEL", d.summary.scopes["sensitive-private"] || 0],
-          ]
-            .map(
-              (x) =>
-                `<div class="stat"><div class="eyebrow">${x[0]}</div><div class="num">${x[1]}</div></div>`,
-            )
-            .join("");
-          updated.textContent =
-            state.updatedAt && state.updatedAt.startsWith("1970")
-              ? "ainda não inicializada"
-              : `Atualizada ${new Date(state.updatedAt).toLocaleString()}`;
-          const values = Object.values(state.sections);
-          sections.innerHTML = values.length
-            ? values
-                .map(
-                  (s) =>
-                    `<div class="card"><div class="row"><div><span class="tag ${scopeClass(s.scope)}">${esc(s.scope)}</span><span class="tag">${esc(s.confidence)}</span><span class="tag">${esc(s.freshness)}</span></div><span class="meta">v${s.version}</span></div><h3>${esc(s.key)}</h3><div class="meta">Fonte: ${esc(s.source)} · ${new Date(s.updatedAt).toLocaleString()}</div></div>`,
-                )
-                .join("")
-            : '<p class="muted">Nenhuma memória bootstrap importada ainda.</p>';
-          imports.innerHTML = state.imports.length
-            ? state.imports
-                .slice(0, 8)
-                .map(
-                  (i) =>
-                    `<div class="card"><b>${esc(i.source)}</b><div class="meta">${new Date(i.at).toLocaleString()} · ${i.keys.length} seções</div><div>${i.keys.map((k) => `<span class="tag">${esc(k)}</span>`).join("")}</div></div>`,
-                )
-                .join("")
-            : '<p class="muted">Sem imports.</p>';
-        } catch (e) {
-          toast(e.message);
-        }
-      }
-      async function previewSeed(value) {
-        seed = value;
-        try {
-          const p = await api("/api/context-memory/preview", {
-            method: "POST",
-            body: JSON.stringify({ seed: value }),
-          });
-          preview.innerHTML = `<div class="ok">${p.keys.length} seções detectadas · ${p.newKeys.length} novas · ${p.conflicts.length} conflitos</div>${p.warnings.map((w) => `<div class="warning">${esc(w)}</div>`).join("")}<div>${p.keys.map((k) => `<span class="tag">${esc(k)}</span>`).join("")}</div>${p.conflicts.length ? `<p class="muted">Conflitos preservados por padrão: ${p.conflicts.map((x) => esc(x.key)).join(", ")}</p>` : ""}`;
-          importBtn.disabled = false;
-        } catch (e) {
-          seed = null;
-          importBtn.disabled = true;
-          toast(e.message);
-        }
-      }
-      async function handleFile(f) {
-        try {
-          const text = await f.text();
-          await previewSeed(JSON.parse(text));
-        } catch (e) {
-          toast(`JSON inválido: ${e.message}`);
-        }
-      }
-      async function doImport() {
-        if (!seed) return;
-        try {
-          const r = await api("/api/context-memory/import", {
-            method: "POST",
-            body: JSON.stringify({
-              seed,
-              source: "Munin Context Seed Pack v1",
-              replaceConflicts: replace.checked,
-            }),
-          });
-          toast(`${r.imported.length} seções importadas · ${r.skipped.length} preservadas`);
-          await load();
-        } catch (e) {
-          toast(e.message);
-        }
-      }
-      async function searchMemory(includeSensitive) {
-        if (!query.value.trim()) return;
-        try {
-          const scopes = includeSensitive
-            ? "public-professional,private-operational,sensitive-private"
-            : "public-professional,private-operational";
-          const r = await api(
-            `/api/context-memory/query?q=${encodeURIComponent(query.value)}&scopes=${scopes}`,
-          );
-          queryResults.innerHTML = r.results.length
-            ? r.results
-                .map(
-                  (x) =>
-                    `<div class="card"><b>${esc(x.section.key)}</b> <span class="tag ${scopeClass(x.section.scope)}">${esc(x.section.scope)}</span><pre class="results">${esc(JSON.stringify(x.section.value, null, 2))}</pre></div>`,
-                )
-                .join("")
-            : "Nenhum contexto encontrado.";
-        } catch (e) {
-          toast(e.message);
-        }
-      }
-      file.addEventListener("change", () => file.files[0] && handleFile(file.files[0]));
-      ["dragenter", "dragover"].forEach((n) =>
-        drop.addEventListener(n, (e) => {
-          e.preventDefault();
-          drop.classList.add("over");
-        }),
-      );
-      ["dragleave", "drop"].forEach((n) =>
-        drop.addEventListener(n, (e) => {
-          e.preventDefault();
-          drop.classList.remove("over");
-        }),
-      );
-      drop.addEventListener("drop", (e) => e.dataTransfer.files[0] && handleFile(e.dataTransfer.files[0]));
-      load();
-    </script>
   </body>
 </html>
