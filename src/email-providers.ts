@@ -66,7 +66,7 @@ export async function fetchOutlook(token:string,days=DEFAULT_SYNC_DAYS,max=DEFAU
   });
 }
 
-export async function syncCareerInbox(days=DEFAULT_SYNC_DAYS):Promise<{providers:string[];added:number;duplicates:number;totalFetched:number;windowDays:number}> {
+export async function syncCareerInbox(days=DEFAULT_SYNC_DAYS):Promise<{providers:string[];added:number;duplicates:number;totalFetched:number;windowDays:number;needsConnection?:boolean}> {
   const messages:CareerEmail[]=[];
   const providers:string[]=[];
   const status=await connectionStatus();
@@ -74,7 +74,7 @@ export async function syncCareerInbox(days=DEFAULT_SYNC_DAYS):Promise<{providers
   const outlookToken=process.env.MUNIN_OUTLOOK_ACCESS_TOKEN??(status.find(x=>x.provider==='outlook'&&x.connected)?await accessToken('outlook'):undefined);
   if(gmailToken){messages.push(...await fetchGmail(gmailToken,days));providers.push('gmail');}
   if(outlookToken){messages.push(...await fetchOutlook(outlookToken,days));providers.push('outlook');}
-  if(!providers.length)throw new Error('No connected email provider. Connect Gmail or Outlook in Career Inbox.');
+  if(!providers.length)return {providers:[],added:0,duplicates:0,totalFetched:0,windowDays:days,needsConnection:true};
   const result=await new CareerInboxStore().upsert(messages);
   return {...result,providers,totalFetched:messages.length,windowDays:days};
 }
