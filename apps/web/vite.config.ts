@@ -14,10 +14,9 @@ export default defineConfig({
     outDir: path.resolve(root, '../../dist-web'),
     emptyOutDir: true,
     rollupOptions: {
-      // Multi-page build: previously only index.html was built, so every
-      // standalone module page silently disappeared from production output.
       input: {
         index: path.resolve(root, 'index.html'),
+        hud: path.resolve(root, 'hud.html'),
         'career-inbox': path.resolve(root, 'career-inbox.html'),
         'context-memory': path.resolve(root, 'context-memory.html'),
         'executive-briefing': path.resolve(root, 'executive-briefing.html'),
