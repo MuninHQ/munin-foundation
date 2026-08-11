@@ -1,162 +1,23 @@
-/*
- * Munin Design System — shared tokens and base styles.
- *
- * Every screen (React Command Center and the standalone module pages) links
- * this file so the product has ONE palette, ONE typography scale and ONE set
- * of core components. Page-level styles may extend, but must not redefine,
- * these tokens.
- */
+/* Munin Design System — one quiet, executive workspace language. */
 :root {
-  /* Color tokens — executive dark, low-noise */
-  --bg: #050b13;
-  --bg-glow: radial-gradient(circle at 80% 0, rgba(18, 56, 90, 0.33), transparent 34%), var(--bg);
-  --surface: #08121d;
-  --surface-raised: #0d1b29;
-  --surface-input: #06101a;
-  --border: #172b3d;
-  --border-strong: #28506c;
-  --text: #eef6ff;
-  --text-soft: #b9cbd8;
-  --text-muted: #7890a5;
-  --text-faint: #58748a;
-  --accent: #4ba6df;
-  --accent-bright: #67c7ff;
-  --accent-strong: #126a9f;
-  --accent-border: #248cc7;
-  --ok: #78dda5;
-  --ok-bg: #123222;
-  --warn: #e8c46b;
-  --warn-bg: #2a2210;
-  --danger: #ff9eaa;
-  --danger-bg: #321d22;
-
-  /* Shape + depth */
-  --radius-sm: 6px;
-  --radius: 9px;
-  --radius-lg: 13px;
-  --shadow-pop: 0 20px 40px rgba(0, 0, 0, 0.5);
-
-  /* Type scale */
-  --font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --text-eyebrow: 10px;
-  --text-small: 11px;
-  --text-body: 13px;
-  --text-h1: 34px;
-
-  font-family: var(--font);
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
+  --bg:#05080d; --bg-glow:radial-gradient(circle at 70% -10%,rgba(32,91,130,.20),transparent 36%),var(--bg);
+  --surface:#0a1018; --surface-raised:#0e1722; --surface-input:#071019;
+  --border:#172431; --border-strong:#29465c;
+  --text:#eef4f8; --text-soft:#b8c7d2; --text-muted:#7890a2; --text-faint:#526b7d;
+  --accent:#5ca9d6; --accent-bright:#86cff4; --accent-strong:#17658f; --accent-border:#337fa9;
+  --ok:#78dda5; --ok-bg:#123222; --warn:#e8c46b; --warn-bg:#2a2210; --danger:#ff9eaa; --danger-bg:#321d22;
+  --radius-sm:7px; --radius:10px; --radius-lg:14px; --shadow-pop:0 24px 60px rgba(0,0,0,.42);
+  --font:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --text-eyebrow:10px; --text-small:11px; --text-body:13px; --text-h1:34px;
+  font-family:var(--font); color:var(--text); background:var(--bg); font-synthesis:none;
 }
+*{box-sizing:border-box} body{margin:0;min-height:100vh;background:var(--bg-glow);color:var(--text)} button,input,textarea,select{font:inherit}
+.eyebrow{color:var(--accent);font-size:var(--text-eyebrow);letter-spacing:.18em;font-weight:700} h1{font-size:var(--text-h1);margin:6px 0;font-weight:600}
 
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--bg-glow);
-}
-
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
-
-.eyebrow {
-  color: var(--accent);
-  font-size: var(--text-eyebrow);
-  letter-spacing: 0.18em;
-  font-weight: 700;
-}
-
-h1 {
-  font-size: var(--text-h1);
-  margin: 6px 0;
-  font-weight: 600;
-}
-
-/* ---- Shared product bar (module pages) ------------------------------- */
-.munin-bar {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  border-bottom: 1px solid var(--border);
-  background: rgba(6, 13, 23, 0.94);
-  backdrop-filter: blur(8px);
-}
-
-.munin-bar-inner {
-  max-width: 1420px;
-  margin: auto;
-  padding: 10px 32px;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-
-.munin-bar-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--text);
-  text-decoration: none;
-  margin-right: 6px;
-}
-
-.munin-bar-brand span {
-  width: 26px;
-  height: 26px;
-  border: 1px solid var(--accent-border);
-  display: grid;
-  place-items: center;
-  transform: rotate(45deg);
-  color: var(--accent-bright);
-  font-size: 13px;
-}
-
-.munin-bar-brand span > i {
-  transform: rotate(-45deg);
-  font-style: normal;
-}
-
-.munin-bar-brand strong {
-  letter-spacing: 0.24em;
-  font-size: 11px;
-}
-
-.munin-bar nav {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex-wrap: wrap;
-}
-
-.munin-bar nav a {
-  color: var(--text-muted);
-  text-decoration: none;
-  font-size: var(--text-small);
-  padding: 7px 10px;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-}
-
-.munin-bar nav a:hover {
-  background: #0e1d2c;
-  color: var(--text);
-}
-
-.munin-bar nav a.active {
-  background: #0e1d2c;
-  color: var(--accent-bright);
-}
-
-.munin-bar nav .sep {
-  width: 1px;
-  height: 16px;
-  background: var(--border);
-  margin: 0 8px;
-}
+/* Workspace shell */
+.munin-bar{position:sticky;top:0;z-index:50;border-bottom:1px solid rgba(120,144,162,.14);background:rgba(5,8,13,.92);backdrop-filter:blur(16px)}
+.munin-bar-inner{max-width:1420px;margin:auto;padding:10px 32px;min-height:54px;display:flex;align-items:center;gap:22px}
+.munin-bar-brand{display:flex;align-items:center;gap:10px;color:var(--text);text-decoration:none;margin-right:8px}.munin-mark{width:27px;height:27px;border:1px solid var(--accent-border);border-radius:8px;display:grid;place-items:center;color:var(--accent-bright);font-size:11px;font-weight:800;letter-spacing:0}.munin-bar-brand strong{letter-spacing:.24em;font-size:11px;font-weight:650}
+.munin-primary{display:flex;align-items:center;gap:3px;flex:1}.munin-primary a,.munin-menu a{color:var(--text-muted);text-decoration:none;font-size:var(--text-small);padding:8px 10px;border-radius:var(--radius-sm);white-space:nowrap;transition:background .15s,color .15s}.munin-primary a:hover,.munin-primary a.active,.munin-menu a:hover,.munin-menu a.active{background:rgba(92,169,214,.09);color:var(--text)}.munin-primary a.active{color:var(--accent-bright)}
+.munin-more{position:relative}.munin-more summary{list-style:none;cursor:pointer;color:var(--text-muted);font-size:var(--text-small);padding:8px 10px;border-radius:var(--radius-sm)}.munin-more summary::-webkit-details-marker{display:none}.munin-more summary:hover,.munin-more[open] summary{background:rgba(92,169,214,.09);color:var(--text)}.munin-menu{position:absolute;right:0;top:calc(100% + 9px);min-width:190px;padding:7px;background:rgba(10,16,24,.98);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-pop);display:grid;gap:2px}.munin-menu a{display:block}
+@media(max-width:900px){.munin-bar-inner{padding:9px 18px;gap:10px;overflow:visible}.munin-bar-brand strong{display:none}.munin-primary{overflow-x:auto;scrollbar-width:none}.munin-primary::-webkit-scrollbar{display:none}.munin-primary a{padding:8px}.munin-more{flex:0 0 auto}}
