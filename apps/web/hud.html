@@ -25,12 +25,30 @@
   </main>
 
   <section id="activity-panel" class="hud-activity"><span class="hud-label">ACTIVITY STREAM</span><span id="hud-wave-caption">—</span><canvas id="hud-wave"></canvas></section>
-  <section class="hud-command"><div id="hud-reply" class="hud-reply"></div><form id="hud-form"><span class="command-dot"></span><input id="hud-input" autocomplete="off" placeholder="Fale com o Munin… (prioridades · SITREP · carreira · LinkedIn)" /><button>EXECUTAR</button></form></section>
+  <section class="hud-command"><div id="hud-reply" class="hud-reply"></div><form id="hud-command-form"><span class="command-dot"></span><input id="hud-command-input" autocomplete="off" placeholder="Fale com o Munin… (prioridades · SITREP · carreira · LinkedIn)" /><button>EXECUTAR</button></form></section>
 
   <div id="hud-readout" class="hud-readout"></div><div id="hud-toast" class="hud-toast"></div>
   <div id="hud-reticle" class="hud-reticle"><div></div><i></i></div>
   <div id="hud-boot" class="hud-boot"><div><div class="boot-word">MUNIN</div><div id="hud-boot-lines" class="boot-lines"></div><div class="boot-bar"><i id="hud-boot-bar"></i></div></div></div>
 
-  <script src="/munin-client.js"></script><script src="/hud.js"></script>
+  <script src="/munin-client.js"></script>
+  <script>
+    // Backward-compatible HUD command adapter: hud.js historically called /api/chat,
+    // while the core API now exposes /api/assistant with { command }.
+    if (window.MuninClient?.request) {
+      const request = window.MuninClient.request.bind(window.MuninClient);
+      window.MuninClient.request = (path, options = {}) => {
+        if (path !== '/api/chat') return request(path, options);
+        let payload = {};
+        try { payload = JSON.parse(options.body || '{}'); } catch {}
+        return request('/api/assistant', {
+          ...options,
+          headers: { 'content-type': 'application/json', ...(options.headers || {}) },
+          body: JSON.stringify({ command: payload.message || payload.command || '' }),
+        });
+      };
+    }
+  </script>
+  <script src="/hud.js"></script>
 </body>
 </html>
