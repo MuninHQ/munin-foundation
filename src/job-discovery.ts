@@ -1,0 +1,7 @@
+import type { CareerEmail } from './career-inbox.js';
+import type { JobOpportunity } from './types.js';
+export interface JobDiscovery { id:string; sourceMessageId:string; title:string; company?:string; score:number; signals:string[]; duplicateJobId?:string; receivedAt:string; }
+const signals=['payments','open finance','open banking','digital assets','blockchain','stablecoin','artificial intelligence',' ai ','product','fintech','financial infrastructure','identity','strategy','leadership'];
+function norm(v:string){return ` ${v.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')} `}
+function titleFrom(m:CareerEmail){return m.subject.replace(/^(fw|fwd|enc)\s*:\s*/i,'').replace(/^(job alert|new jobs|vagas para voce)\s*[:\-]?\s*/i,'').trim()||m.subject}
+export function extractJobDiscoveries(messages:CareerEmail[],jobs:JobOpportunity[]):JobDiscovery[]{return messages.filter(m=>m.category==='job_alert').map(m=>{const text=norm(`${m.subject} ${m.snippet}`);const matched=signals.filter(s=>text.includes(s));const title=titleFrom(m);const normalizedTitle=norm(title);const duplicate=jobs.find(j=>normalizedTitle.includes(norm(j.role).trim())||norm(`${j.company} ${j.role}`).split(' ').filter(Boolean).filter(t=>t.length>4).every(t=>text.includes(` ${t} `)));return{id:`disc-${m.id}`,sourceMessageId:m.id,title,company:m.detectedCompany,score:Math.min(100,45+matched.length*7+(duplicate?-30:0)),signals:matched,duplicateJobId:duplicate?.id,receivedAt:m.receivedAt}}).sort((a,b)=>b.score-a.score)}
