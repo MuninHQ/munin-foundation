@@ -8,7 +8,7 @@ Auditoria completa em `docs/ARCHITECTURE_AUDIT_2026-08.md`.
 
 ## Architecture Before / After
 
-```
+```text
 ANTES                                          DEPOIS
 :4310 api.ts                                   :4310 server.ts ─┬─ /api/* (core)
 :4312 visual-assets-api.ts                                      ├─ /api/visual-assets/*
