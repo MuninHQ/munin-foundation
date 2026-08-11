@@ -41,6 +41,7 @@ const patterns: Array<[CareerEmailCategory, RegExp, JobStatus | undefined, strin
 ];
 
 function normalize(value: string): string { return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+function tokens(value:string):string[]{return normalize(value).split(/[^a-z0-9]+/).filter(token=>token.length>3&&!['para','with','from','your','vaga','position','application','entrevista','interview'].includes(token));}
 
 export function classifyCareerEmail(input: Pick<CareerEmail, 'subject' | 'snippet' | 'fromEmail'>, jobs: JobOpportunity[]): Omit<CareerEmail, 'id' | 'provider' | 'providerMessageId' | 'threadId' | 'fromName' | 'receivedAt' | 'handled'> {
   const text = `${input.subject}\n${input.snippet}\n${input.fromEmail ?? ''}`;
@@ -48,14 +49,18 @@ export function classifyCareerEmail(input: Pick<CareerEmail, 'subject' | 'snippe
   const category = match?.[0] ?? 'other';
   const confidence = match ? 0.86 : 0.20;
   const normalized = normalize(text);
+  const subjectTokens=tokens(input.subject);
   const ranked = jobs.map(job => {
     const company = normalize(job.company); const role = normalize(job.role);
     let score = 0;
-    if (company && normalized.includes(company)) score += 3;
-    for (const token of role.split(/\s+/).filter(token => token.length > 3)) if (normalized.includes(token)) score += 1;
-    return { job, score };
+    if (company && normalized.includes(company)) score += 5;
+    const roleTokens=tokens(role); const roleHits=roleTokens.filter(token=>subjectTokens.includes(token)||normalized.includes(token)).length;
+    score += roleHits * 1.5;
+    if(roleTokens.length>=2&&roleHits>=Math.min(2,roleTokens.length)) score += 2;
+    return { job, score, roleHits };
   }).sort((a,b) => b.score - a.score);
-  const linked = ranked[0]?.score >= 3 ? ranked[0].job : undefined;
+  const best=ranked[0];
+  const linked = best && (best.score >= 5 || (best.roleHits >= 2 && best.score >= 4)) ? best.job : undefined;
   return {
     subject: input.subject,
     snippet: input.snippet,
