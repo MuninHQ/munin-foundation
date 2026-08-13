@@ -1,35 +1,9 @@
 #!/usr/bin/env node
-import { DeterministicProvider, type ExecutionProvider, type ProviderRequest, type ProviderResponse } from './providers.js';
-import { ProviderRegistry, type ProviderPolicy } from './provider-policy.js';
+import { OllamaProvider } from './ollama-provider.js';
+import { ProviderRegistry, defaultProviderProfiles, type ProviderPolicy } from './provider-policy.js';
+import type { ProviderRequest } from './providers.js';
 
-class ExternalPlaceholderProvider implements ExecutionProvider {
-  readonly id = 'external-placeholder';
-  async execute(_request: ProviderRequest): Promise<ProviderResponse> {
-    throw new Error('External provider execution is not configured');
-  }
-}
-
-const registry = new ProviderRegistry([
-  {
-    id: 'deterministic-local',
-    provider: new DeterministicProvider(),
-    capabilities: ['*'],
-    mode: 'offline',
-    estimatedCostPerCall: 0,
-    estimatedLatencyMs: 5,
-    enabled: true,
-  },
-  {
-    id: 'external-placeholder',
-    provider: new ExternalPlaceholderProvider(),
-    capabilities: ['research', 'write', 'code', 'review'],
-    mode: 'external',
-    estimatedCostPerCall: 0.02,
-    estimatedLatencyMs: 1200,
-    enabled: false,
-  },
-]);
-
+const registry = new ProviderRegistry(defaultProviderProfiles());
 const [command, capability = 'write', ...flags] = process.argv.slice(2);
 
 function policyFromFlags(values: string[]): ProviderPolicy {
@@ -46,6 +20,8 @@ function policyFromFlags(values: string[]): ProviderPolicy {
 
 if (command === 'list') {
   console.log(JSON.stringify(registry.list().map(({ provider, ...profile }) => ({ ...profile, providerId: provider.id })), null, 2));
+} else if (command === 'health') {
+  console.log(JSON.stringify(await new OllamaProvider().health(), null, 2));
 } else if (command === 'evaluate') {
   const request: ProviderRequest = {
     taskId: 'policy-preview',
@@ -58,5 +34,5 @@ if (command === 'list') {
   const selection = registry.select(request, policyFromFlags(flags));
   console.log(JSON.stringify(selection.decision, null, 2));
 } else {
-  console.log('Usage:\n  provider-policy list\n  provider-policy evaluate <capability> [--allow-external] [--max-cost=N] [--max-latency=N] [--prefer=id1,id2]');
+  console.log('Usage:\n  provider-policy list\n  provider-policy health\n  provider-policy evaluate <capability> [--allow-external] [--max-cost=N] [--max-latency=N] [--prefer=ollama-local]');
 }
