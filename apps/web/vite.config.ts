@@ -19,6 +19,7 @@ export default defineConfig({
         hud: path.resolve(root, 'hud.html'),
         'career-inbox': path.resolve(root, 'career-inbox.html'),
         'context-memory': path.resolve(root, 'context-memory.html'),
+        'council': path.resolve(root, 'council.html'),
         'executive-briefing': path.resolve(root, 'executive-briefing.html'),
         'image-settings': path.resolve(root, 'image-settings.html'),
         'linkedin-assets': path.resolve(root, 'linkedin-assets.html'),

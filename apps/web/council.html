@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Munin Council</title>
+  <link rel="stylesheet" href="/munin.css"/>
+  <style>
+    .shell{max-width:1200px;margin:auto;padding:32px}.hero{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}.status{border:1px solid #28506c;border-radius:12px;padding:14px 16px;background:#08131f;min-width:280px}.status strong{display:block}.ok{color:#8adcb0}.warn{color:#f4c66d}.panel{margin-top:20px;border:1px solid #193149;background:#08131f;border-radius:14px;padding:20px}.row{display:flex;gap:12px;align-items:flex-end}.field{flex:1}label{display:block;color:var(--text-muted);margin-bottom:7px}textarea{width:100%;min-height:130px;resize:vertical;background:#06101a;border:1px solid #28506c;color:#d8ecfa;border-radius:10px;padding:12px;font:inherit}button{border:1px solid #28506c;background:#0d1d2b;color:#d8ecfa;border-radius:9px;padding:11px 16px;cursor:pointer}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}.seat{border:1px solid #173047;border-radius:12px;padding:16px;background:#07111c}.seat h3{margin-top:0}.seat pre,.synthesis pre{white-space:pre-wrap;font:inherit;color:#cfe4f2}.synthesis{margin-top:14px;border:1px solid #28506c;border-radius:12px;padding:18px;background:#0a1926}@media(max-width:850px){.hero,.row{display:block}.status{margin-top:16px}.grid{grid-template-columns:1fr}button{margin-top:10px;width:100%}}
+  </style>
+  <script defer src="/munin-nav.js"></script>
+</head>
+<body>
+<main class="shell">
+  <section class="hero">
+    <div><div class="eyebrow">LOCAL INTELLIGENCE</div><h1>Council</h1><p>Deliberação multi-lente usando Ollama local, sem custo por chamada.</p></div>
+    <div class="status" id="health"><strong>OLLAMA</strong><span>Verificando…</span></div>
+  </section>
+  <section class="panel">
+    <div class="row"><div class="field"><label for="objective">Objetivo / decisão</label><textarea id="objective" placeholder="Ex.: Qual deve ser a próxima capability do Munin e por quê?"></textarea></div><button id="run">Executar Council</button></div>
+    <div id="result"></div>
+  </section>
+</main>
+<script>
+const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+async function api(path,options){const r=await fetch(path,options),d=await r.json();if(!r.ok)throw new Error(d.error||'Falha');return d}
+async function health(){const h=await api('/api/council/health');document.getElementById('health').innerHTML=`<strong>OLLAMA · ${esc(h.model)}</strong><span class="${h.ready?'ok':'warn'}">${h.ready?'Pronto':'Modelo indisponível'}</span><small>${esc(h.baseUrl)}</small>`}
+async function run(){const button=document.getElementById('run'),objective=document.getElementById('objective').value.trim(),result=document.getElementById('result');if(!objective)return;button.disabled=true;button.textContent='Deliberando…';result.innerHTML='<p>Strategist, Skeptic e Operator estão analisando.</p>';try{const d=await api('/api/council/deliberate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({objective})});result.innerHTML=`<div class="grid">${d.seats.map(x=>`<article class="seat"><div class="eyebrow">${esc(x.seat.title)}</div><pre>${esc(x.response.output)}</pre></article>`).join('')}</div><article class="synthesis"><div class="eyebrow">SYNTHESIS</div><h2>Decisão do Council</h2><pre>${esc(d.synthesis.output)}</pre></article>`}catch(error){result.innerHTML=`<p class="warn">${esc(error.message||error)}</p>`}finally{button.disabled=false;button.textContent='Executar Council'}}
+document.getElementById('run').addEventListener('click',run);health().catch(error=>document.getElementById('health').innerHTML=`<strong>OLLAMA</strong><span class="warn">${esc(error.message||error)}</span>`);
+</script>
+</body>
+</html>

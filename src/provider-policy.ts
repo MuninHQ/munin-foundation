@@ -1,5 +1,6 @@
+import { OllamaProvider } from './ollama-provider.js';
 import { DeterministicProvider, type ExecutionProvider, type ProviderRequest } from './providers.js';
-import { ResilientProvider } from './resilience.js';
+import { ProviderResilience, ResilientProvider } from './resilience.js';
 
 export interface ProviderProfile {
   id: string;
@@ -33,16 +34,32 @@ export class ProviderSelectionError extends Error {
 }
 
 export function defaultProviderProfiles(): ProviderProfile[] {
-  const local = new ResilientProvider(new DeterministicProvider());
-  return [{
-    id: local.id,
-    provider: local,
-    capabilities: ['*'],
-    mode: 'offline',
-    estimatedCostPerCall: 0,
-    estimatedLatencyMs: 1,
-    enabled: true,
-  }];
+  const deterministic = new ResilientProvider(new DeterministicProvider());
+  const ollamaTimeoutMs = Number(process.env.OLLAMA_TIMEOUT_MS ?? 120_000);
+  const ollama = new ResilientProvider(
+    new OllamaProvider({ timeoutMs: ollamaTimeoutMs }),
+    new ProviderResilience({ timeoutMs: ollamaTimeoutMs, maxAttempts: 1, circuitFailureThreshold: 3, circuitResetMs: 30_000 }),
+  );
+  return [
+    {
+      id: deterministic.id,
+      provider: deterministic,
+      capabilities: ['*'],
+      mode: 'offline',
+      estimatedCostPerCall: 0,
+      estimatedLatencyMs: 1,
+      enabled: true,
+    },
+    {
+      id: ollama.id,
+      provider: ollama,
+      capabilities: ['research', 'write', 'code', 'review', 'strategy', 'execute', 'synthesis', 'council'],
+      mode: 'offline',
+      estimatedCostPerCall: 0,
+      estimatedLatencyMs: 30_000,
+      enabled: process.env.MUNIN_OLLAMA_ENABLED !== '0',
+    },
+  ];
 }
 
 export class ProviderRegistry {

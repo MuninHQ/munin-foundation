@@ -4,6 +4,7 @@
     { label: 'Home', href: '/' },
     { label: 'Briefing', href: '/executive-briefing.html' },
     { label: 'Intelligence', href: '/intelligence.html' },
+    { label: 'Council', href: '/council.html' },
     { label: 'Career', href: '/career-command.html' },
     { label: 'Memory', href: '/context-memory.html' },
     { label: 'LinkedIn', href: '/linkedin.html' },
