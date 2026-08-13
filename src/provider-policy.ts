@@ -1,6 +1,6 @@
 import { OllamaProvider } from './ollama-provider.js';
 import { DeterministicProvider, type ExecutionProvider, type ProviderRequest } from './providers.js';
-import { ResilientProvider } from './resilience.js';
+import { ProviderResilience, ResilientProvider } from './resilience.js';
 
 export interface ProviderProfile {
   id: string;
@@ -35,7 +35,11 @@ export class ProviderSelectionError extends Error {
 
 export function defaultProviderProfiles(): ProviderProfile[] {
   const deterministic = new ResilientProvider(new DeterministicProvider());
-  const ollama = new ResilientProvider(new OllamaProvider());
+  const ollamaTimeoutMs = Number(process.env.OLLAMA_TIMEOUT_MS ?? 120_000);
+  const ollama = new ResilientProvider(
+    new OllamaProvider({ timeoutMs: ollamaTimeoutMs }),
+    new ProviderResilience({ timeoutMs: ollamaTimeoutMs, maxAttempts: 1, circuitFailureThreshold: 3, circuitResetMs: 30_000 }),
+  );
   return [
     {
       id: deterministic.id,
