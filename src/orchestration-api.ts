@@ -5,7 +5,7 @@ import {
   type OrchestrationMode,
   type OrchestrationRisk,
 } from './intelligence-orchestration.js';
-import { OrchestrationRuntimeCore } from './orchestration-runtime-core.js';
+import { OrchestrationRuntimeCore, OrchestrationRuntimeError } from './orchestration-runtime-core.js';
 import type { OrchestrationTrace } from './orchestration-trace.js';
 import { json, readJsonBody, requireText } from './http.js';
 
@@ -78,35 +78,21 @@ export async function handleOrchestration(
     if (request.method === 'POST' && url.pathname === '/api/orchestration/run') {
       const body = await readJsonBody(request, 1_000_000);
       const input = parseInput(body);
-      const startedAt = new Date().toISOString();
-
       const result = await new OrchestrationRuntimeCore().run(input);
+      rememberTrace(result.trace);
 
-      const trace: OrchestrationTrace = {
-        planId: result.plan.id,
-        route: result.plan.route,
-        attempts: [
-          {
-            providerId: result.providerId,
-            ok: true,
-          },
-        ],
-        selectedProviderId: result.providerId,
-        providerDecision: result.decision,
-        startedAt,
-        completedAt: new Date().toISOString(),
-      };
-
-      rememberTrace(trace);
-
-      return json(request, response, 200, {
-        ...result,
-        trace,
-      });
+      return json(request, response, 200, result);
     }
 
     return json(request, response, 404, { error: 'Not found' });
   } catch (error) {
+    if (error instanceof OrchestrationRuntimeError) {
+      rememberTrace(error.trace);
+      return json(request, response, 503, {
+        error: error.message,
+        trace: error.trace,
+      });
+    }
     return json(request, response, 400, {
       error: error instanceof Error ? error.message : String(error),
     });
