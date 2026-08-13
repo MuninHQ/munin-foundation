@@ -3,12 +3,13 @@ import { composeLinkedInPost, composerSuggestions } from './linkedin-composer.js
 import { llmProviderStatus } from './llm-provider.js';
 import { imageProviderStatus } from './image-provider.js';
 import { trustedSourceRadar } from './trusted-source-radar.js';
+import { OllamaProvider } from './ollama-provider.js';
 import { json, readJsonBody } from './http.js';
 
 const body=(request:IncomingMessage)=>readJsonBody(request,1_000_000);
 
 export async function handleLinkedInComposer(request:IncomingMessage,response:ServerResponse):Promise<void>{if(request.method==='OPTIONS')return json(request,response,204,{});const url=new URL(request.url??'/','http://127.0.0.1');try{
-  if(request.method==='GET'&&url.pathname==='/api/linkedin-composer/status')return json(request,response,200,{text:await llmProviderStatus(),image:await imageProviderStatus()});
+  if(request.method==='GET'&&url.pathname==='/api/linkedin-composer/status')return json(request,response,200,{localText:await new OllamaProvider().health(),text:await llmProviderStatus(),image:await imageProviderStatus(),routing:['ollama-local','configured-llm','deterministic-local']});
   if(request.method==='GET'&&url.pathname==='/api/linkedin-composer/sources')return json(request,response,200,await trustedSourceRadar(url.searchParams.get('refresh')==='1'));
   if(request.method==='GET'&&url.pathname==='/api/linkedin-composer/suggestions')return json(request,response,200,await composerSuggestions(url.searchParams.get('refresh')==='1'));
   if(request.method==='POST'&&url.pathname==='/api/linkedin-composer/compose'){const input=await body(request);const result=await composeLinkedInPost({suggestionId:typeof input.suggestionId==='string'?input.suggestionId:undefined,generateImage:input.generateImage===true,refreshSources:input.refreshSources===true});return json(request,response,201,result);}
