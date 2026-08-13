@@ -58,4 +58,11 @@
   }
 
   window.Munin = Object.freeze({ request, toast, escapeHtml, setBusy });
+
+  if (location.pathname.endsWith('/hud.html') || location.pathname === '/hud') {
+    const script = document.createElement('script');
+    script.src = '/hud-orchestration.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  }
 })();
