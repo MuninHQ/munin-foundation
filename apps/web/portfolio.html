@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Munin — Portfolio Intelligence</title>
+  <link rel="stylesheet" href="/munin.css" />
+  <style>
+    body{margin:0;background:#071018;color:#dcecf4;font-family:Inter,system-ui,sans-serif}.page{max-width:1280px;margin:0 auto;padding:36px 28px 70px}.eyebrow{font-size:12px;letter-spacing:.18em;color:#71bedc}.hero{display:flex;justify-content:space-between;gap:24px;align-items:end;margin:18px 0 28px}.hero h1{font-size:42px;margin:0}.hero p{max-width:620px;color:#91a8b4}.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px}.metric,.card{border:1px solid #18394a;background:#0a1721;border-radius:12px}.metric{padding:18px}.metric span{display:block;color:#7795a5;font-size:12px}.metric b{font-size:28px}.grid{display:grid;gap:12px}.card{padding:18px;display:grid;grid-template-columns:90px 1.4fr 120px 1fr 2fr;gap:18px;align-items:center}.priority{font-weight:800;color:#78c8e8}.status{font-size:12px;text-transform:uppercase;letter-spacing:.08em}.muted{color:#819aa7;font-size:13px}.milestone{color:#b7cbd5}.empty{padding:28px;border:1px dashed #315160;border-radius:12px;color:#819aa7}@media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)}.card{grid-template-columns:70px 1fr}.card>*:nth-child(n+3){grid-column:2}.hero{display:block}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="eyebrow">NORTH STAR · CANONICAL PORTFOLIO</div>
+    <div class="hero"><div><h1>Portfolio Intelligence</h1><p>Visão operacional das iniciativas do ecossistema Munin. Fonte canônica: <code>PROJECTS.md</code>.</p></div><div id="generated" class="muted">Carregando…</div></div>
+    <section id="metrics" class="metrics"></section>
+    <section id="projects" class="grid"></section>
+  </main>
+  <script src="/munin-client.js"></script>
+  <script src="/munin-nav.js"></script>
+  <script>
+    (()=>{const esc=window.Munin?.escapeHtml??(v=>String(v??''));const req=window.Munin?.request??(async p=>(await fetch(p)).json());
+      async function load(){const projects=document.getElementById('projects');try{const data=await req('/api/portfolio');const c=data.counts;document.getElementById('generated').textContent=`${data.source} · ${new Date(data.generatedAt).toLocaleString('pt-BR')}`;document.getElementById('metrics').innerHTML=[['TOTAL',c.total],['ACTIVE',c.active],['STRUCTURED',c.structured],['PILOT',c.pilot],['P0 / P1',c.p0+c.p1]].map(([k,v])=>`<div class="metric"><span>${k}</span><b>${v}</b></div>`).join('');projects.innerHTML=data.items.map(x=>`<article class="card"><div class="priority">${esc(x.priority)}</div><div><strong>${esc(x.initiative)}</strong><div class="muted">${esc(x.system)}</div></div><div class="status">${esc(x.status)}</div><div class="muted">${esc(x.owner)}</div><div class="milestone">${esc(x.nextMilestone)}</div></article>`).join('')||'<div class="empty">Nenhuma iniciativa encontrada.</div>';}catch(e){projects.innerHTML=`<div class="empty">Falha ao carregar portfolio: ${esc(e.message||e)}</div>`;}}
+      load();
+    })();
+  </script>
+</body>
+</html>
