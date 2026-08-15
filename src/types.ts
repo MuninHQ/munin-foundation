@@ -19,4 +19,4 @@ export interface ResearchRecord { id: string; question: string; status: Research
 export interface ContextRelation extends Record<string, unknown> { id: string; sourceType: EntityType; sourceId: string; type: RelationType; targetType: EntityType; targetId: string; createdAt: string; }
 export interface RelatedContext { entityId: string; incoming: ContextRelation[]; outgoing: ContextRelation[]; }
 export interface MuninEvent { id: string; type: string; entityType: EntityType | 'relation' | 'system'; entityId: string; timestamp: string; payload: Record<string, unknown>; }
-export interface MuninState { projects: Project[]; decisions: Decision[]; actions: Action[]; jobs: JobOpportunity[]; research: ResearchRecord[]; goals?: Goal[]; relations: ContextRelation[]; }
+export interface MuninState { projects: Project[]; decisions: Decision[]; actions: Action[]; jobs: JobOpportunity[]; research: ResearchRecord[]; goals: Goal[]; relations: ContextRelation[]; }
