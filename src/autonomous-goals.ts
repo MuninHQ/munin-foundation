@@ -18,7 +18,7 @@ export function prioritizeGoals(state: MuninState, now = new Date()): GoalPriori
     if (goal.status === 'active') { score += 40; rationale.push('active'); } if (goal.status === 'blocked') { score -= 80; rationale.push('blocked'); }
     if (goal.progress < 25) { score += 25; rationale.push('early-stage leverage'); } else if (goal.progress >= 75) { score += 35; rationale.push('close to completion'); }
     const ageDays = Math.max(0, Math.floor((now.getTime() - new Date(goal.updatedAt).getTime()) / 86_400_000)); if (ageDays >= 7) { score += Math.min(30, ageDays); rationale.push(`${ageDays} days since update`); }
-    const pending = state.actions.filter(action => action.goalId === goal.id && ['planned', 'active', 'blocked'].includes(action.status)); if (pending.length) { score += 20; rationale.push(`${pending.length} pending action(s)`); }
+    const pending = state.actions.filter(action => action.goalId === goal.id && ['planned', 'active'].includes(action.status)); if (pending.length) { score += 20; rationale.push(`${pending.length} pending action(s)`); }
     return { goal, score, rationale };
   }).sort((a, b) => b.score - a.score || a.goal.createdAt.localeCompare(b.goal.createdAt));
 }
@@ -34,7 +34,8 @@ function generateNextAction(goal: Goal, repeatedFailures: number): string { if (
 
 export function planAutonomousGoalCycle(state: MuninState, outcomes: OutcomeRecord[] = [], now = new Date()): AutonomousGoalDecision {
   const ranked = prioritizeGoals(state, now); if (!ranked.length) return { disposition: 'idle', rationale: ['No active/planned/blocked goals require work.'], repeatedFailures: 0 };
-  const selected = ranked[0]; const failures = relevantFailures(selected.goal, outcomes); const actions = state.actions.filter(action => action.goalId === selected.goal.id && ['planned', 'active', 'blocked'].includes(action.status)).sort((a, b) => priorityWeight[b.priority] - priorityWeight[a.priority] || a.createdAt.localeCompare(b.createdAt));
-  if (!actions.length) { const generatedActionTitle = generateNextAction(selected.goal, failures); return { disposition: 'plan', goal: selected.goal, generatedActionTitle, score: selected.score, rationale: [...selected.rationale, failures >= 2 ? 'replanning required after repeated failures' : 'goal has no pending action'], repeatedFailures: failures }; }
+  const selected = ranked[0]; const failures = relevantFailures(selected.goal, outcomes); const actions = state.actions.filter(action => action.goalId === selected.goal.id && ['planned', 'active'].includes(action.status)).sort((a, b) => priorityWeight[b.priority] - priorityWeight[a.priority] || a.createdAt.localeCompare(b.createdAt));
+  if (failures >= 2) { const generatedActionTitle = generateNextAction(selected.goal, failures); return { disposition: 'plan', goal: selected.goal, generatedActionTitle, score: selected.score, rationale: [...selected.rationale, 'replanning required after repeated failures'], repeatedFailures: failures }; }
+  if (!actions.length) { const generatedActionTitle = generateNextAction(selected.goal, failures); return { disposition: 'plan', goal: selected.goal, generatedActionTitle, score: selected.score, rationale: [...selected.rationale, 'goal has no pending action'], repeatedFailures: failures }; }
   const action = actions[0]; const guard = autonomyGuard(action.title); return { disposition: guard.allowed ? 'execute' : 'needs_user', goal: selected.goal, action, score: selected.score, rationale: [...selected.rationale, `selected action ${action.id}`, guard.reason], guard, repeatedFailures: failures };
 }
