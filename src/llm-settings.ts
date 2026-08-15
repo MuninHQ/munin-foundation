@@ -18,6 +18,13 @@ export type PublicLlmSettings = Omit<LlmSettings, 'apiKey'> & { hasApiKey: boole
 const file = () => runtimePath('llm-settings.json');
 const empty = (): LlmSettings => ({ enabled: false, provider: 'openai-compatible', baseUrl: '', apiKey: '', model: '', updatedAt: new Date(0).toISOString() });
 
+export function isLocalProviderUrl(value: string): boolean {
+  try {
+    const host = new URL(value).hostname.toLowerCase();
+    return host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.localhost');
+  } catch { return false; }
+}
+
 export async function loadLlmSettings(): Promise<LlmSettings> {
   try {
     const parsed = JSON.parse(await readFile(file(), 'utf8')) as Partial<LlmSettings>;
@@ -46,14 +53,15 @@ export async function saveLlmSettings(input: { enabled?: boolean; provider?: Llm
     enabled: input.enabled ?? current.enabled,
     provider: input.provider ?? current.provider,
     baseUrl: input.baseUrl === undefined ? current.baseUrl : input.baseUrl.trim(),
-    apiKey: input.apiKey === undefined || input.apiKey === '' ? current.apiKey : input.apiKey.trim(),
+    apiKey: input.apiKey === undefined ? current.apiKey : input.apiKey.trim(),
     model: input.model === undefined ? current.model : input.model.trim(),
     updatedAt: new Date().toISOString(),
   };
-  if (next.enabled && (!next.baseUrl || !next.apiKey || !next.model)) throw new Error('Base URL, API key e modelo são obrigatórios para ativar o provider.');
   if (next.baseUrl) {
     try { new URL(next.baseUrl); } catch { throw new Error('Base URL inválida.'); }
   }
+  const keyRequired = next.provider === 'anthropic' || !isLocalProviderUrl(next.baseUrl);
+  if (next.enabled && (!next.baseUrl || !next.model || (keyRequired && !next.apiKey))) throw new Error(keyRequired ? 'Base URL, API key e modelo são obrigatórios para ativar o provider.' : 'Base URL e modelo são obrigatórios para ativar o provider local.');
   await writeJsonAtomic(file(), next);
   return publicLlmSettings(next);
 }
