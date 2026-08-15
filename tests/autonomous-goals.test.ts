@@ -40,6 +40,7 @@ test('runner plans missing local action, executes it, validates it and completes
     const runner = new AutonomousGoalRunner(store, new SuccessfulRuntime(), new InMemoryOutcomeStore()); const result = await runner.run(5);
     assert.equal(result.status, 'completed'); assert.ok(result.cycles.some(cycle => cycle.decision.disposition === 'plan')); assert.ok(result.cycles.some(cycle => cycle.executedActionId));
     const current = (await service.listGoals()).find(item => item.id === goal.id)!; assert.equal(current.status, 'achieved'); assert.equal(current.progress, 100); assert.equal(current.evidence.length, 1); assert.equal(current.learnings.length, 1);
+    const sitrep = await service.sitrep(); assert.match(sitrep, /Autonomous goal loop:/); assert.match(sitrep, /executed/);
   } finally { if (previous === undefined) delete process.env.MUNIN_DATA_DIR; else process.env.MUNIN_DATA_DIR = previous; await rm(root, { recursive: true, force: true }); }
 });
 
@@ -49,5 +50,6 @@ test('runner stops only when a selected action needs user control', async () => 
     const store = new ContextStore(root); const service = new MuninService(store); const goal = await service.addGoal('Recruiter outreach', ['Message sent'], 'P0', 'munin'); await service.decomposeGoal(goal.id, ['Send email to recruiter']);
     const result = await new AutonomousGoalRunner(store, new SuccessfulRuntime(), new InMemoryOutcomeStore()).run(3);
     assert.equal(result.status, 'needs_user'); assert.equal(result.cycles.at(-1)?.decision.action?.title, 'Send email to recruiter'); const state = await store.load(); assert.equal(state.actions[0].status, 'planned');
+    const sitrep = await service.sitrep(); assert.match(sitrep, /needs user/);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
