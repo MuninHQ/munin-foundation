@@ -15,7 +15,7 @@ export interface CognitiveMemoryAdapter {
 export class NativeOnlyCognitiveMemory implements CognitiveMemoryAdapter {
   readonly candidate='yantrikdb' as const;
   async health():Promise<CognitiveHealth>{return {candidate:this.candidate,available:false,authoritative:false,detail:'No external cognitive adapter configured; Munin-native memory is active.'}}
-  async recall():Promise<CognitiveRecall[]>{return []}
+  async recall(_query:string,_limit=10):Promise<CognitiveRecall[]>{return []}
 }
 
 export function cognitiveMemoryPolicy(){return {
