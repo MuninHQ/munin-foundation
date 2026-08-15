@@ -10,6 +10,7 @@ function state(): MuninState {
     actions: [{ id: 'act-1', title: 'Ship dashboard', priority: 'P0', status: 'active', dueAt: '2026-08-06T12:00:00.000Z', createdAt: '2026-08-05T12:00:00.000Z', updatedAt: '2026-08-05T12:00:00.000Z' }],
     jobs: [{ id: 'job-1', company: 'Example Bank', role: 'Head of Product', status: 'interview', fitScore: 90, matchedSignals: ['product'], followUpAt: '2026-08-04T12:00:00.000Z', createdAt: '2026-08-01T12:00:00.000Z', updatedAt: '2026-08-01T12:00:00.000Z' }],
     research: [{ id: 'res-1', question: 'What should the dashboard show?', status: 'open', evidence: [{ id: 'evd-1', title: 'User needs', url: 'https://example.com', sourceType: 'primary', capturedAt: '2026-08-05T12:00:00.000Z' }], syntheses: [], createdAt: '2026-08-05T12:00:00.000Z', updatedAt: '2026-08-05T12:00:00.000Z' }],
+    goals: [],
     relations: [{ id: 'rel-1', sourceType: 'decision', sourceId: 'dec-1', type: 'blocks', targetType: 'action', targetId: 'act-1', createdAt: '2026-08-05T12:00:00.000Z' }],
   };
 }
@@ -26,7 +27,7 @@ test('command center consolidates operational domains and alerts', () => {
 });
 
 test('command center stays stable with empty state', () => {
-  const empty: MuninState = { projects: [], decisions: [], actions: [], jobs: [], research: [], relations: [] };
+  const empty: MuninState = { projects: [], decisions: [], actions: [], jobs: [], research: [], goals: [], relations: [] };
   const report = generateCommandCenter(empty, [], new Date('2026-08-05T15:00:00.000Z'));
   assert.match(report, /Health: STABLE/);
   assert.match(report, /No critical alerts/);
