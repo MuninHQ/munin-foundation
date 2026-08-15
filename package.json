@@ -21,6 +21,7 @@
     "executive-briefing-api": "npm run build:core && node dist/src/executive-briefing-api.js",
     "web": "vite --config apps/web/vite.config.ts",
     "workspace": "node scripts/launch.mjs",
+    "mobile": "node scripts/launch-mobile.mjs",
     "hud": "node scripts/launch-hud.mjs",
     "hud:kiosk": "node scripts/launch-hud.mjs --kiosk",
     "hud:startup:install": "powershell -ExecutionPolicy Bypass -File scripts/install-hud-startup.ps1",
