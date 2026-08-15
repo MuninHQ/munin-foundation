@@ -6,6 +6,7 @@ import { json, readJsonBody, requireText as text } from './http.js';
 import { MuninService } from './service.js';
 import { ContextStore } from './store.js';
 import { ContinuityMemoryStore, type MemoryInput } from './continuity-memory.js';
+import { chatGptExportSummary, parseChatGptExport } from './chatgpt-export.js';
 
 const store = new ContextStore();
 const service = new MuninService(store);
@@ -70,6 +71,19 @@ export async function handleMobileApi(request: IncomingMessage, response: Server
       const records = Array.isArray(input.records) ? input.records as MemoryInput[] : [];
       if (!records.length) return json(request, response, 400, { error: 'records must be a non-empty array' });
       return json(request, response, 200, await continuity.import(records));
+    }
+    if (request.method === 'POST' && url.pathname === '/api/mobile/memory/import-chatgpt') {
+      const input = await readJsonBody(request, 100_000_000);
+      const conversations = Array.isArray(input) ? input : input.conversations;
+      if (!Array.isArray(conversations)) return json(request, response, 400, { error: 'Expected ChatGPT conversations array.' });
+      const records = parseChatGptExport(conversations);
+      if (!records.length) return json(request, response, 400, { error: 'No user-authored continuity records found in this export.' });
+      const backup = await continuity.backup();
+      const result = await continuity.import(records);
+      return json(request, response, 200, { summary: chatGptExportSummary(records), result, backup });
+    }
+    if (request.method === 'POST' && url.pathname === '/api/mobile/memory/backup') {
+      return json(request, response, 200, await continuity.backup());
     }
     if (request.method === 'GET' && url.pathname === '/api/mobile/sitrep') {
       return json(request, response, 200, { report: await service.sitrep() });
