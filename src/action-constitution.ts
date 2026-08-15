@@ -9,7 +9,14 @@ export type PolicyResult={decision:PolicyDecision;rule:string;request:ActionRequ
 
 const secretPattern=/(?:api[_-]?key|secret|password|passwd|token|authorization|bearer|private[_-]?key)\s*[:=]\s*[^\s]{6,}/i;
 const protectedPathPattern=/(^|\/)(?:\.git|node_modules|data\/runtime)(\/|$)|(^|\/)\.env(?:\.|$)/i;
-const destructiveToolPattern=/(?:rm|del|remove|delete|drop|destroy|format|reset --hard|clean -fd)/i;
+const destructiveToolPattern=/(?:rm\s+-rf|reset\s+--hard|clean\s+-fd|drop\s+(?:database|table)|format\s+(?:disk|drive)|delete\s+(?:repository|repo|account|database|production))/i;
+const externalWriteIntent=/(?:send\s+(?:an?\s+)?(?:email|message)|publish\s+(?:to\s+)?(?:linkedin|social|web)|post\s+(?:to\s+)?(?:linkedin|slack|discord|teams)|make\s+(?:a\s+)?payment|purchase|buy\s+|deploy\s+(?:to\s+)?production|release\s+to\s+production)/i;
+
+export function classifyActionIntent(text:string,fallback:ActionClass='local-write'):ActionClass{
+ if(destructiveToolPattern.test(text))return 'destructive';
+ if(externalWriteIntent.test(text))return 'external-write';
+ return fallback;
+}
 
 export function evaluateAction(request:ActionRequest):PolicyResult{
  const text=`${request.tool} ${request.target??''} ${request.payloadPreview??''}`;
