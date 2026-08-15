@@ -21,6 +21,25 @@ test('adaptive roles and provider orchestration stay separate but coordinated', 
   assert.equal(observedProviderRoute, 'direct'); assert.equal(result.orchestration.localOnly, true); assert.equal(result.orchestration.maxCostPerCall, 0); assert.equal(result.outcome.orchestration?.route, 'direct');
 });
 
+test('repeated relevant direct failures escalate a later medium-risk task to council', async () => {
+  const store = new InMemoryOutcomeStore(); const engine = new AdaptiveExecutionEngine(store);
+  for (const id of ['learn-fail-1', 'learn-fail-2']) {
+    await assert.rejects(() => engine.execute(
+      { id, objective: 'Build flaky provider integration', capability: 'provider', kind: 'build', risk: 'medium' },
+      async (_task, _route, _prior, orchestration) => ({ evidence: [`route:${orchestration.route}`] }),
+      async () => ({ passed: false, checks: [{ name: 'provider-test', passed: false }] }),
+    ));
+  }
+  const learned = await engine.execute(
+    { id: 'learn-next', objective: 'Fix flaky provider integration', capability: 'provider', kind: 'build', risk: 'medium' },
+    async (_task, route, prior, orchestration) => { assert.equal(route.primary, 'builder'); assert.ok(prior.length >= 2); return { evidence: [`route:${orchestration.route}`] }; },
+    async () => ({ passed: true, checks: [{ name: 'provider-test', passed: true }] }),
+  );
+  assert.equal(learned.orchestration.route, 'council');
+  assert.ok(learned.orchestration.rationale.some(item => item.includes('Escalated after 2 relevant direct failures')));
+  assert.equal(learned.orchestration.maxCostPerCall, 0);
+});
+
 test('high-risk strategy work invokes council while preserving orchestrator and reviewer roles', async () => {
   const result = await new AdaptiveExecutionEngine(new InMemoryOutcomeStore()).execute(
     { id: 'bridge-2', objective: 'Decide architecture', capability: 'architecture', kind: 'strategy', risk: 'high' },
@@ -28,6 +47,7 @@ test('high-risk strategy work invokes council while preserving orchestrator and 
     async () => ({ passed: true, checks: [{ name: 'independent-review', passed: true }] }),
   );
   assert.equal(result.orchestration.route, 'council'); assert.deepEqual(result.orchestration.providerPreference, ['ollama-local', 'deterministic-local']);
+  assert.ok(result.orchestration.rationale.some(item => item.includes('Safety policy')));
 });
 
 test('reviewer gate rejects a false-success completion', async () => {
