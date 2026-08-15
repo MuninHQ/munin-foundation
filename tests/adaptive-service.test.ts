@@ -26,8 +26,8 @@ test('service execute passes through adaptive reviewer gate and persists learnin
     assert.equal((event.payload.validation as { passed: boolean }).passed, true);
     assert.equal(typeof event.payload.adaptiveOutcomeId, 'string');
 
-    const outcomes = JSON.parse(await readFile(path.join(root, 'adaptive-execution', 'outcomes.json'), 'utf8')) as { taskId: string; status: string }[];
-    assert.ok(outcomes.some(item => item.taskId === action.id && item.status === 'passed'));
+    const state = JSON.parse(await readFile(path.join(root, 'adaptive-outcomes.json'), 'utf8')) as { records: { taskId: string; status: string }[] };
+    assert.ok(state.records.some(item => item.taskId === action.id && item.status === 'passed'));
   } finally {
     if (previous === undefined) delete process.env.MUNIN_DATA_DIR; else process.env.MUNIN_DATA_DIR = previous;
     await rm(root, { recursive: true, force: true });
