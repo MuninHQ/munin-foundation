@@ -16,8 +16,17 @@ function actionScore(action: Action, state: MuninState): number {
   return score;
 }
 
+function adaptiveExecutionLine(event: MuninEvent): string | undefined {
+  if (event.type !== 'action.executed' || typeof event.payload.adaptiveOutcomeId !== 'string') return undefined;
+  const route = event.payload.route as { primary?: string; reviewers?: string[] } | undefined;
+  const validation = event.payload.validation as { passed?: boolean } | undefined;
+  const routeLabel = route?.primary ? `${route.primary}${route.reviewers?.length ? ` + ${route.reviewers.join(', ')}` : ''}` : 'unknown';
+  return `- ${event.entityId}: ${validation?.passed ? 'validated' : 'rejected'} — ${routeLabel} — memory ${event.payload.adaptiveOutcomeId}`;
+}
+
 export function generateSitrep(state: MuninState, events: MuninEvent[], since?: Date): string {
   const recent = since ? events.filter(event => new Date(event.timestamp) > since) : events.slice(-10);
+  const adaptive = recent.map(adaptiveExecutionLine).filter((line): line is string => Boolean(line));
   const active = state.projects.filter(p => p.status === 'active' || p.status === 'blocked')
     .sort((a, b) => a.priority.localeCompare(b.priority));
   const graphBlockers = state.relations.filter(r => r.type === 'blocks');
@@ -37,6 +46,9 @@ export function generateSitrep(state: MuninState, events: MuninEvent[], since?: 
     '',
     'Mudanças:',
     ...(recent.length ? recent.map(e => `- ${e.timestamp} — ${e.type}: ${e.entityType}/${e.entityId}`) : ['- Nenhuma mudança registrada.']),
+    '',
+    'Adaptive execution:',
+    ...(adaptive.length ? adaptive : ['- Nenhuma execução adaptativa na janela.']),
     '',
     'Prioridades:',
     ...(active.length ? active.map(p => `- [${p.priority}] ${p.name} — ${p.currentOutcome}`) : ['- Nenhum projeto ativo.']),
