@@ -4,12 +4,13 @@ import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname);
 const apiTarget = `http://127.0.0.1:${process.env.MUNIN_API_PORT ?? 4310}`;
+const allowedHosts = ['localhost', '127.0.0.1', '.ts.net'];
 
 export default defineConfig({
   root,
   plugins: [react()],
-  server: { proxy: { '/api': apiTarget } },
-  preview: { proxy: { '/api': apiTarget } },
+  server: { allowedHosts, proxy: { '/api': apiTarget } },
+  preview: { allowedHosts, proxy: { '/api': apiTarget } },
   build: {
     outDir: path.resolve(root, '../../dist-web'),
     emptyOutDir: true,
