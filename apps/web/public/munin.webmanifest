@@ -1,0 +1,10 @@
+{
+  "name": "Munin Mobile",
+  "short_name": "Munin",
+  "start_url": "/mobile.html",
+  "display": "standalone",
+  "background_color": "#050b14",
+  "theme_color": "#07111f",
+  "description": "Munin mobile command center",
+  "icons": []
+}
