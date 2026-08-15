@@ -2,7 +2,7 @@
 
 ## Status
 
-Initial implementation for issue #110.
+Core implementation and first user-facing integration for issue #110.
 
 ## Purpose
 
@@ -33,6 +33,8 @@ This layer complements the existing `IntelligenceOrchestrationPlanner`: provider
 
 A task cannot return a successful `ExecuteResult` when validation fails. Failed validation is recorded as an outcome first, then the engine raises an error identifying failed checks. This prevents false-success completion while preserving the failure as future learning evidence.
 
+The user-facing `munin execute <action-id> <outcome>` path now passes through this gate before an action is marked `done`. Successful execution records its route, validation result, prior-outcome count, and adaptive outcome ID in the normal Munin event stream.
+
 ## Outcome memory
 
 `OutcomeStore` is an interface with two adapters:
@@ -40,7 +42,7 @@ A task cannot return a successful `ExecuteResult` when validation fails. Failed 
 - `InMemoryOutcomeStore` for deterministic tests and isolated execution.
 - `JsonOutcomeStore` for runtime persistence using Munin's existing crash-safe atomic JSON storage.
 
-`AdaptiveExecutionEngine` defaults to the persistent JSON adapter at `data/runtime/adaptive-outcomes.json` (or the configured `MUNIN_DATA_DIR`). The store retains the 500 most recent records and retrieves up to five relevant prior outcomes for each task.
+`AdaptiveExecutionEngine` defaults to the persistent JSON adapter under the configured runtime data directory. The store retains the 500 most recent records and retrieves up to five relevant prior outcomes for each task.
 
 Each outcome records:
 
@@ -53,6 +55,10 @@ Each outcome records:
 - timestamp.
 
 Relevant prior outcomes are retrieved before execution and provided to the runner. This creates a simple outcome-learning loop without a vector database or paid infrastructure.
+
+## SITREP visibility
+
+SITREP reads adaptive metadata from recent `action.executed` events and exposes a dedicated `Adaptive execution` section. For each execution it shows whether reviewer validation passed, the execution route, and the persistent outcome-memory identifier.
 
 ## Lifecycle hooks
 
@@ -77,6 +83,6 @@ Hooks are sequential and deterministic by design.
 
 ## Next increment
 
-1. Connect Adaptive Execution to the user-facing `EXECUTE` command/API surface.
-2. Bridge task routing with existing provider/council orchestration without merging their responsibilities.
-3. Expose execution/outcome evidence to SITREP.
+1. Bridge task routing with existing provider/council orchestration without merging their responsibilities.
+2. Replace the first deterministic execution evidence adapter with capability-specific evidence producers as those execution surfaces mature.
+3. Add richer outcome-learning signals (failure categories and reviewer feedback) while keeping storage local-first.
