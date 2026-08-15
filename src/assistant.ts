@@ -4,6 +4,7 @@ import { generateDailyBrief, resolveContext, type ContextMatch } from './intelli
 import type { JobStatus, Priority } from './types.js';
 import { clearAssistantMemory, loadAssistantMemory, rememberTurn, type AssistantEntity } from './assistant-memory.js';
 import { normalizeWithLlm } from './llm-provider.js';
+import { answerFromContinuity } from './continuity-context.js';
 
 export type AssistantResult = { kind:'message'|'sitrep'|'created'|'context'; message:string; data?:unknown; mutated?:boolean; entity?:AssistantEntity; interpretedBy?:'local'|'llm' };
 
@@ -27,8 +28,8 @@ export async function executeAssistantCommand(raw:string,allowLlm=true,rememberU
   if(/\b(sitrep|status report|relatório de status)\b/i.test(command)) return finish({kind:'sitrep',message:await service.sitrep(),interpretedBy:'local'});
   if(/\b(prioridades|priorizar|foco de hoje|o que devo fazer hoje|meu dia)\b/i.test(command)) {const brief=generateDailyBrief(state);return finish({kind:'message',message:[brief.headline,...brief.priorities.map((x,i)=>`${i+1}. ${x}`),...brief.alerts.map(x=>`Atenção: ${x}`)].join('\n'),data:brief,interpretedBy:'local'});}
 
-  const explicitQuery=command.match(/^(?:buscar|pesquisar|encontrar|me mostre|mostre|o que temos sobre|o que sabe sobre|detalhes de)\s+(.+)$/i);
-  if(explicitQuery){const matches=resolveContext(state,explicitQuery[1]);if(matches.length){const entity=entityFromMatch(matches[0]);return finish({kind:'context',message:`Contexto principal: ${entity.label}\n${entitySummary(state,entity)}`,data:matches.slice(0,12),entity,interpretedBy:'local'});}return finish({kind:'message',message:`Não encontrei contexto para “${explicitQuery[1]}”.`,interpretedBy:'local'});}
+  const explicitQuery=command.match(/^(?:buscar|pesquisar|encontrar|me mostre|mostre|o que temos sobre|o que sabe sobre|detalhes de|lembrar|lembre de)\s+(.+)$/i);
+  if(explicitQuery){const matches=resolveContext(state,explicitQuery[1]);if(matches.length){const entity=entityFromMatch(matches[0]);return finish({kind:'context',message:`Contexto principal: ${entity.label}\n${entitySummary(state,entity)}`,data:matches.slice(0,12),entity,interpretedBy:'local'});}const continuity=await answerFromContinuity(explicitQuery[1]);if(continuity)return finish({kind:'context',message:continuity,interpretedBy:'local'});return finish({kind:'message',message:`Não encontrei contexto para “${explicitQuery[1]}”.`,interpretedBy:'local'});}
   if(/^(?:mais detalhes|detalhes|continue|continua|e agora\??)$/i.test(command)&&memory.lastEntity){return finish({kind:'context',message:entitySummary(state,memory.lastEntity),entity:memory.lastEntity,interpretedBy:'local'});}
 
   const action=command.match(/^(?:criar|adicione|adicionar|nova?)\s+(?:uma\s+)?a[cç][aã]o\s*[:\-]?\s*(.+)$/i);
@@ -46,10 +47,11 @@ export async function executeAssistantCommand(raw:string,allowLlm=true,rememberU
 
   const matches=resolveContext(state,command);
   if(matches.length){const entity=entityFromMatch(matches[0]);return finish({kind:'context',message:`Acho que você está falando de ${entity.label}.\n${entitySummary(state,entity)}`,data:matches.slice(0,12),entity,interpretedBy:'local'});}
+  const continuity=await answerFromContinuity(command);if(continuity)return finish({kind:'context',message:continuity,interpretedBy:'local'});
   if(memory.lastEntity&&/\b(ela|ele|isso|essa|esse|dela|dele)\b/i.test(command))return finish({kind:'context',message:`Entendi a referência como ${memory.lastEntity.label}. Diga a ação desejada — por exemplo “criar follow-up”, “mais detalhes” ou “marcar como entrevista”.`,entity:memory.lastEntity,interpretedBy:'local'});
 
   if(allowLlm){
     try{const normalized=await normalizeWithLlm(command);if(normalized?.command&&normalized.command.toLowerCase()!==command.toLowerCase()){const result=await executeAssistantCommand(normalized.command,false,false);return {...result,interpretedBy:'llm'};}if(normalized?.reply)return finish({kind:'message',message:normalized.reply,interpretedBy:'llm'});}catch(error){return finish({kind:'message',message:`Não consegui interpretar esse pedido pelo provider configurado (${error instanceof Error?error.message:String(error)}). O modo local continua disponível.`,interpretedBy:'local'});}
   }
-  return finish({kind:'message',message:'Ainda não consegui interpretar esse pedido. O modo local entende comandos de carreira, projetos, pesquisas, SITREP e contexto. Se um provider LLM estiver configurado, pedidos livres também serão normalizados com segurança.',interpretedBy:'local'});
+  return finish({kind:'message',message:'Ainda não consegui interpretar esse pedido. O modo local entende carreira, projetos, pesquisas, SITREP e memória de continuidade. Se um provider LLM estiver configurado, pedidos livres também serão normalizados com segurança.',interpretedBy:'local'});
 }

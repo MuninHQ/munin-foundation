@@ -5,9 +5,11 @@ import { executeAssistantCommand } from './assistant.js';
 import { json, readJsonBody, requireText as text } from './http.js';
 import { MuninService } from './service.js';
 import { ContextStore } from './store.js';
+import { ContinuityMemoryStore, type MemoryInput } from './continuity-memory.js';
 
 const store = new ContextStore();
 const service = new MuninService(store);
+const continuity = new ContinuityMemoryStore();
 
 function configuredToken(): string | undefined {
   const value = process.env.MUNIN_MOBILE_TOKEN?.trim();
@@ -52,7 +54,22 @@ export async function handleMobileApi(request: IncomingMessage, response: Server
         goals,
         pendingActions,
         decisions: state.decisions.filter(decision => decision.status === 'required').slice(0, 8),
+        continuityMemory: await continuity.stats(),
       });
+    }
+    if (request.method === 'GET' && url.pathname === '/api/mobile/memory/stats') {
+      return json(request, response, 200, await continuity.stats());
+    }
+    if (request.method === 'GET' && url.pathname === '/api/mobile/memory/search') {
+      const query = url.searchParams.get('q')?.trim() ?? '';
+      if (!query) return json(request, response, 400, { error: 'q is required' });
+      return json(request, response, 200, { query, records: await continuity.search(query, 20) });
+    }
+    if (request.method === 'POST' && url.pathname === '/api/mobile/memory/import') {
+      const input = await readJsonBody(request, 1_000_000);
+      const records = Array.isArray(input.records) ? input.records as MemoryInput[] : [];
+      if (!records.length) return json(request, response, 400, { error: 'records must be a non-empty array' });
+      return json(request, response, 200, await continuity.import(records));
     }
     if (request.method === 'GET' && url.pathname === '/api/mobile/sitrep') {
       return json(request, response, 200, { report: await service.sitrep() });
