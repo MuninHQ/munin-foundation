@@ -1,0 +1,29 @@
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { randomUUID } from 'node:crypto';
+
+export type ProjectMemoryKind='decision'|'requirement'|'idea'|'research'|'rejected'|'backlog'|'architecture'|'lesson_learned'|'session_summary';
+export type ProjectMemoryStatus='current'|'superseded'|'archived';
+export type ProjectMemoryRecord={id:string;kind:ProjectMemoryKind;title:string;content:string;project:string;source:string;observedAt:string;confidence:'confirmed'|'inferred';tags:string[];status:ProjectMemoryStatus;supersedes:string[];relatedIssues:string[]};
+export type ProjectMemoryInput=Omit<ProjectMemoryRecord,'id'|'status'|'supersedes'|'relatedIssues'> & {id?:string;status?:ProjectMemoryStatus;supersedes?:string[];relatedIssues?:string[]};
+
+const DEFAULT_FILE=path.resolve('data/runtime/project-memory.json');
+const normalize=(value:string)=>value.trim().toLocaleLowerCase().replace(/\s+/g,' ');
+const words=(value:string)=>new Set(normalize(value).split(/[^\p{L}\p{N}#]+/u).filter(Boolean));
+const ts=(value:string)=>Date.parse(value)||0;
+
+export function isMuninProjectRelevant(input:string):boolean{return /\bmunin\b/i.test(input)||/MuninHQ\/munin-foundation/i.test(input)}
+
+export class ProjectMemoryStore {
+  constructor(private readonly file=DEFAULT_FILE){}
+  private async loadAll():Promise<ProjectMemoryRecord[]>{try{return JSON.parse(await fs.readFile(this.file,'utf8')) as ProjectMemoryRecord[]}catch(error:any){if(error?.code==='ENOENT')return [];throw error}}
+  private async saveAll(records:ProjectMemoryRecord[]){await fs.mkdir(path.dirname(this.file),{recursive:true});await fs.writeFile(this.file,JSON.stringify(records,null,2)+'\n','utf8')}
+  async capture(raw:ProjectMemoryInput){if(!raw.kind||!raw.title?.trim()||!raw.content?.trim()||!raw.source?.trim()||!raw.observedAt)throw new Error('Project memory requires kind, title, content, source and observedAt.');const records=await this.loadAll();const input={...raw,project:raw.project?.trim()||'munin',title:raw.title.trim(),content:raw.content.trim(),tags:[...new Set((raw.tags??[]).map(x=>x.trim()).filter(Boolean))],relatedIssues:[...new Set(raw.relatedIssues??[])]};const exact=records.find(record=>record.kind===input.kind&&normalize(record.title)===normalize(input.title)&&normalize(record.content)===normalize(input.content));if(exact){Object.assign(exact,{...input,id:exact.id,status:input.status??exact.status,supersedes:[...new Set([...(exact.supersedes??[]),...(input.supersedes??[])])]});await this.saveAll(records);return {record:exact,created:false,superseded:0};}
+    const current=records.filter(record=>record.kind===input.kind&&normalize(record.title)===normalize(input.title)&&record.status==='current').sort((a,b)=>ts(b.observedAt)-ts(a.observedAt))[0];const shouldSupersede=Boolean(current&&ts(input.observedAt)>ts(current.observedAt)&&(input.confidence==='confirmed'||current.confidence==='inferred'));if(shouldSupersede&&current)current.status='superseded';const record:ProjectMemoryRecord={...input,id:input.id??randomUUID(),status:input.status??'current',supersedes:[...new Set([...(input.supersedes??[]),...(shouldSupersede&&current?[current.id]:[])])],relatedIssues:input.relatedIssues};records.push(record);await this.saveAll(records);return {record,created:true,superseded:shouldSupersede?1:0};}
+  async search(query:string,limit=20,includeHistorical=false){const q=words(query);return (await this.loadAll()).filter(record=>includeHistorical||record.status==='current').map(record=>{const hay=words(`${record.kind} ${record.title} ${record.content} ${record.tags.join(' ')} ${record.relatedIssues.join(' ')}`);let score=0;for(const token of q)if(hay.has(token))score++;if(normalize(record.title).includes(normalize(query)))score+=4;if(record.confidence==='confirmed')score+=.5;return {record,score}}).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||ts(b.record.observedAt)-ts(a.record.observedAt)).slice(0,limit).map(x=>x.record)}
+  async currentState(limit=100){return (await this.loadAll()).filter(record=>record.status==='current').sort((a,b)=>ts(b.observedAt)-ts(a.observedAt)).slice(0,limit)}
+  async reconstruct(query='munin'){const records=await this.search(query,50);const grouped=new Map<ProjectMemoryKind,ProjectMemoryRecord[]>();for(const record of records){const list=grouped.get(record.kind)??[];list.push(record);grouped.set(record.kind,list)}return {project:'munin',generatedAt:new Date().toISOString(),records,byKind:Object.fromEntries([...grouped.entries()])};}
+  async exportMarkdown(){const records=await this.currentState();const lines=['# Munin Project Memory','',`Generated: ${new Date().toISOString()}`,''];for(const record of records){lines.push(`## ${record.title}`,`- Kind: ${record.kind}`,`- Date: ${record.observedAt}`,`- Source: ${record.source}`,`- Confidence: ${record.confidence}`,record.relatedIssues.length?`- Issues: ${record.relatedIssues.join(', ')}`:'', '',record.content,'');}return lines.filter((line,index,all)=>line!==''||all[index-1]!== '').join('\n')+'\n'}
+  async stats(){const records=await this.loadAll();return {total:records.length,current:records.filter(x=>x.status==='current').length,superseded:records.filter(x=>x.status==='superseded').length,archived:records.filter(x=>x.status==='archived').length,byKind:Object.fromEntries((['decision','requirement','idea','research','rejected','backlog','architecture','lesson_learned','session_summary'] as ProjectMemoryKind[]).map(kind=>[kind,records.filter(x=>x.kind===kind).length]))}}
+  async backup(directory=path.join(path.dirname(this.file),'backups')){const records=await this.loadAll();await fs.mkdir(directory,{recursive:true});const stamp=new Date().toISOString().replace(/[:.]/g,'-');const target=path.join(directory,`project-memory-${stamp}.json`);await fs.writeFile(target,JSON.stringify(records,null,2)+'\n','utf8');return {path:target,records:records.length}}
+}
