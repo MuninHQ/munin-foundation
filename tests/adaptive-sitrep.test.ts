@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { generateSitrep } from '../src/sitrep.js';
 import type { MuninEvent, MuninState } from '../src/types.js';
 
-const state: MuninState = { projects: [], decisions: [], actions: [], jobs: [], research: [], relations: [] };
+const state: MuninState = { projects: [], decisions: [], actions: [], jobs: [], research: [], goals: [], relations: [] };
 
 test('sitrep exposes reviewer validation and outcome memory for adaptive executions', () => {
   const event: MuninEvent = {
