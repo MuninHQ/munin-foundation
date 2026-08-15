@@ -2,19 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildApiSnapshot, validateState } from '../src/foundation.js';
 import type { MuninState } from '../src/types.js';
-
 const emptyState = (): MuninState => ({ projects: [], decisions: [], actions: [], jobs: [], research: [], goals: [], relations: [] });
-
-test('foundation validates a consistent state', () => {
-  const state = emptyState();
-  state.projects.push({ id: 'prj-1', name: 'Foundation', priority: 'P1', status: 'active', currentOutcome: 'Hardening', blockers: [], updatedAt: '2026-08-05T12:00:00.000Z' });
-  state.actions.push({ id: 'act-1', title: 'Validate state', projectId: 'prj-1', priority: 'P1', status: 'planned', createdAt: '2026-08-05T12:00:00.000Z', updatedAt: '2026-08-05T12:00:00.000Z' });
-  state.relations.push({ id: 'rel-1', sourceType: 'action', sourceId: 'act-1', type: 'supports', targetType: 'project', targetId: 'prj-1', createdAt: '2026-08-05T12:00:00.000Z' });
-  const report = validateState(state, new Date('2026-08-05T13:00:00.000Z')); assert.equal(report.valid, true); assert.equal(report.issues.length, 0); assert.equal(report.counts.relations, 1);
-});
-
-test('foundation detects dangling project references', () => { const state = emptyState(); state.actions.push({ id: 'act-1', title: 'Dangling', projectId: 'missing', priority: 'P1', status: 'planned', createdAt: '2026-08-05T12:00:00.000Z', updatedAt: '2026-08-05T12:00:00.000Z' }); const report = validateState(state); assert.equal(report.valid, false); assert.ok(report.issues.some(issue => issue.code === 'dangling_action_project')) });
-
-test('foundation detects stale active projects', () => { const state = emptyState(); state.projects.push({ id: 'prj-1', name: 'Stale', priority: 'P1', status: 'active', currentOutcome: 'Old', blockers: [], updatedAt: '2026-07-01T00:00:00.000Z' }); const report = validateState(state, new Date('2026-08-05T00:00:00.000Z')); assert.ok(report.issues.some(issue => issue.code === 'stale_active_project')) });
-
-test('api snapshot is read-only and bounded', () => { const state = emptyState(); state.jobs.push({ id: 'job-1', company: 'Acme', role: 'Payments Product', status: 'discovered', fitScore: 85, matchedSignals: ['payments'], createdAt: '2026-08-05T12:00:00.000Z', updatedAt: '2026-08-05T12:00:00.000Z' }); const snapshot = buildApiSnapshot(state, []); assert.equal(snapshot.readOnly, true); assert.equal(snapshot.state.jobs.length, 1); });
+test('foundation validates a consistent state', () => { const state = emptyState(); state.projects.push({ id: 'prj-1', name: 'Foundation', priority: 'P1', status: 'active', currentOutcome: 'Hardening', blockers: [], updatedAt: '2026-08-05T12:00:00.000Z' }); state.actions.push({ id: 'act-1', title: 'Validate state', projectId: 'prj-1', priority: 'P1', status: 'planned', createdAt: '2026-08-05T12:00:00.000Z', updatedAt: '2026-08-05T12:00:00.000Z' }); state.relations.push({ id: 'rel-1', sourceType: 'action', sourceId: 'act-1', type: 'supports', targetType: 'project', targetId: 'prj-1', createdAt: '2026-08-05T12:00:00.000Z' }); const report = validateState(state, new Date('2026-08-05T13:00:00.000Z')); assert.equal(report.valid, true); assert.equal(report.issues.length, 0); assert.equal(report.counts.relations, 1); });
+test('foundation detects dangling project references', () => { const state = emptyState(); state.actions.push({ id: 'act-1', title: 'Dangling', projectId: 'missing', priority: 'P1', status: 'planned', createdAt: '2026-08-05T12:00:00.000Z', updatedAt: '2026-08-05T12:00:00.000Z' }); const report = validateState(state); assert.equal(report.valid, false); assert.ok(report.issues.some(issue => issue.code === 'dangling_action_project')); });
+test('foundation detects stale active projects', () => { const state = emptyState(); state.projects.push({ id: 'prj-1', name: 'Stale', priority: 'P1', status: 'active', currentOutcome: 'Old', blockers: [], updatedAt: '2026-07-01T00:00:00.000Z' }); const report = validateState(state, new Date('2026-08-05T00:00:00.000Z')); assert.ok(report.issues.some(issue => issue.code === 'stale_active_project')); });
+test('api snapshot exposes bounded read-only-style data contract', () => { const state = emptyState(); state.jobs.push({ id: 'job-1', company: 'Acme', role: 'Payments Product', status: 'discovered', fitScore: 85, matchedSignals: ['payments'], createdAt: '2026-08-05T12:00:00.000Z', updatedAt: '2026-08-05T12:00:00.000Z' }); const snapshot = buildApiSnapshot(state); assert.equal(snapshot.schemaVersion, '1.0'); assert.equal(snapshot.data.jobs.length, 1); assert.equal(snapshot.summary.activeJobs, 1); });
