@@ -21,3 +21,9 @@ test('newer confirmed memory supersedes an older record and backups remain local
  assert.equal(result.superseded,1);const active=await store.search('Work style');assert.equal(active.length,1);assert.match(active[0].content,/autonomously/);
  const stats=await store.stats();assert.equal(stats.freshness.stale,1);const backup=await store.backup(path.join(dir,'backups'));const saved=JSON.parse(await readFile(backup.path,'utf8'));assert.equal(saved.length,2);await rm(dir,{recursive:true,force:true});
 });
+
+test('user can inspect correct export delete and clear local memory',async()=>{
+ const dir=await mkdtemp(path.join(tmpdir(),'munin-memory-trust-'));const store=new ContinuityMemoryStore(path.join(dir,'memory.json'));await store.import([{kind:'identity',subject:'City',content:'Old city',tags:['identity'],source:'import',confidence:'inferred',observedAt:'2026-01-01'}]);
+ const listed=await store.list();assert.equal(listed.length,1);const id=listed[0].id;const corrected=await store.correct(id,{subject:'City',content:'Correct city',tags:['identity','corrected'],confidence:'confirmed'});assert.equal(corrected.content,'Correct city');assert.match(corrected.source,/user-corrected/);assert.equal((await store.export()).records[0].content,'Correct city');assert.equal((await store.remove(id)).removed,true);assert.equal((await store.stats()).total,0);
+ await store.import([{kind:'goal',subject:'Goal',content:'Temporary',tags:['goal'],source:'manual',confidence:'confirmed',observedAt:'2026-08-15'}]);const cleared=await store.clear();assert.equal(cleared.cleared,true);assert.equal(cleared.backup.records,1);assert.equal((await store.stats()).total,0);await rm(dir,{recursive:true,force:true});
+});
