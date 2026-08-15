@@ -7,10 +7,12 @@ import { MuninService } from './service.js';
 import { ContextStore } from './store.js';
 import { ContinuityMemoryStore, type MemoryInput } from './continuity-memory.js';
 import { chatGptExportSummary, parseChatGptExport } from './chatgpt-export.js';
+import { ProjectMemoryStore, type ProjectMemoryInput } from './project-memory.js';
 
 const store = new ContextStore();
 const service = new MuninService(store);
 const continuity = new ContinuityMemoryStore();
+const projectMemory = new ProjectMemoryStore();
 
 function configuredToken(): string | undefined {
   const value = process.env.MUNIN_MOBILE_TOKEN?.trim();
@@ -56,6 +58,7 @@ export async function handleMobileApi(request: IncomingMessage, response: Server
         pendingActions,
         decisions: state.decisions.filter(decision => decision.status === 'required').slice(0, 8),
         continuityMemory: await continuity.stats(),
+        projectMemory: await projectMemory.stats(),
       });
     }
     if (request.method === 'GET' && url.pathname === '/api/mobile/memory/stats') {
@@ -84,6 +87,28 @@ export async function handleMobileApi(request: IncomingMessage, response: Server
     }
     if (request.method === 'POST' && url.pathname === '/api/mobile/memory/backup') {
       return json(request, response, 200, await continuity.backup());
+    }
+    if (request.method === 'GET' && url.pathname === '/api/mobile/project-memory/stats') {
+      return json(request, response, 200, await projectMemory.stats());
+    }
+    if (request.method === 'GET' && url.pathname === '/api/mobile/project-memory/search') {
+      const query = url.searchParams.get('q')?.trim() ?? '';
+      if (!query) return json(request, response, 400, { error: 'q is required' });
+      return json(request, response, 200, { query, records: await projectMemory.search(query, 30) });
+    }
+    if (request.method === 'GET' && url.pathname === '/api/mobile/project-memory/state') {
+      const query = url.searchParams.get('q')?.trim() || 'munin';
+      return json(request, response, 200, await projectMemory.reconstruct(query));
+    }
+    if (request.method === 'POST' && url.pathname === '/api/mobile/project-memory/capture') {
+      const input = await readJsonBody(request, 500_000);
+      return json(request, response, 200, await projectMemory.capture(input as ProjectMemoryInput));
+    }
+    if (request.method === 'POST' && url.pathname === '/api/mobile/project-memory/backup') {
+      return json(request, response, 200, await projectMemory.backup());
+    }
+    if (request.method === 'GET' && url.pathname === '/api/mobile/project-memory/export') {
+      return json(request, response, 200, { markdown: await projectMemory.exportMarkdown() });
     }
     if (request.method === 'GET' && url.pathname === '/api/mobile/sitrep') {
       return json(request, response, 200, { report: await service.sitrep() });
