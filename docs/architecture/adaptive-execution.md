@@ -35,7 +35,12 @@ A task cannot return a successful `ExecuteResult` when validation fails. Failed 
 
 ## Outcome memory
 
-`OutcomeStore` is an interface. The first implementation includes `InMemoryOutcomeStore` for deterministic tests and contract validation. A persistent adapter should reuse Munin storage/context primitives rather than introducing another database.
+`OutcomeStore` is an interface with two adapters:
+
+- `InMemoryOutcomeStore` for deterministic tests and isolated execution.
+- `JsonOutcomeStore` for runtime persistence using Munin's existing crash-safe atomic JSON storage.
+
+`AdaptiveExecutionEngine` defaults to the persistent JSON adapter at `data/runtime/adaptive-outcomes.json` (or the configured `MUNIN_DATA_DIR`). The store retains the 500 most recent records and retrieves up to five relevant prior outcomes for each task.
 
 Each outcome records:
 
@@ -47,7 +52,7 @@ Each outcome records:
 - tags;
 - timestamp.
 
-Relevant prior outcomes are retrieved before execution and provided to the runner.
+Relevant prior outcomes are retrieved before execution and provided to the runner. This creates a simple outcome-learning loop without a vector database or paid infrastructure.
 
 ## Lifecycle hooks
 
@@ -72,7 +77,6 @@ Hooks are sequential and deterministic by design.
 
 ## Next increment
 
-1. Add a JSON-backed persistent `OutcomeStore` using existing atomic storage primitives.
-2. Connect Adaptive Execution to the `EXECUTE` command/API surface.
-3. Bridge task routing with existing provider/council orchestration without merging their responsibilities.
-4. Expose execution/outcome evidence to SITREP.
+1. Connect Adaptive Execution to the user-facing `EXECUTE` command/API surface.
+2. Bridge task routing with existing provider/council orchestration without merging their responsibilities.
+3. Expose execution/outcome evidence to SITREP.
