@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/**'
       - 'tests/**'
+      - 'apps/web/**'
       - 'package.json'
       - 'tsconfig.json'
       - '.github/workflows/munin-ci.yml'
