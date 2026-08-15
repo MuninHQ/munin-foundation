@@ -14,13 +14,14 @@ const ephemeral=[
  /\b(filme|série|cena pós.?crédito|música|cerveja|chopp|clima|tempo hoje)\b/i,
 ];
 const durableIntent=/\b(decidi|decidimos|fica decidido|lembre|guardar|manter|daqui pra frente|sempre|nunca|preferência|objetivo|meta)\b/i;
+const durableKinds=new Set(['preference','goal','decision','project','career']);
 
 export function memoryRelevance(record:MemoryInput):RelevanceResult{
  const text=`${record.subject}\n${record.content}\n${record.tags.join(' ')}`;let score=0.35;const reasons:string[]=[];
  for(const rule of durable)if(rule.test(text)){score+=0.22;reasons.push('durable-domain')}
- if(record.kind==='preference'||record.kind==='goal'||record.kind==='decision'||record.kind==='project'){score+=0.18;reasons.push(`durable-kind:${record.kind}`)}
+ if(durableKinds.has(record.kind)){score+=record.kind==='career'?0.1:0.18;reasons.push(`durable-kind:${record.kind}`)}
  const casual=ephemeral.some(rule=>rule.test(text));if(casual){score-=0.42;reasons.push('ephemeral-domain')}
- if(casual&&durableIntent.test(text)){score+=0.4;reasons.push('durable-intent-overrides-ephemeral')}
+ if(casual&&durableIntent.test(text)){score+=0.5;reasons.push('durable-intent-overrides-ephemeral')}
  score=Math.max(0,Math.min(1,score));return {score,decision:score>=0.8?'keep':score>=0.55?'review':'drop',reasons:[...new Set(reasons)]};
 }
 
