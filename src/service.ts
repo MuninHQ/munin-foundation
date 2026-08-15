@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { ContextStore } from './store.js';
 import { generateSitrep } from './sitrep.js';
+import { AdaptiveExecutionEngine, JsonOutcomeStore, type ValidationResult } from './adaptive-execution.js';
 import type { Action, CareerQueueItem, ContextRelation, Decision, EntityType, JobOpportunity, JobStatus, Priority, Project, RelatedContext, RelationType, ResearchEvidence, ResearchRecord, ResearchSynthesis, Status } from './types.js';
 
 const careerSignals = ['payments', 'open finance', 'open banking', 'artificial intelligence', 'ai', 'blockchain', 'digital assets', 'product', 'leadership', 'financial infrastructure', 'fintech'];
@@ -55,8 +56,28 @@ export class MuninService {
   }
   async execute(actionId: string, outcome: string): Promise<Action> {
     const state = await this.store.load(); const action = state.actions.find(item => item.id === actionId); if (!action) throw new Error(`Action not found: ${actionId}`);
-    action.status = 'done'; action.outcome = outcome; action.updatedAt = new Date().toISOString(); const project = action.projectId ? state.projects.find(item => item.id === action.projectId) : undefined;
-    if (project) { project.currentOutcome = outcome; project.updatedAt = action.updatedAt; } await this.store.save(state); await this.store.event('action.executed', 'action', action.id, { outcome, projectId: action.projectId }); return action;
+    const engine = new AdaptiveExecutionEngine(new JsonOutcomeStore());
+    const result = await engine.execute(
+      { id: action.id, objective: action.title, capability: action.projectId ? `project:${action.projectId}` : 'action', kind: 'build', risk: action.priority === 'P0' ? 'high' : 'medium', context: { projectId: action.projectId, proposedOutcome: outcome } },
+      async (_task, route, prior) => ({
+        evidence: [
+          `action:${action.id}`,
+          `outcome:${outcome.trim()}`,
+          `route:${route.primary}${route.reviewers.length ? `+${route.reviewers.join('+')}` : ''}`,
+          `prior-outcomes:${prior.length}`,
+        ],
+        lesson: `Action ${action.id} completed with reviewer-gated outcome: ${outcome.trim()}`,
+      }),
+      async (_task, evidence): Promise<ValidationResult> => {
+        const checks = [
+          { name: 'outcome-present', passed: outcome.trim().length > 0, evidence: outcome.trim() || 'empty outcome' },
+          { name: 'execution-evidence', passed: evidence.length >= 3, evidence: `${evidence.length} evidence records` },
+        ];
+        return { passed: checks.every(check => check.passed), checks };
+      },
+    );
+    action.status = 'done'; action.outcome = outcome.trim(); action.updatedAt = new Date().toISOString(); const project = action.projectId ? state.projects.find(item => item.id === action.projectId) : undefined;
+    if (project) { project.currentOutcome = action.outcome; project.updatedAt = action.updatedAt; } await this.store.save(state); await this.store.event('action.executed', 'action', action.id, { outcome: action.outcome, projectId: action.projectId, adaptiveOutcomeId: result.outcome.id, route: result.route, validation: result.validation, priorOutcomes: result.priorOutcomes.length }); return action;
   }
 
   async addJob(company: string, role: string, description = ''): Promise<JobOpportunity> {
