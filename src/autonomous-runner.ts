@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { JsonOutcomeStore, type OutcomeStore } from './adaptive-execution.js';
+import { JsonOutcomeStore, type OutcomeRecord, type OutcomeStore } from './adaptive-execution.js';
 import { planAutonomousGoalCycle, prioritizeGoals, type AutonomousCycleRecord, type AutonomousLoopResult } from './autonomous-goals.js';
 import { ExecutionEngine, type ExecutionPlan } from './runtime.js';
 import { MuninService } from './service.js';
@@ -16,6 +16,22 @@ export class AutonomousGoalRunner {
     private readonly runtime: GoalRuntime = new ExecutionEngine(),
     private readonly outcomes: OutcomeStore = new JsonOutcomeStore(),
   ) {}
+
+  private async saveRuntimeFailure(goalId: string, goalTitle: string, actionId: string, actionTitle: string, evidence: string[]): Promise<void> {
+    const record: OutcomeRecord = {
+      id: `outcome-${actionId}-${Date.now()}`,
+      taskId: actionId,
+      objective: `${goalTitle}: ${actionTitle}`,
+      capability: `goal:${goalId}`,
+      route: { primary: 'orchestrator', reviewers: ['reviewer'], rationale: ['Autonomous runtime failed before reviewer-gated completion.'] },
+      status: 'failed',
+      evidence,
+      lesson: 'Do not blindly retry this autonomous action; replan after repeated failures.',
+      tags: [`goal:${goalId}`, 'autonomous', 'runtime-failure'],
+      createdAt: new Date().toISOString(),
+    };
+    await this.outcomes.save(record);
+  }
 
   async run(maxCycles = 5): Promise<AutonomousLoopResult> {
     if (!Number.isInteger(maxCycles) || maxCycles < 1 || maxCycles > 20) throw new Error('maxCycles must be an integer between 1 and 20.');
@@ -39,6 +55,14 @@ export class AutonomousGoalRunner {
         return { status: 'needs_user', cycles };
       }
       if (decision.disposition === 'plan') {
+        if (decision.repeatedFailures >= 2) {
+          const replanningState = await this.store.load();
+          for (const action of replanningState.actions.filter(item => item.goalId === decision.goal!.id && ['planned', 'active'].includes(item.status))) {
+            action.status = 'blocked';
+            action.updatedAt = new Date().toISOString();
+          }
+          await this.store.save(replanningState);
+        }
         const created = await service.decomposeGoal(decision.goal!.id, [decision.generatedActionTitle!]);
         await this.store.event('goal.autonomy_planned', 'goal', decision.goal!.id, { actionId: created[0].id, title: created[0].title, repeatedFailures: decision.repeatedFailures });
         continue;
@@ -52,13 +76,20 @@ export class AutonomousGoalRunner {
       if (executed.status !== 'DONE') {
         const failures = executed.tasks.filter(task => task.status === 'FAILED').map(task => task.error ?? task.title);
         record.error = failures.join('; ') || `Runtime ended with ${executed.status}`;
+        await this.saveRuntimeFailure(decision.goal!.id, decision.goal!.title, action.id, action.title, failures.length ? failures : [record.error]);
         await this.store.event('goal.autonomy_runtime_failed', 'goal', decision.goal!.id, { actionId: action.id, runtimePlanId: plan.id, runtimeStatus: executed.status, failures });
         return { status: 'failed', cycles };
       }
 
       const results = executed.tasks.map(task => task.result).filter((value): value is string => Boolean(value));
       const summary = results.at(-1) ?? `Runtime plan ${plan.id} completed successfully.`;
-      await service.execute(action.id, `Autonomous local execution completed: ${summary}`);
+      try {
+        await service.execute(action.id, `Autonomous local execution completed: ${summary}`);
+      } catch (error) {
+        record.error = error instanceof Error ? error.message : String(error);
+        await this.store.event('goal.autonomy_runtime_failed', 'goal', decision.goal!.id, { actionId: action.id, runtimePlanId: plan.id, runtimeStatus: 'REVIEW_REJECTED', failures: [record.error] });
+        return { status: 'failed', cycles };
+      }
       record.executedActionId = action.id;
       await this.store.event('goal.autonomy_executed', 'goal', decision.goal!.id, { actionId: action.id, runtimePlanId: plan.id, runtimeStatus: executed.status, traceId: randomUUID() });
     }
