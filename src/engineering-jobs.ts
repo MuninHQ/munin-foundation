@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { ActionAuditLog, classifyActionIntent, evaluateAction, type PolicyResult } from './action-constitution.js';
 import { EngineeringAgentRuntime, type EngineeringResult } from './engineering-runtime.js';
 
 export type EngineeringJobStatus='queued'|'running'|'completed'|'needs_user'|'failed';
@@ -8,12 +9,15 @@ export type EngineeringJob={id:string;objective:string;status:EngineeringJobStat
 
 const MAX_JOBS=30;
 const interruptedResult=(job:EngineeringJob):EngineeringResult=>({status:'needs_user',objective:job.objective,changedFiles:[],events:[{phase:'needs_user',message:'Desktop runtime restarted while this build was executing.',at:new Date().toISOString()}],message:'O runtime reiniciou durante este build. O objetivo foi preservado, mas o Munin não repetirá efeitos externos automaticamente sem um checkpoint seguro.'});
+const policyEngineeringResult=(objective:string,policy:PolicyResult):EngineeringResult=>({status:policy.decision==='needs_user'?'needs_user':'failed',objective,changedFiles:[],events:[{phase:policy.decision==='needs_user'?'needs_user':'failed',message:`Action Constitution: ${policy.rule}`,at:new Date().toISOString()}],message:policy.decision==='needs_user'?`A política do Munin exige aprovação explícita antes desta ação (${policy.rule}).`:`A política do Munin bloqueou esta ação (${policy.rule}).`});
 
 export class EngineeringJobManager{
  private readonly jobs=new Map<string,EngineeringJob>();
  private readonly file:string;
- constructor(private readonly repo=process.cwd(),file?:string){this.file=file??path.join(repo,'data/runtime/engineering-jobs.json');this.load()}
- start(objective:string){const id=randomUUID();const job:EngineeringJob={id,objective,status:'queued',createdAt:new Date().toISOString()};this.jobs.set(id,job);this.prune();this.persist();queueMicrotask(()=>void this.run(id));return {...job}}
+ private readonly audit:ActionAuditLog;
+ constructor(private readonly repo=process.cwd(),file?:string){this.file=file??path.join(repo,'data/runtime/engineering-jobs.json');this.audit=new ActionAuditLog(path.join(repo,'data/runtime/action-audit.jsonl'));this.load()}
+ start(objective:string){const id=randomUUID();const policy=evaluateAction({class:classifyActionIntent(objective),tool:'engineering-agent',payloadPreview:objective,reason:'mobile engineering job'});void this.audit.append(policy).catch(()=>{});if(policy.decision!=='allow'){const result=policyEngineeringResult(objective,policy);const job:EngineeringJob={id,objective,status:result.status,createdAt:new Date().toISOString(),completedAt:new Date().toISOString(),result};this.jobs.set(id,job);this.prune();this.persist();return {...job}}
+  const job:EngineeringJob={id,objective,status:'queued',createdAt:new Date().toISOString()};this.jobs.set(id,job);this.prune();this.persist();queueMicrotask(()=>void this.run(id));return {...job}}
  get(id:string){const job=this.jobs.get(id);return job?{...job}:undefined}
  list(){return [...this.jobs.values()].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map(job=>({...job}))}
  private load(){if(!existsSync(this.file))return;try{const parsed=JSON.parse(readFileSync(this.file,'utf8')) as EngineeringJob[];for(const raw of parsed){const job={...raw};if(job.status==='queued'||job.status==='running'){job.status='needs_user';job.completedAt=new Date().toISOString();job.result=interruptedResult(job)}this.jobs.set(job.id,job)}this.prune();this.persist()}catch{/* corrupted runtime state must not prevent Munin startup */}}
