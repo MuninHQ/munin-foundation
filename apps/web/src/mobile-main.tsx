@@ -2,58 +2,41 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './mobile.css';
 
-type Goal = { id:string; title:string; priority:'P0'|'P1'|'P2'; status:string; progress:number; nextAction?:string };
-type Action = { id:string; title:string; priority:'P0'|'P1'|'P2'; status:string; goalId?:string };
-type HomePayload = { generatedAt:string; goals:Goal[]; pendingActions:Action[]; decisions:{id:string;title:string}[] };
+type Goal={id:string;title:string;priority:'P0'|'P1'|'P2';status:string;progress:number;nextAction?:string};
+type Action={id:string;title:string;priority:'P0'|'P1'|'P2';status:string;goalId?:string};
+type MemoryStats={total:number;active?:number;byKind?:Record<string,number>;freshness?:Record<string,number>};
+type HomePayload={generatedAt:string;goals:Goal[];pendingActions:Action[];decisions:{id:string;title:string}[];continuityMemory?:MemoryStats};
+type ApiState={token:string;connected:boolean;error?:string};
+type AssistantResult={kind?:string;message?:string;data?:unknown};
+type EngineeringEvent={phase:string;message:string;at:string;evidence?:string};
+type EngineeringResult={status:'completed'|'needs_user'|'failed';objective:string;branch?:string;commit?:string;pullRequest?:string;changedFiles:string[];events:EngineeringEvent[];validation?:string;delivery?:string;message:string};
+type TranscriptItem={id:string;role:'user'|'munin';text:string;engineering?:EngineeringResult};
 
-type ApiState = { token:string; connected:boolean; error?:string };
+function apiToken(){return localStorage.getItem('munin-mobile-token')??''}
+function uid(){return `${Date.now()}-${Math.random().toString(36).slice(2)}`}
+function isEngineeringCommand(value:string){return /^(?:build|construir|implementar|continue|continua|fix|corrigir|validate|validar)(?:\b|\s*[:\-])/i.test(value.trim())}
+async function mobileFetch<T>(path:string,init:RequestInit={}):Promise<T>{const token=apiToken();const headers=new Headers(init.headers);headers.set('Authorization',`Bearer ${token}`);if(init.body&&!headers.has('Content-Type'))headers.set('Content-Type','application/json');const response=await fetch(path,{...init,headers});const payload=await response.json().catch(()=>({error:`HTTP ${response.status}`}));if(!response.ok)throw new Error(payload.error??`HTTP ${response.status}`);return payload as T}
 
-function apiToken(): string { return localStorage.getItem('munin-mobile-token') ?? ''; }
-async function mobileFetch<T>(path:string, init:RequestInit = {}):Promise<T>{
-  const token=apiToken();
-  const headers=new Headers(init.headers);
-  headers.set('Authorization',`Bearer ${token}`);
-  if(init.body&&!headers.has('Content-Type')) headers.set('Content-Type','application/json');
-  const response=await fetch(path,{...init,headers});
-  const payload=await response.json().catch(()=>({error:`HTTP ${response.status}`}));
-  if(!response.ok) throw new Error(payload.error??`HTTP ${response.status}`);
-  return payload as T;
-}
+function ExecutionTimeline({result}:{result:EngineeringResult}){return <div className="execution"><div className={`execution-result ${result.status}`}><strong>{result.status==='completed'?'Build concluído':result.status==='needs_user'?'Preciso de você':'Build interrompido'}</strong><span>{result.message}</span></div>{result.events.map((item,index)=><div className="execution-step" key={`${item.at}-${index}`}><span className={`phase ${item.phase}`}>{item.phase}</span><div><strong>{item.message}</strong>{item.evidence&&<small>{item.evidence.length>500?`${item.evidence.slice(0,500)}…`:item.evidence}</small>}</div></div>)}{result.pullRequest&&<a className="pr-link" href={result.pullRequest} target="_blank" rel="noreferrer">Abrir pull request ↗</a>}{result.changedFiles.length>0&&<small className="muted">Arquivos: {result.changedFiles.join(', ')}</small>}</div>}
 
 function App(){
-  const [auth,setAuth]=useState<ApiState>({token:apiToken(),connected:false});
-  const [home,setHome]=useState<HomePayload|null>(null);
-  const [sitrep,setSitrep]=useState('');
-  const [command,setCommand]=useState('sitrep');
-  const [answer,setAnswer]=useState('');
-  const [busy,setBusy]=useState(false);
-  const topGoal=useMemo(()=>home?.goals[0], [home]);
-
-  async function refresh(){
-    if(!apiToken()){setAuth(current=>({...current,connected:false,error:'Informe o token do Munin Mobile.'}));return;}
-    try{const payload=await mobileFetch<HomePayload>('/api/mobile/home');setHome(payload);setAuth(current=>({...current,connected:true,error:undefined}));}
-    catch(error){setAuth(current=>({...current,connected:false,error:error instanceof Error?error.message:String(error)}));}
-  }
-  useEffect(()=>{void refresh();if('serviceWorker'in navigator)void navigator.serviceWorker.register('/munin-sw.js');},[]);
-
-  async function saveToken(){localStorage.setItem('munin-mobile-token',auth.token.trim());await refresh();}
-  async function loadSitrep(){setBusy(true);try{const result=await mobileFetch<{report:string}>('/api/mobile/sitrep');setSitrep(result.report);}catch(error){setSitrep(error instanceof Error?error.message:String(error));}finally{setBusy(false);}}
-  async function sendCommand(){if(!command.trim())return;setBusy(true);try{const result=await mobileFetch<unknown>('/api/mobile/assistant',{method:'POST',body:JSON.stringify({command})});setAnswer(typeof result==='string'?result:JSON.stringify(result,null,2));}catch(error){setAnswer(error instanceof Error?error.message:String(error));}finally{setBusy(false);}}
-  async function runLoop(){setBusy(true);try{const result=await mobileFetch<unknown>('/api/mobile/goal-loop',{method:'POST',body:JSON.stringify({maxCycles:5})});setAnswer(JSON.stringify(result,null,2));await refresh();}catch(error){setAnswer(error instanceof Error?error.message:String(error));}finally{setBusy(false);}}
-
-  if(!auth.connected){return <main className="shell auth-shell"><section className="hero-card"><span className="eyebrow">MUNIN MOBILE</span><h1>Seu command center no iPhone.</h1><p>Conecte ao runtime do seu PC usando o token local do Mobile Gateway.</p><label>Token<input type="password" value={auth.token} onChange={event=>setAuth({...auth,token:event.target.value})} placeholder="MUNIN_MOBILE_TOKEN" /></label><button onClick={()=>void saveToken()}>Conectar</button>{auth.error&&<p className="error">{auth.error}</p>}</section></main>}
-
-  return <main className="shell">
-    <header><div><span className="eyebrow">MUNIN</span><h1>Command Center</h1></div><button className="ghost" onClick={()=>void refresh()}>Atualizar</button></header>
-    <section className="status-card"><div><span className="status-dot"/>Online</div><small>{home?new Date(home.generatedAt).toLocaleString('pt-BR'):''}</small></section>
-    <section className="hero-card"><span className="eyebrow">PRIORIDADE AGORA</span><h2>{topGoal?.title??'Nenhum goal ativo'}</h2>{topGoal&&<><div className="progress"><span style={{width:`${topGoal.progress}%`}}/></div><p>{topGoal.progress}% · {topGoal.priority} · {topGoal.status}</p>{topGoal.nextAction&&<strong>Próxima: {topGoal.nextAction}</strong>}</>}</section>
-    <section className="quick-grid"><button onClick={()=>void loadSitrep()}>📊 SITREP</button><button onClick={()=>void runLoop()}>⚡ Continuar sozinho</button><button onClick={()=>setCommand('qual a prioridade agora?')}>🎯 Prioridade</button><button onClick={()=>setCommand('o que depende de mim?')}>🚧 Depende de mim</button></section>
-    <section className="panel"><h3>Conversar com Munin</h3><textarea value={command} onChange={event=>setCommand(event.target.value)} rows={3}/><button disabled={busy} onClick={()=>void sendCommand()}>{busy?'Executando…':'Enviar'}</button>{answer&&<pre>{answer}</pre>}</section>
-    {sitrep&&<section className="panel"><div className="panel-title"><h3>SITREP</h3><button className="ghost" onClick={()=>setSitrep('')}>Fechar</button></div><pre>{sitrep}</pre></section>}
-    <section className="panel"><h3>Goals</h3>{home?.goals.length?home.goals.map(goal=><article className="row" key={goal.id}><div><strong>{goal.title}</strong><small>{goal.priority} · {goal.status}</small></div><span>{goal.progress}%</span></article>):<p>Nenhum goal ativo.</p>}</section>
-    <section className="panel"><h3>Pendências</h3>{home?.pendingActions.length?home.pendingActions.slice(0,6).map(action=><article className="row" key={action.id}><div><strong>{action.title}</strong><small>{action.priority} · {action.status}</small></div></article>):<p>Nenhuma ação pendente.</p>}</section>
-    <footer>Munin Mobile · local-first · zero-cost runtime</footer>
-  </main>;
+ const [auth,setAuth]=useState<ApiState>({token:apiToken(),connected:false});const [home,setHome]=useState<HomePayload|null>(null);const [command,setCommand]=useState('');const [busy,setBusy]=useState(false);const [transcript,setTranscript]=useState<TranscriptItem[]>([{id:'welcome',role:'munin',text:'Munin online. Posso recuperar contexto, gerar SITREP, continuar Goals e executar builds isolados e validados.'}]);const topGoal=useMemo(()=>home?.goals[0],[home]);
+ async function refresh(){if(!apiToken()){setAuth(current=>({...current,connected:false,error:'Informe o token do Munin Mobile.'}));return}try{const payload=await mobileFetch<HomePayload>('/api/mobile/home');setHome(payload);setAuth(current=>({...current,connected:true,error:undefined}))}catch(error){setAuth(current=>({...current,connected:false,error:error instanceof Error?error.message:String(error)}))}}
+ useEffect(()=>{void refresh();if('serviceWorker'in navigator)void navigator.serviceWorker.register('/munin-sw.js')},[]);
+ async function saveToken(){localStorage.setItem('munin-mobile-token',auth.token.trim());await refresh()}
+ function addMunin(text:string,engineering?:EngineeringResult){setTranscript(items=>[...items,{id:uid(),role:'munin',text,engineering}])}
+ async function execute(value=command){const trimmed=value.trim();if(!trimmed||busy)return;setTranscript(items=>[...items,{id:uid(),role:'user',text:trimmed}]);setCommand('');setBusy(true);try{if(isEngineeringCommand(trimmed)){const result=await mobileFetch<EngineeringResult>('/api/mobile/engineering',{method:'POST',body:JSON.stringify({command:trimmed})});addMunin(result.message,result);await refresh()}else{const result=await mobileFetch<AssistantResult>('/api/mobile/assistant',{method:'POST',body:JSON.stringify({command:trimmed})});addMunin(result.message??JSON.stringify(result,null,2))}}catch(error){addMunin(error instanceof Error?error.message:String(error))}finally{setBusy(false)}}
+ async function runLoop(){if(busy)return;setTranscript(items=>[...items,{id:uid(),role:'user',text:'Continue sozinho'}]);setBusy(true);try{const result=await mobileFetch<unknown>('/api/mobile/goal-loop',{method:'POST',body:JSON.stringify({maxCycles:5})});addMunin(`Goal Loop concluído.\n${JSON.stringify(result,null,2)}`);await refresh()}catch(error){addMunin(error instanceof Error?error.message:String(error))}finally{setBusy(false)}}
+ if(!auth.connected)return <main className="shell auth-shell"><section className="hero-card"><span className="eyebrow">MUNIN MOBILE</span><h1>Seu command center.</h1><p>Conecte ao runtime privado usando o token local.</p><label>Token<input type="password" value={auth.token} onChange={event=>setAuth({...auth,token:event.target.value})} placeholder="MUNIN_MOBILE_TOKEN" autoCapitalize="none" autoCorrect="off"/></label><button onClick={()=>void saveToken()}>Conectar</button>{auth.error&&<p className="error">{auth.error}</p>}</section></main>;
+ return <main className="shell chat-shell">
+  <header><div><span className="eyebrow">MUNIN</span><h1>Command Center</h1></div><button className="ghost" onClick={()=>void refresh()}>Atualizar</button></header>
+  <section className="status-card"><div><span className="status-dot"/>Online</div><small>{home?.continuityMemory?.active??home?.continuityMemory?.total??0} memórias · {home?new Date(home.generatedAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):''}</small></section>
+  <section className="hero-card priority-card"><span className="eyebrow">PRIORIDADE AGORA</span><h2>{topGoal?.title??'Nenhum goal ativo'}</h2>{topGoal&&<><div className="progress"><span style={{width:`${topGoal.progress}%`}}/></div><p>{topGoal.progress}% · {topGoal.priority} · {topGoal.status}</p>{topGoal.nextAction&&<strong>Próxima: {topGoal.nextAction}</strong>}</>}</section>
+  <section className="quick-grid"><button onClick={()=>void execute('sitrep')}>📊 SITREP</button><button onClick={()=>void execute('build')}>🛠️ Build</button><button onClick={()=>void runLoop()}>⚡ Continue</button><button onClick={()=>void execute('o que depende de mim?')}>🚧 Depende de mim</button></section>
+  <section className="conversation" aria-live="polite">{transcript.map(item=><article className={`bubble ${item.role}`} key={item.id}><span>{item.role==='user'?'VOCÊ':'MUNIN'}</span><div className="bubble-text">{item.text}</div>{item.engineering&&<ExecutionTimeline result={item.engineering}/>}</article>)}{busy&&<article className="bubble munin thinking"><span>MUNIN</span><div className="thinking-dots"><i/><i/><i/></div><small>Planejando / executando / validando…</small></article>}</section>
+  <section className="composer"><textarea value={command} onChange={event=>setCommand(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();void execute()}}} rows={2} placeholder="Fale com o Munin… ex.: build, sitrep, o que sabe sobre B3"/><button disabled={busy||!command.trim()} onClick={()=>void execute()}>{busy?'…':'Enviar'}</button></section>
+  <section className="compact-panels"><details><summary>Goals <b>{home?.goals.length??0}</b></summary>{home?.goals.map(goal=><article className="row" key={goal.id}><div><strong>{goal.title}</strong><small>{goal.priority} · {goal.status}</small></div><span>{goal.progress}%</span></article>)}</details><details><summary>Pendências <b>{home?.pendingActions.length??0}</b></summary>{home?.pendingActions.slice(0,8).map(action=><article className="row" key={action.id}><div><strong>{action.title}</strong><small>{action.priority} · {action.status}</small></div></article>)}</details></section>
+  <footer>Munin · continuity + autonomous runtime · local-first</footer>
+ </main>
 }
-
 createRoot(document.getElementById('mobile-root')!).render(<React.StrictMode><App/></React.StrictMode>);
