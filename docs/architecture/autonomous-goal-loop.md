@@ -16,15 +16,21 @@ The prioritizer scores active/planned/blocked goals using:
 - current status;
 - progress (including a completion bias near 100%);
 - staleness since the last update;
-- presence of pending goal-linked actions.
+- presence of pending executable goal-linked actions.
 
 Blocked goals are penalized so executable work is preferred when otherwise comparable.
 
 ## Next-action generation
 
-When the selected goal has no pending action, the loop creates a normal Munin Action from the next success criterion. The Action is linked to the Goal with the existing `advances` relation and then passes through the same loop on the next cycle.
+When the selected goal has no pending executable action, the loop creates a normal Munin Action from the next success criterion. The Action is linked to the Goal with the existing `advances` relation and then passes through the same loop on the next cycle.
 
-Repeated relevant validation failures cause the generated action to switch to explicit review/replanning instead of repeating the same execution strategy.
+## Failure memory and replanning
+
+Runtime failures are persisted into Adaptive Outcome Memory with `goal:<id>` capability, failure evidence and an explicit lesson against blind retries. Reviewer-gate rejection is already persisted by Adaptive Execution and is handled as a failed autonomous cycle.
+
+After two relevant failures, the planner no longer selects the same execution path. Existing planned/active actions for that goal are moved to `blocked`, and a new `Review and replan goal ...` Action is created. Blocked Actions remain visible as history but are excluded from autonomous executable-action selection.
+
+This turns failure history into an operational routing signal rather than a passive log.
 
 ## Autonomy guard
 
@@ -40,7 +46,7 @@ Unknown actions also stop rather than being assumed safe.
 
 Safe actions use the existing `ExecutionEngine`, so provider selection remains governed by the offline/local zero-cost provider policy and existing quality gate. Runtime success alone does not complete the Action: the result is passed to the existing reviewer-gated `MuninService.execute`, which records Adaptive Outcome Memory, Goal evidence and Goal learning.
 
-Runtime failure leaves the Action unfinished and records a `goal.autonomy_runtime_failed` event.
+Runtime failure leaves the Action unfinished, records a failed Outcome Memory record, and emits `goal.autonomy_runtime_failed`.
 
 ## Bounded execution
 
@@ -49,7 +55,7 @@ Runtime failure leaves the Action unfinished and records a `goal.autonomy_runtim
 - `completed` — autonomous work completed and no further active goal remains;
 - `idle` — there was no work to start;
 - `needs_user` — the next selected action requires user-controlled external/irreversible behavior;
-- `failed` — local runtime execution failed;
+- `failed` — local runtime or reviewer-gated completion failed;
 - `cycle_limit` — more work remains after the configured bound.
 
 ## Observability
