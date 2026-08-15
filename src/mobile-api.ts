@@ -8,11 +8,13 @@ import { ContextStore } from './store.js';
 import { ContinuityMemoryStore, type MemoryInput } from './continuity-memory.js';
 import { chatGptExportSummary, parseChatGptExport } from './chatgpt-export.js';
 import { ProjectMemoryStore, type ProjectMemoryInput } from './project-memory.js';
+import { MemoryReviewQueue } from './memory-review-queue.js';
 
 const store = new ContextStore();
 const service = new MuninService(store);
 const continuity = new ContinuityMemoryStore();
 const projectMemory = new ProjectMemoryStore();
+const memoryReview = new MemoryReviewQueue();
 
 function configuredToken(): string | undefined { const value = process.env.MUNIN_MOBILE_TOKEN?.trim(); return value || undefined; }
 function tokenMatches(candidate: string, expected: string): boolean { const left = Buffer.from(candidate); const right = Buffer.from(expected); return left.length === right.length && timingSafeEqual(left, right); }
@@ -28,12 +30,16 @@ export async function handleMobileApi(request: IncomingMessage, response: Server
       const state = await store.load();
       const goals = state.goals.filter(goal => ['planned', 'active', 'blocked'].includes(goal.status)).sort((a, b) => a.priority.localeCompare(b.priority) || b.progress - a.progress).slice(0, 8);
       const pendingActions = state.actions.filter(action => ['planned', 'active', 'blocked'].includes(action.status)).sort((a, b) => a.priority.localeCompare(b.priority)).slice(0, 10);
-      return json(request, response, 200, { generatedAt: new Date().toISOString(), goals, pendingActions, decisions: state.decisions.filter(decision => decision.status === 'required').slice(0, 8), continuityMemory: await continuity.stats(), projectMemory: await projectMemory.stats() });
+      const reviewItems=await memoryReview.list();
+      return json(request, response, 200, { generatedAt: new Date().toISOString(), goals, pendingActions, decisions: state.decisions.filter(decision => decision.status === 'required').slice(0, 8), continuityMemory: await continuity.stats(), projectMemory: await projectMemory.stats(), memoryReview:{pending:reviewItems.length} });
     }
     if (request.method === 'GET' && url.pathname === '/api/mobile/memory/stats') return json(request, response, 200, await continuity.stats());
     if (request.method === 'GET' && url.pathname === '/api/mobile/memory/list') return json(request, response, 200, { records: await continuity.list(url.searchParams.get('includeStale') !== '0') });
     if (request.method === 'GET' && url.pathname === '/api/mobile/memory/export') return json(request, response, 200, await continuity.export());
     if (request.method === 'GET' && url.pathname === '/api/mobile/memory/search') { const query = url.searchParams.get('q')?.trim() ?? ''; if (!query) return json(request, response, 400, { error: 'q is required' }); return json(request, response, 200, { query, records: await continuity.search(query, 20) }); }
+    if (request.method === 'GET' && url.pathname === '/api/mobile/memory/review') return json(request,response,200,{items:await memoryReview.list()});
+    const reviewItem=url.pathname.match(/^\/api\/mobile\/memory\/review\/([^/]+)\/(approve|drop)$/);
+    if(request.method==='POST'&&reviewItem){const [,id,action]=reviewItem;return json(request,response,200,action==='approve'?await memoryReview.approve(id):await memoryReview.drop(id));}
     const memoryRecord = url.pathname.match(/^\/api\/mobile\/memory\/records\/([^/]+)$/);
     if (request.method === 'GET' && memoryRecord) { const record = await continuity.get(memoryRecord[1]); return record ? json(request, response, 200, record) : json(request, response, 404, { error: 'Memory record not found' }); }
     if (request.method === 'PATCH' && memoryRecord) { const input = await readJsonBody(request, 100_000); const subject=text(input.subject,'subject'); const content=text(input.content,'content'); const tags=Array.isArray(input.tags)?input.tags.filter((item):item is string=>typeof item==='string'):[]; return json(request,response,200,await continuity.correct(memoryRecord[1],{subject,content,tags,confidence:input.confidence==='inferred'?'inferred':'confirmed',lastConfirmedAt:typeof input.lastConfirmedAt==='string'?input.lastConfirmedAt:undefined})); }
