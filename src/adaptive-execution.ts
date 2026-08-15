@@ -1,3 +1,6 @@
+import { runtimePath } from './config.js';
+import { readJsonFile, writeJsonAtomic } from './storage.js';
+
 export type ExecutionRole = 'orchestrator' | 'researcher' | 'builder' | 'reviewer';
 export type TaskKind = 'research' | 'build' | 'review' | 'strategy' | 'general';
 export type ExecutionStatus = 'planned' | 'running' | 'passed' | 'failed';
@@ -89,6 +92,20 @@ export class TaskRouter {
   }
 }
 
+function scoreOutcomes(records: OutcomeRecord[], task: AdaptiveTask): OutcomeRecord[] {
+  const terms = `${task.capability} ${task.objective}`.toLowerCase().split(/\s+/).filter(x => x.length > 2);
+  return records
+    .map(record => {
+      const haystack = `${record.capability} ${record.objective} ${record.tags.join(' ')} ${record.lesson}`.toLowerCase();
+      const score = terms.reduce((sum, term) => sum + (haystack.includes(term) ? 1 : 0), 0);
+      return { record, score };
+    })
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.record)
+    .slice(0, 5);
+}
+
 export class InMemoryOutcomeStore implements OutcomeStore {
   private readonly records: OutcomeRecord[] = [];
 
@@ -97,17 +114,27 @@ export class InMemoryOutcomeStore implements OutcomeStore {
   }
 
   async findRelevant(task: AdaptiveTask): Promise<OutcomeRecord[]> {
-    const terms = `${task.capability} ${task.objective}`.toLowerCase().split(/\s+/).filter(x => x.length > 2);
-    return this.records
-      .map(record => {
-        const haystack = `${record.capability} ${record.objective} ${record.tags.join(' ')} ${record.lesson}`.toLowerCase();
-        const score = terms.reduce((sum, term) => sum + (haystack.includes(term) ? 1 : 0), 0);
-        return { record, score };
-      })
-      .filter(item => item.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .map(item => item.record)
-      .slice(0, 5);
+    return scoreOutcomes(this.records, task);
+  }
+}
+
+type OutcomeState = { schemaVersion: 1; records: OutcomeRecord[]; updatedAt: string };
+
+export class JsonOutcomeStore implements OutcomeStore {
+  constructor(private readonly file = runtimePath('adaptive-outcomes.json')) {}
+
+  private async load(): Promise<OutcomeState> {
+    return readJsonFile<OutcomeState>(this.file, () => ({ schemaVersion: 1, records: [], updatedAt: new Date(0).toISOString() }));
+  }
+
+  async save(record: OutcomeRecord): Promise<void> {
+    const state = await this.load();
+    const records = [record, ...state.records.filter(item => item.id !== record.id)].slice(0, 500);
+    await writeJsonAtomic(this.file, { schemaVersion: 1, records, updatedAt: new Date().toISOString() } satisfies OutcomeState);
+  }
+
+  async findRelevant(task: AdaptiveTask): Promise<OutcomeRecord[]> {
+    return scoreOutcomes((await this.load()).records, task);
   }
 }
 
@@ -121,7 +148,7 @@ export interface ExecuteResult {
 
 export class AdaptiveExecutionEngine {
   constructor(
-    private readonly store: OutcomeStore = new InMemoryOutcomeStore(),
+    private readonly store: OutcomeStore = new JsonOutcomeStore(),
     private readonly hooks: LifecycleHooks = new LifecycleHooks(),
     private readonly router: TaskRouter = new TaskRouter(),
   ) {}
