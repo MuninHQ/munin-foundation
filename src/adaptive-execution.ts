@@ -1,5 +1,5 @@
 import { runtimePath } from './config.js';
-import { IntelligenceOrchestrationPlanner, type OrchestrationPlan } from './intelligence-orchestration.js';
+import { IntelligenceOrchestrationPlanner, type OrchestrationMode, type OrchestrationPlan } from './intelligence-orchestration.js';
 import { readJsonFile, writeJsonAtomic } from './storage.js';
 
 export type ExecutionRole = 'orchestrator' | 'researcher' | 'builder' | 'reviewer';
@@ -45,6 +45,18 @@ function scoreOutcomes(records: OutcomeRecord[], task: AdaptiveTask): OutcomeRec
   return records.map(record => { const haystack = `${record.capability} ${record.objective} ${record.tags.join(' ')} ${record.lesson}`.toLowerCase(); return { record, score: terms.reduce((sum, term) => sum + (haystack.includes(term) ? 1 : 0), 0) }; }).filter(item => item.score > 0).sort((a, b) => b.score - a.score).map(item => item.record).slice(0, 5);
 }
 
+function learnedOrchestrationMode(task: AdaptiveTask, prior: OutcomeRecord[]): { mode: OrchestrationMode; signals: string[] } {
+  if (task.risk === 'high' || task.kind === 'strategy' || task.kind === 'review') return { mode: 'auto', signals: ['Safety policy keeps high-risk/strategy/review routing authoritative.'] };
+  const routed = prior.filter(item => item.orchestration);
+  const directPassed = routed.filter(item => item.orchestration?.route === 'direct' && item.status === 'passed').length;
+  const directFailed = routed.filter(item => item.orchestration?.route === 'direct' && item.status === 'failed').length;
+  const councilPassed = routed.filter(item => item.orchestration?.route === 'council' && item.status === 'passed').length;
+  if (directFailed >= 2) return { mode: 'council', signals: [`Escalated after ${directFailed} relevant direct failures.`] };
+  if (directPassed >= 2 && directFailed === 0) return { mode: 'direct', signals: [`Reused direct route after ${directPassed} relevant validated outcomes.`] };
+  if (councilPassed >= 2 && directPassed === 0) return { mode: 'council', signals: [`Reused council route after ${councilPassed} relevant validated outcomes.`] };
+  return { mode: 'auto', signals: ['Insufficient outcome evidence to override default orchestration policy.'] };
+}
+
 export class InMemoryOutcomeStore implements OutcomeStore {
   private readonly records: OutcomeRecord[] = [];
   async save(record: OutcomeRecord): Promise<void> { this.records.unshift(record); }
@@ -67,8 +79,10 @@ export class AdaptiveExecutionEngine {
   async execute(task: AdaptiveTask, runner: (task: AdaptiveTask, route: ExecutionRoute, prior: OutcomeRecord[], orchestration: OrchestrationPlan) => Promise<{ evidence?: string[]; lesson?: string }>, validator: (task: AdaptiveTask, evidence: string[]) => Promise<ValidationResult>): Promise<ExecuteResult> {
     await this.hooks.emit('session:start', { task }); await this.hooks.emit('task:pre', { task });
     const route = this.router.route(task);
-    const orchestration = this.planner.plan({ objective: task.objective, capability: task.kind === 'strategy' ? 'strategy' : task.capability, risk: task.risk, context: { ...task.context, executionRole: route.primary, reviewers: route.reviewers } });
     const priorOutcomes = await this.store.findRelevant(task);
+    const learned = learnedOrchestrationMode(task, priorOutcomes);
+    const orchestration = this.planner.plan({ objective: task.objective, capability: task.kind === 'strategy' ? 'strategy' : task.capability, risk: task.risk, mode: learned.mode, context: { ...task.context, executionRole: route.primary, reviewers: route.reviewers, priorOutcomeCount: priorOutcomes.length, learningSignals: learned.signals } });
+    orchestration.rationale.push(...learned.signals);
     const execution = await runner(task, route, priorOutcomes, orchestration); const evidence = execution.evidence ?? [];
     await this.hooks.emit('validation:pre', { task, route, orchestration }); const validation = await validator(task, evidence); await this.hooks.emit('validation:post', { task, route, orchestration, validation });
     const status = validation.passed ? 'passed' : 'failed';
