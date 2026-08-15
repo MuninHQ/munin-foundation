@@ -3,13 +3,19 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { ActionAuditLog, evaluateAction } from '../src/action-constitution.js';
+import { ActionAuditLog, classifyActionIntent, evaluateAction } from '../src/action-constitution.js';
 
 test('allows bounded local and read actions',()=>{
  assert.equal(evaluateAction({class:'read',tool:'read-file',target:'src/app.ts'}).decision,'allow');
  assert.equal(evaluateAction({class:'local-write',tool:'write-file',target:'src/app.ts'}).decision,'allow');
  assert.equal(evaluateAction({class:'git-write',tool:'git commit'}).decision,'allow');
  assert.equal(evaluateAction({class:'network-read',tool:'http get',target:'https://example.com'}).decision,'allow');
+});
+
+test('classifies only genuinely consequential engineering intents',()=>{
+ assert.equal(classifyActionIntent('remove unused React component'),'local-write');
+ assert.equal(classifyActionIntent('delete repository and recreate it'),'destructive');
+ assert.equal(classifyActionIntent('publish to LinkedIn after build'),'external-write');
 });
 
 test('escalates consequential external/destructive actions',()=>{
