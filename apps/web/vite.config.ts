@@ -16,6 +16,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         index: path.resolve(root, 'index.html'),
+        mobile: path.resolve(root, 'mobile.html'),
         hud: path.resolve(root, 'hud.html'),
         'career-inbox': path.resolve(root, 'career-inbox.html'),
         'context-memory': path.resolve(root, 'context-memory.html'),
