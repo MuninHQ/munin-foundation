@@ -22,6 +22,8 @@
     "web": "vite --config apps/web/vite.config.ts",
     "workspace": "node scripts/launch.mjs",
     "mobile": "node scripts/launch-mobile.mjs",
+    "mobile:startup:install": "powershell -ExecutionPolicy Bypass -File scripts/install-mobile-startup.ps1",
+    "mobile:startup:remove": "powershell -ExecutionPolicy Bypass -File scripts/remove-mobile-startup.ps1",
     "hud": "node scripts/launch-hud.mjs",
     "hud:kiosk": "node scripts/launch-hud.mjs --kiosk",
     "hud:startup:install": "powershell -ExecutionPolicy Bypass -File scripts/install-hud-startup.ps1",
