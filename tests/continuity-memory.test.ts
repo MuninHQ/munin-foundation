@@ -16,7 +16,7 @@ test('imports, deduplicates and retrieves continuity memory',async()=>{
 
 test('newer confirmed memory supersedes an older record and backups remain local',async()=>{
  const dir=await mkdtemp(path.join(tmpdir(),'munin-memory-')); const store=new ContinuityMemoryStore(path.join(dir,'memory.json'));
- await store.import([{kind:'preference',subject:'Work style',content:'Ask before every step.',tags:['workflow'],source:'historic',confidence:'inferred',observedAt:'2025-01-01'}]);
+ await store.import([{kind:'preference',subject:'Work style',content:'Ask before every step.',tags:['workflow'],source:'historic',confidence:'inferred',observedAt:'2026-01-01'}]);
  const result=await store.import([{kind:'preference',subject:'Work style',content:'Continue autonomously until a real blocker.',tags:['workflow','autonomy'],source:'chatgpt-memory-import',confidence:'confirmed',observedAt:'2026-08-15',lastConfirmedAt:'2026-08-15'}]);
  assert.equal(result.superseded,1);const active=await store.search('Work style');assert.equal(active.length,1);assert.match(active[0].content,/autonomously/);
  const stats=await store.stats();assert.equal(stats.freshness.stale,1);const backup=await store.backup(path.join(dir,'backups'));const saved=JSON.parse(await readFile(backup.path,'utf8'));assert.equal(saved.length,2);await rm(dir,{recursive:true,force:true});
