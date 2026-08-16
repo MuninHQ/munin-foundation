@@ -1,6 +1,7 @@
 import { loadAssistantMemory } from './assistant-memory.js';
 import { ContextStore } from './store.js';
 import { isLocalProviderUrl, loadLlmSettings, type LlmProviderType } from './llm-settings.js';
+import { RepoIntelligenceProvider, type RepoImpact } from './repo-intelligence.js';
 
 export type LlmProviderStatus={enabled:boolean;provider:LlmProviderType|'ollama-local'|'disabled';model?:string;baseUrl?:string;source?:'settings'|'environment'|'autodetect'};
 type Normalized={command?:string;reply?:string;confidence?:number};
@@ -70,8 +71,21 @@ async function callBestProvider(messages:{role:string;content:string}[],maxToken
  try{return await callOllama(messages,maxTokens)}catch(localError){const primary=primaryError instanceof Error?primaryError.message:String(primaryError);const local=localError instanceof Error?localError.message:String(localError);throw new Error(`Provider principal indisponível após retries (${primary}); fallback Ollama também indisponível (${local}).`)}
 }
 
+function engineeringObjective(user:string){return user.match(/Objective:\s*\n([^\n]+)/i)?.[1]?.trim()??''}
+function isEngineeringPlanner(system:string){return system.includes("Munin's software engineering planner")}
+export function formatEngineeringRepoContext(impact:RepoImpact){
+ const evidence=impact.evidence.slice(0,8).map(item=>({source:item.source,path:item.path,symbol:item.symbol,rationale:item.rationale,confidence:item.confidence}));
+ return `Repository intelligence (advisory; repository source files remain authoritative):\n${JSON.stringify({coverage:impact.coverage,files:impact.files.slice(0,30),symbols:impact.symbols.slice(0,30),tests:impact.tests.slice(0,30),evidence},null,2)}`;
+}
+async function engineeringAwareUser(system:string,user:string){
+ if(!isEngineeringPlanner(system)||process.env.MUNIN_REPO_INTELLIGENCE==='0')return user;
+ const objective=engineeringObjective(user);if(!objective)return user;
+ try{const impact=await new RepoIntelligenceProvider(process.cwd()).impact(objective);return `${user}\n\n${formatEngineeringRepoContext(impact)}\n\nUse indexed evidence only as a relevance hint. Verify consequential conclusions against repository files before editing.`}catch{return user}
+}
+
 export async function completeWithLlm(system:string,user:string,maxTokens=4000):Promise<string>{
-  const result=await callBestProvider([{role:'system',content:system},{role:'user',content:user}],maxTokens);
+  const enrichedUser=await engineeringAwareUser(system,user);
+  const result=await callBestProvider([{role:'system',content:system},{role:'user',content:enrichedUser}],maxTokens);
   if(!result.content)throw new Error('Provider respondeu sem conteúdo.');
   return result.content;
 }
