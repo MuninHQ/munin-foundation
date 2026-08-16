@@ -31,17 +31,19 @@ function safeBase(url:string){return url.replace(/\/$/,'');}
 function parseJson(text:string):Normalized|undefined{try{const cleaned=text.trim().replace(/^```json\s*/i,'').replace(/```$/,'').trim();const parsed=JSON.parse(cleaned);if(!parsed||typeof parsed!=='object')return undefined;return parsed as Normalized}catch{return undefined}}
 function extractOpenAi(payload:any):string|undefined{return payload?.choices?.[0]?.message?.content??payload?.output_text;}
 function extractAnthropic(payload:any):string|undefined{return Array.isArray(payload?.content)?payload.content.find((x:any)=>x?.type==='text')?.text:undefined;}
+const sleep=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
+function transient(error:unknown){const text=error instanceof Error?error.message:String(error);return /fetch failed|network|timeout|timed out|ECONN|ENOTFOUND|EAI_AGAIN|429|502|503|504/i.test(text)}
 
 async function callProvider(config:ProviderConfig,messages:{role:string;content:string}[],maxTokens=1200):Promise<ProviderResult>{
   if(config.provider==='anthropic'){
     const system=messages.filter(x=>x.role==='system').map(x=>x.content).join('\n\n');
     const conversational=messages.filter(x=>x.role!=='system').map(x=>({role:x.role==='assistant'?'assistant':'user',content:x.content}));
-    const response=await fetch(`${safeBase(config.baseUrl)}/messages`,{method:'POST',headers:{'content-type':'application/json','x-api-key':config.apiKey,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:config.model,max_tokens:maxTokens,temperature:0,system,messages:conversational})});
+    const response=await fetch(`${safeBase(config.baseUrl)}/messages`,{method:'POST',headers:{'content-type':'application/json','x-api-key':config.apiKey,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:config.model,max_tokens:maxTokens,temperature:0,system,messages:conversational}),signal:AbortSignal.timeout(Number(process.env.MUNIN_LLM_TIMEOUT_MS??180000))});
     if(!response.ok)throw new Error(`Anthropic respondeu ${response.status}`);
     const payload=await response.json();return {payload,content:extractAnthropic(payload),provider:config.provider,model:config.model,source:config.source};
   }
   const headers:Record<string,string>={'content-type':'application/json'};if(config.apiKey)headers.authorization=`Bearer ${config.apiKey}`;
-  const response=await fetch(`${safeBase(config.baseUrl)}/chat/completions`,{method:'POST',headers,body:JSON.stringify({model:config.model,temperature:0,max_tokens:maxTokens,messages})});
+  const response=await fetch(`${safeBase(config.baseUrl)}/chat/completions`,{method:'POST',headers,body:JSON.stringify({model:config.model,temperature:0,max_tokens:maxTokens,messages}),signal:AbortSignal.timeout(Number(process.env.MUNIN_LLM_TIMEOUT_MS??180000))});
   if(!response.ok)throw new Error(`LLM provider respondeu ${response.status}`);
   const payload=await response.json();return {payload,content:extractOpenAi(payload),provider:config.provider,model:config.model,source:config.source};
 }
@@ -56,7 +58,17 @@ async function callOllama(messages:{role:string;content:string}[],maxTokens=1200
  const payload=await response.json() as {response?:string;model?:string};return {payload,content:payload.response?.trim(),provider:'ollama-local',model:payload.model??model,source:'autodetect'};
 }
 
-async function callBestProvider(messages:{role:string;content:string}[],maxTokens:number){const config=await providerConfig();return config?callProvider(config,messages,maxTokens):callOllama(messages,maxTokens)}
+async function callBestProvider(messages:{role:string;content:string}[],maxTokens:number){
+ const config=await providerConfig();
+ if(!config)return callOllama(messages,maxTokens);
+ let primaryError:unknown;
+ const retries=Math.max(0,Number(process.env.MUNIN_LLM_RETRIES??2));
+ for(let attempt=0;attempt<=retries;attempt++){
+  try{return await callProvider(config,messages,maxTokens)}catch(error){primaryError=error;if(attempt>=retries||!transient(error))break;await sleep(500*(2**attempt))}
+ }
+ if(process.env.MUNIN_LLM_OLLAMA_FALLBACK==='0')throw primaryError;
+ try{return await callOllama(messages,maxTokens)}catch(localError){const primary=primaryError instanceof Error?primaryError.message:String(primaryError);const local=localError instanceof Error?localError.message:String(localError);throw new Error(`Provider principal indisponível após retries (${primary}); fallback Ollama também indisponível (${local}).`)}
+}
 
 export async function completeWithLlm(system:string,user:string,maxTokens=4000):Promise<string>{
   const result=await callBestProvider([{role:'system',content:system},{role:'user',content:user}],maxTokens);
