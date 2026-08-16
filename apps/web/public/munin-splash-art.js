@@ -1,0 +1,1 @@
+(()=>{const chunks=window.__muninSplashChunks||[];if(chunks.length===7&&chunks.every(Boolean)){window.__muninSplashArt=`data:image/webp;base64,${chunks.join('')}`;}delete window.__muninSplashChunks;})();
