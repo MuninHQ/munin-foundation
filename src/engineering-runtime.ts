@@ -5,6 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { completeWithLlm } from './llm-provider.js';
+import { DurableEffectLedger } from './durable-effects.js';
 
 const execFileAsync=promisify(execFile);
 export type EngineeringPhase='inspect'|'plan'|'edit'|'validate'|'repair'|'commit'|'push'|'pr'|'ci'|'completed'|'needs_user'|'failed';
@@ -25,6 +26,8 @@ async function applyChanges(root:string,changes:EditPlan['changes']){const chang
 async function attachDependencies(root:string,worktree:string){const source=path.join(root,'node_modules');const target=path.join(worktree,'node_modules');try{const stat=await fs.stat(source);if(!stat.isDirectory())return false;await fs.symlink(source,target,process.platform==='win32'?'junction':'dir');return true}catch{return false}}
 async function chooseBase(root:string){const main=await run('git',['rev-parse','--verify','main'],root,20_000);return main.ok?'main':'HEAD'}
 function firstUrl(text:string){return text.match(/https:\/\/github\.com\/[^\s]+\/pull\/\d+/)?.[0]}
+async function reconcilePush(root:string,branch:string,sha:string){const remote=await run('git',['ls-remote','--heads','origin',`refs/heads/${branch}`],root,30_000);return remote.ok&&remote.stdout.includes(sha)}
+async function findExistingPr(worktree:string,branch:string){const view=await run('gh',['pr','view',branch,'--json','url','--jq','.url'],worktree,30_000);return view.ok?firstUrl(view.stdout.trim())??(view.stdout.trim().startsWith('https://github.com/')?view.stdout.trim():undefined):undefined}
 
 const plannerSystem=`You are Munin's software engineering planner. Return ONLY JSON: {"strategy":"...","filesToRead":["path"]}. Select at most 12 files from the provided repository tree that are necessary for the objective. Never request secrets, .env, .git, node_modules or data/runtime. Prefer the smallest coherent change.`;
 const editorSystem=`You are Munin's autonomous builder. Return ONLY JSON: {"summary":"short commit summary","changes":[{"path":"relative/path","content":"COMPLETE UTF-8 FILE CONTENT"}]}. Make the smallest production-quality change that satisfies the objective. At most 8 files. Never touch secrets, .env, .git, node_modules or data/runtime. Preserve existing architecture and tests. Do not return patches: return complete contents only.`;
@@ -35,7 +38,7 @@ export class EngineeringAgentRuntime{
  async execute(objective:string):Promise<EngineeringResult>{const events:EngineeringEvent[]=[];const changed=new Set<string>();let worktree='';let branch='';
   try{
    const top=await run('git',['rev-parse','--show-toplevel'],this.repo,20_000);if(!top.ok)return {status:'needs_user',objective,changedFiles:[],events:[event('needs_user','Git repository unavailable.',top.stderr)],message:'Munin precisa rodar dentro de um repositório Git.'};
-   const root=top.stdout.trim();const base=await chooseBase(root);events.push(event('inspect','Repository located.',`${root} · base ${base}`));
+   const root=top.stdout.trim();const ledger=new DurableEffectLedger(path.join(root,'data/runtime/durable-effects.json'));const base=await chooseBase(root);events.push(event('inspect','Repository located.',`${root} · base ${base}`));
    const tree=await filesUnder(root);const id=randomUUID().slice(0,8);worktree=path.join(os.tmpdir(),'munin-engineering',id);await fs.mkdir(path.dirname(worktree),{recursive:true});
    const add=await run('git',['worktree','add','--detach',worktree,base],root,60_000);if(!add.ok)throw new Error(`git worktree failed: ${add.stderr}`);
    const deps=await attachDependencies(root,worktree);events.push(event('inspect',deps?'Reused installed dependencies through isolated worktree.':'No reusable node_modules found; validation may use package-manager cache.'));
@@ -53,7 +56,34 @@ export class EngineeringAgentRuntime{
    if(!validation.ok)return {status:'failed',objective,branch,worktree,changedFiles:[...changed],events:[...events,event('failed','Validation failed after bounded repair attempts.')],validation:`${validation.stdout}\n${validation.stderr}`.slice(-10000),message:'Build interrompido porque os testes continuam falhando; nenhuma alteração foi mesclada na branch principal.'};
    const status=await run('git',['status','--porcelain'],worktree,20_000);if(!status.stdout.trim())return {status:'completed',objective,branch,worktree,changedFiles:[],events:[...events,event('completed','Objective required no repository changes.')],validation:'npm test passed',delivery:'local-commit',message:'Validação passou; nenhuma alteração de código foi necessária.'};
    await run('git',['add','--all'],worktree,30_000);const commitMessage=`munin: ${(plan.summary??objective).replace(/[\r\n]+/g,' ').slice(0,68)}`;const commit=await run('git',['commit','-m',commitMessage],worktree,60_000);if(!commit.ok)throw new Error(`commit failed: ${commit.stderr}`);const sha=(await run('git',['rev-parse','HEAD'],worktree,20_000)).stdout.trim();events.push(event('commit','Validated engineering change committed.',sha));
-   let delivery:'pull-request'|'pushed-branch'|'local-commit'='local-commit';let pullRequest:string|undefined;if(process.env.MUNIN_ENGINEERING_AUTO_PUSH!=='0'){const push=await run('git',['push','-u','origin',branch],worktree,120_000);if(push.ok){delivery='pushed-branch';events.push(event('push','Agent branch pushed to origin.',branch));const gh=await run('gh',['--version'],worktree,15_000);if(gh.ok&&process.env.MUNIN_ENGINEERING_AUTO_PR!=='0'){const pr=await run('gh',['pr','create','--base','main','--head',branch,'--title',commitMessage,'--body',`Autonomous Munin build.\n\nObjective: ${objective}\n\nValidated locally with npm test.`],worktree,60_000);pullRequest=firstUrl(`${pr.stdout}\n${pr.stderr}`);if(pr.ok&&pullRequest){delivery='pull-request';events.push(event('pr','Pull request created.',pullRequest));if(process.env.MUNIN_ENGINEERING_WATCH_CI==='1'){const checks=await run('gh',['pr','checks','--watch','--fail-fast'],worktree,300_000);events.push(event('ci',checks.ok?'GitHub checks passed.':'GitHub checks did not pass within the bounded watch.',`${checks.stdout}\n${checks.stderr}`.slice(-5000)))}}}}else events.push(event('push','Push unavailable; validated commit remains local.',push.stderr.slice(-2000)))}
+   let delivery:'pull-request'|'pushed-branch'|'local-commit'='local-commit';let pullRequest:string|undefined;
+   if(process.env.MUNIN_ENGINEERING_AUTO_PUSH!=='0'){
+    const pushIdentity=`${branch}@${sha}`;let pushGate=ledger.begin('git-push',pushIdentity);let pushAlready=false;
+    if(pushGate.decision==='already_completed'){pushAlready=true;events.push(event('push','Push checkpoint already completed; side effect not repeated.',pushGate.record.evidence))}
+    else if(pushGate.decision==='needs_reconciliation'){
+     if(await reconcilePush(root,branch,sha)){ledger.complete('git-push',pushIdentity,`${branch}@${sha}`);pushAlready=true;events.push(event('push','Recovered push checkpoint from origin.',`${branch}@${sha}`))}
+     else{ledger.retryAfterReconciliation('git-push',pushIdentity);pushGate={...pushGate,decision:'execute'}}
+    }
+    let pushed=pushAlready;
+    if(!pushAlready&&pushGate.decision==='execute'){
+     const push=await run('git',['push','-u','origin',branch],worktree,120_000);
+     if(push.ok){ledger.complete('git-push',pushIdentity,`${branch}@${sha}`);pushed=true;events.push(event('push','Agent branch pushed to origin.',branch))}
+     else{ledger.uncertain('git-push',pushIdentity,push.stderr.slice(-2000));events.push(event('push','Push outcome uncertain; Munin will reconcile before any retry.',push.stderr.slice(-2000)))}
+    }
+    if(pushed){delivery='pushed-branch';const gh=await run('gh',['--version'],worktree,15_000);
+     if(gh.ok&&process.env.MUNIN_ENGINEERING_AUTO_PR!=='0'){
+      const prIdentity=`${branch}@${sha}`;let prGate=ledger.begin('create-pr',prIdentity);
+      if(prGate.decision==='already_completed'){pullRequest=firstUrl(prGate.record.evidence??'');events.push(event('pr','PR checkpoint already completed; creation not repeated.',prGate.record.evidence))}
+      else if(prGate.decision==='needs_reconciliation'){pullRequest=await findExistingPr(worktree,branch);if(pullRequest){ledger.complete('create-pr',prIdentity,pullRequest);events.push(event('pr','Recovered existing PR after restart/retry.',pullRequest))}else{ledger.retryAfterReconciliation('create-pr',prIdentity);prGate={...prGate,decision:'execute'}}}
+      if(!pullRequest&&prGate.decision==='execute'){
+       const pr=await run('gh',['pr','create','--base','main','--head',branch,'--title',commitMessage,'--body',`Autonomous Munin build.\n\nObjective: ${objective}\n\nValidated locally with npm test.`],worktree,60_000);pullRequest=firstUrl(`${pr.stdout}\n${pr.stderr}`);
+       if(!pullRequest&&!pr.ok)pullRequest=await findExistingPr(worktree,branch);
+       if(pullRequest){ledger.complete('create-pr',prIdentity,pullRequest);events.push(event('pr','Pull request created or reconciled.',pullRequest))}else{ledger.uncertain('create-pr',prIdentity,`${pr.stdout}\n${pr.stderr}`.slice(-3000));events.push(event('pr','PR creation outcome uncertain; Munin will reconcile before retry.',`${pr.stdout}\n${pr.stderr}`.slice(-3000)))}
+      }
+      if(pullRequest){delivery='pull-request';if(process.env.MUNIN_ENGINEERING_WATCH_CI==='1'){const checks=await run('gh',['pr','checks','--watch','--fail-fast'],worktree,300_000);events.push(event('ci',checks.ok?'GitHub checks passed.':'GitHub checks did not pass within the bounded watch.',`${checks.stdout}\n${checks.stderr}`.slice(-5000)))}}
+     }
+    }
+   }
    events.push(event('completed','Engineering loop completed.'));return {status:'completed',objective,branch,commit:sha,pullRequest,worktree,changedFiles:[...changed],events,validation:'npm test passed',delivery,message:pullRequest?`Build validado e PR criado: ${pullRequest}`:delivery==='pushed-branch'?`Build validado e enviado para ${branch}.`:`Build validado e commitado localmente em ${branch}.`};
   }catch(error){const message=error instanceof Error?error.message:String(error);return {status:'failed',objective,branch:branch||undefined,worktree:worktree||undefined,changedFiles:[...changed],events:[...events,event('failed',message)],message}}
  }
