@@ -1,12 +1,15 @@
 import { registerAutonomousLoopCapability, type AutonomousLoopCapabilityInput } from './autonomous-loop-capability.js';
 import type { AutonomousRunResult } from './autonomous-execution-loop.js';
 import { installBrowserPolicyGate, registerBrowserCapability, type BrowserCapabilityInput, type BrowserCapabilityOutput } from './browser-capability.js';
+import type { EngineeringAutonomousMissionResult, EngineeringMissionRuntime } from './engineering-autonomous-mission.js';
+import { registerEngineeringMissionCapability, type EngineeringMissionCapabilityInput } from './engineering-mission-capability.js';
 import { ExecutionEngine } from './runtime.js';
 import { RuntimeCapabilityRegistry, type CapabilityExecutionResult } from './runtime-capability-seam.js';
 
 export interface RuntimeCapabilityAdapterOptions {
   enabled?: boolean;
   registry?: RuntimeCapabilityRegistry;
+  engineeringRuntime?: EngineeringMissionRuntime;
 }
 
 export class RuntimeCapabilityAdapter {
@@ -25,6 +28,7 @@ export class RuntimeCapabilityAdapter {
         installBrowserPolicyGate(this.registry);
       }
       registerAutonomousLoopCapability(this.registry);
+      registerEngineeringMissionCapability(this.registry, options.engineeringRuntime);
     }
   }
 
@@ -43,6 +47,14 @@ export class RuntimeCapabilityAdapter {
   async autonomousLoop(input: AutonomousLoopCapabilityInput): Promise<CapabilityExecutionResult<AutonomousRunResult>> {
     this.assertEnabled();
     return this.registry.execute<AutonomousLoopCapabilityInput, AutonomousRunResult>('execution.autonomous-loop', input, {
+      source: 'execution-engine-adapter',
+      experimental: true,
+    });
+  }
+
+  async engineeringMission(input: EngineeringMissionCapabilityInput): Promise<CapabilityExecutionResult<EngineeringAutonomousMissionResult>> {
+    this.assertEnabled();
+    return this.registry.execute<EngineeringMissionCapabilityInput, EngineeringAutonomousMissionResult>('engineering.autonomous-mission', input, {
       source: 'execution-engine-adapter',
       experimental: true,
     });
