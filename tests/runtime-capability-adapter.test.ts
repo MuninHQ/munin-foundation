@@ -10,7 +10,7 @@ test('runtime capability adapter stays disabled by default when explicitly false
 
 test('runtime capability adapter exposes governed capabilities only when enabled',()=>{
  const adapter=new RuntimeCapabilityAdapter(new ExecutionEngine(),{enabled:true});
- assert.deepEqual(adapter.capabilityNames(),['browser.operator','engineering.autonomous-mission','execution.autonomous-loop']);
+ assert.deepEqual(adapter.capabilityNames(),['browser.operator','code.semantic-intelligence','engineering.autonomous-mission','execution.autonomous-loop']);
 });
 
 test('disabled adapter fails closed before capability execution',async()=>{
@@ -18,6 +18,7 @@ test('disabled adapter fails closed before capability execution',async()=>{
  await assert.rejects(adapter.browser({action:'health'}),/capability seam is disabled/);
  await assert.rejects(adapter.autonomousLoop({objective:'x',executor:async()=>({status:'PASS'})}),/capability seam is disabled/);
  await assert.rejects(adapter.engineeringMission({objective:'Build local feature'}),/capability seam is disabled/);
+ await assert.rejects(adapter.semanticIntelligence({action:'health',backend:'native'}),/capability seam is disabled/);
 });
 
 test('enabled adapter executes browser health through policy-gated seam',async()=>{
@@ -48,5 +49,16 @@ test('enabled adapter executes engineering mission with injectable runtime',asyn
  assert.equal(result.capability,'engineering.autonomous-mission');
  assert.equal(result.output.loop.status,'DONE');
  assert.equal(result.output.engineering?.commit,'abc123');
+ assert.deepEqual(result.trace.map(event=>event.phase),['before','execute']);
+});
+
+test('enabled adapter exposes native semantic fallback without overclaiming Serena',async()=>{
+ const adapter=new RuntimeCapabilityAdapter(new ExecutionEngine(),{enabled:true});
+ const result=await adapter.semanticIntelligence({action:'health',backend:'native'});
+ assert.equal(result.capability,'code.semantic-intelligence');
+ assert.equal(result.output.health.backend,'native');
+ assert.equal(result.output.health.available,true);
+ assert.equal(result.output.promotion.promoteSerena,false);
+ assert.equal(result.output.policy.authoritativeSource,'repository');
  assert.deepEqual(result.trace.map(event=>event.phase),['before','execute']);
 });
