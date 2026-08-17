@@ -1,6 +1,11 @@
 import { EngineeringAutonomousMission, type EngineeringMissionRuntime } from './engineering-autonomous-mission.js';
+import { ReadOnlyBrowserEngineeringVerifier } from './engineering-browser-verifier.js';
 import type { EngineeringResult } from './engineering-runtime.js';
 import { SkillAwareEngineeringRuntime } from './skill-aware-engineering-runtime.js';
+
+export interface EngineeringMissionRunOptions {
+ verificationUrl?: string;
+}
 
 function loopOnlyResult(objective:string,status:'needs_user'|'failed',message:string):EngineeringResult{
  return {status,objective,changedFiles:[],events:[{phase:status==='needs_user'?'needs_user':'failed',message,at:new Date().toISOString()}],message};
@@ -10,8 +15,10 @@ export async function runEngineeringMission(
  objective:string,
  repositoryRoot=process.cwd(),
  runtime:EngineeringMissionRuntime=new SkillAwareEngineeringRuntime(repositoryRoot),
+ options:EngineeringMissionRunOptions={},
 ):Promise<EngineeringResult>{
- const mission=new EngineeringAutonomousMission(runtime,{maxIterations:3,maxRepeatedFailureFingerprints:2});
+ const verifier=options.verificationUrl?new ReadOnlyBrowserEngineeringVerifier(options.verificationUrl):undefined;
+ const mission=new EngineeringAutonomousMission(runtime,{maxIterations:3,maxRepeatedFailureFingerprints:2},verifier);
  const output=await mission.run(objective);
  if(output.engineering){
   output.engineering.events.push({
