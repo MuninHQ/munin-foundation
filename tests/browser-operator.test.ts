@@ -1,9 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { browserHealth, browserOperatorPolicy, recommendBrowserBackend, scoreBrowserBenchmark } from '../src/browser-operator.js';
+import { browserHealth, browserOperatorPolicy, recommendBrowserBackend, scoreBrowserBenchmark, validateBrowserInspectionUrl } from '../src/browser-operator.js';
 
 test('prefers Playwright CLI without requiring a paid cloud',()=>{
- const policy=browserOperatorPolicy();assert.equal(policy.preferred,'playwright-cli');assert.equal(policy.fallback,'browser-use');assert.equal(policy.cloudRequired,false);assert.equal(policy.paidDependencyRequired,false);assert.equal(policy.actionPolicyRequired,true);assert.equal(policy.benchmarkRequiredBeforePromotion,true);
+ const policy=browserOperatorPolicy();assert.equal(policy.preferred,'playwright-cli');assert.equal(policy.fallback,'browser-use');assert.equal(policy.cloudRequired,false);assert.equal(policy.paidDependencyRequired,false);assert.equal(policy.actionPolicyRequired,true);assert.equal(policy.benchmarkRequiredBeforePromotion,true);assert.deepEqual(policy.allowedActions,['health','inspect']);assert.equal(policy.inspectMode,'read-only-navigation-and-snapshot');
+});
+
+test('read-only browser inspection accepts local and public http URLs',()=>{
+ assert.equal(validateBrowserInspectionUrl('http://127.0.0.1:5173/dashboard'),'http://127.0.0.1:5173/dashboard');
+ assert.equal(validateBrowserInspectionUrl('https://example.com/path?q=1'),'https://example.com/path?q=1');
+});
+
+test('read-only browser inspection blocks unsafe URL classes and metadata endpoints',()=>{
+ assert.throws(()=>validateBrowserInspectionUrl('file:///etc/passwd'),/only http\/https/);
+ assert.throws(()=>validateBrowserInspectionUrl('javascript:alert(1)'),/only http\/https/);
+ assert.throws(()=>validateBrowserInspectionUrl('https://user:pass@example.com'),/embedded credentials/);
+ assert.throws(()=>validateBrowserInspectionUrl('http://169.254.169.254/latest/meta-data'),/metadata endpoints/);
+ assert.throws(()=>validateBrowserInspectionUrl('http://metadata.google.internal/computeMetadata/v1'),/metadata endpoints/);
 });
 
 test('missing local browser backend degrades to health status instead of crashing',async()=>{
