@@ -55,6 +55,16 @@ Munin can obtain that benefit with a very small native seam while preserving its
 
 The seam is deliberately **adjacent** to `ExecutionEngine` rather than wired into production execution in this PR. Promotion requires a benchmark proving that it improves extension ergonomics without weakening leases/outbox/provider-policy behavior.
 
+## Browser Operator proof
+
+`browser.operator` is the first existing Munin module exposed through the experimental capability seam.
+
+The first slice intentionally allows only the existing non-destructive `health` action. A `browser-policy-gate` `before` interceptor rejects any other action before the backend can run. The output preserves the Browser Operator's backend portability (`playwright-cli` or `browser-use`) and its local-first policy (`cloudRequired=false`, `paidDependencyRequired=false`).
+
+This proves that an existing module can become a removable capability without rewriting its implementation, that policy can stop execution before side effects, and that every approved invocation receives the same capability trace envelope.
+
+Navigation, forms, downloads and uploads remain out of the seam until the Browser Operator benchmark demonstrates action logging, replay and deterministic permission gates. This keeps the PoC fail-closed rather than expanding autonomy merely to demonstrate functionality.
+
 ## Promotion gate
 
 Promote the seam into `ExecutionEngine` only if all are true:
