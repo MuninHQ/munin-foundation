@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createBrowserCapability, installBrowserPolicyGate, registerBrowserCapability } from '../src/browser-capability.js';
+import { createBrowserCapability, installBrowserPolicyGate, registerBrowserCapability, type BrowserCapabilityInput, type BrowserCapabilityOutput } from '../src/browser-capability.js';
 import { RuntimeCapabilityRegistry } from '../src/runtime-capability-seam.js';
 
 test('browser operator registers as removable runtime capability',()=>{
@@ -15,7 +15,8 @@ test('browser health executes through seam with auditable trace',async()=>{
  const registry=new RuntimeCapabilityRegistry();
  registerBrowserCapability(registry);
  installBrowserPolicyGate(registry);
- const result=await registry.execute('browser.operator',{action:'health' as const,backend:'playwright-cli' as const},{source:'test'});
+ const input:BrowserCapabilityInput={action:'health',backend:'playwright-cli'};
+ const result=await registry.execute<BrowserCapabilityInput,BrowserCapabilityOutput>('browser.operator',input,{source:'test'});
  assert.equal(result.capability,'browser.operator');
  assert.equal(result.output.backend,'playwright-cli');
  assert.equal(typeof result.output.available,'boolean');
