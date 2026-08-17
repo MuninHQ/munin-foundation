@@ -5,6 +5,7 @@ import type { EngineeringAutonomousMissionResult, EngineeringMissionRuntime } fr
 import { registerEngineeringMissionCapability, type EngineeringMissionCapabilityInput } from './engineering-mission-capability.js';
 import { ExecutionEngine } from './runtime.js';
 import { RuntimeCapabilityRegistry, type CapabilityExecutionResult } from './runtime-capability-seam.js';
+import { registerSemanticIntelligenceCapability, type SemanticIntelligenceCapabilityInput, type SemanticIntelligenceCapabilityOutput } from './semantic-intelligence-capability.js';
 
 export interface RuntimeCapabilityAdapterOptions {
   enabled?: boolean;
@@ -29,6 +30,7 @@ export class RuntimeCapabilityAdapter {
       }
       registerAutonomousLoopCapability(this.registry);
       registerEngineeringMissionCapability(this.registry, options.engineeringRuntime);
+      registerSemanticIntelligenceCapability(this.registry);
     }
   }
 
@@ -55,6 +57,14 @@ export class RuntimeCapabilityAdapter {
   async engineeringMission(input: EngineeringMissionCapabilityInput): Promise<CapabilityExecutionResult<EngineeringAutonomousMissionResult>> {
     this.assertEnabled();
     return this.registry.execute<EngineeringMissionCapabilityInput, EngineeringAutonomousMissionResult>('engineering.autonomous-mission', input, {
+      source: 'execution-engine-adapter',
+      experimental: true,
+    });
+  }
+
+  async semanticIntelligence(input: SemanticIntelligenceCapabilityInput): Promise<CapabilityExecutionResult<SemanticIntelligenceCapabilityOutput>> {
+    this.assertEnabled();
+    return this.registry.execute<SemanticIntelligenceCapabilityInput, SemanticIntelligenceCapabilityOutput>('code.semantic-intelligence', input, {
       source: 'execution-engine-adapter',
       experimental: true,
     });
