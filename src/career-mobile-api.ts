@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { mobileAuthorized } from './mobile-api.js';
 import { CareerInboxStore } from './career-inbox.js';
 import { buildCareerBrief, buildCareerProcesses } from './career-intelligence.js';
+import { auditCareerContinuity } from './career-continuity-audit.js';
 import { careerContinuityMetrics, recordCareerContinuityFeedback } from './career-continuity-validation.js';
 import { ContextStore } from './store.js';
 import { json, readJsonBody } from './http.js';
@@ -12,9 +13,10 @@ function fallbackAction(status:string){if(status==='interview')return'Preparar p
 export async function mobileCareerSnapshot(){
  const [state,inbox,validation]=await Promise.all([new ContextStore().load(),new CareerInboxStore().load(),careerContinuityMetrics()]);
  const brief=buildCareerBrief(state.jobs,inbox.messages);const processes=buildCareerProcesses(state.jobs,inbox.messages).filter(p=>!terminal.has(p.job.status));
+ const audit=auditCareerContinuity(state.jobs,inbox.messages);
  const attentionIds=new Set([...brief.attention,...brief.interviews,...brief.followUps,...brief.stale].map(p=>p.job.id));
  const active=processes.map(p=>({id:p.job.id,company:p.job.company,role:p.job.role,status:p.suggestedStatus??p.job.status,fitScore:p.job.fitScore,nextAction:p.suggestedAction??p.job.nextAction??fallbackAction(p.job.status),followUpAt:p.job.followUpAt,lastSignalAt:p.lastSignalAt,signalCount:p.signals.length,needsAttention:attentionIds.has(p.job.id),automation:p.automation,provenance:p.signals.slice(0,3)})).sort((a,b)=>Number(b.needsAttention)-Number(a.needsAttention)||Date.parse(b.lastSignalAt??'0')-Date.parse(a.lastSignalAt??'0'));
- const focus=active[0];return{generatedAt:brief.generatedAt,counts:brief.counts,focus,active,validation};
+ const focus=active[0];return{generatedAt:brief.generatedAt,counts:brief.counts,focus,active,validation,audit};
 }
 
 export async function handleCareerMobileApi(request:IncomingMessage,response:ServerResponse):Promise<void>{
