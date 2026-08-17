@@ -1,6 +1,10 @@
 ---
 name: yt-lab
 description: Plan, govern, and evaluate the YT-LAB faceless YouTube validation experiment under strict time, budget, originality, copyright, and human-approval constraints.
+version: 0.1.0
+triggers: youtube, yt-lab, faceless, video, thumbnail, retention
+permissions: read, local-write, network-read
+source: munin-local
 ---
 
 # YT-LAB Skill
