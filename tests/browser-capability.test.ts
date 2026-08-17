@@ -26,12 +26,22 @@ test('browser health executes through seam with auditable trace',async()=>{
  assert.equal(result.trace[0].detail,'browser-policy-gate');
 });
 
-test('browser policy gate fails closed for destructive or unapproved actions',async()=>{
+test('browser policy gate permits only validated Playwright read-only inspection',async()=>{
+ const registry=new RuntimeCapabilityRegistry();
+ registry.register({name:'browser.operator',async execute(input){return input}});
+ installBrowserPolicyGate(registry);
+ const allowed=await registry.execute('browser.operator',{action:'inspect',url:'http://127.0.0.1:5173/dashboard',backend:'playwright-cli'});
+ assert.equal((allowed.output as {action:string}).action,'inspect');
+ await assert.rejects(registry.execute('browser.operator',{action:'inspect',url:'file:///etc/passwd',backend:'playwright-cli'}),/only http\/https/);
+ await assert.rejects(registry.execute('browser.operator',{action:'inspect',url:'https://example.com',backend:'browser-use'}),/promoted only for Playwright CLI/);
+});
+
+test('browser policy gate fails closed for unapproved interaction actions',async()=>{
  const registry=new RuntimeCapabilityRegistry();
  registry.register(createBrowserCapability());
  installBrowserPolicyGate(registry);
  await assert.rejects(
-   registry.execute('browser.operator',{action:'navigate' as never,url:'https://example.com'} as never),
-   /only non-destructive health action is allowed/,
+   registry.execute('browser.operator',{action:'click' as never,ref:'e1'} as never),
+   /unsupported or unapproved action/,
  );
 });
