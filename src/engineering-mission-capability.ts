@@ -1,7 +1,7 @@
 import type { AutonomousLoopPolicy } from './autonomous-execution-loop.js';
 import { EngineeringAutonomousMission, type EngineeringAutonomousMissionResult, type EngineeringMissionRuntime } from './engineering-autonomous-mission.js';
-import { EngineeringAgentRuntime } from './engineering-runtime.js';
 import { RuntimeCapabilityRegistry, type RuntimeCapability } from './runtime-capability-seam.js';
+import { SkillAwareEngineeringRuntime } from './skill-aware-engineering-runtime.js';
 
 export interface EngineeringMissionCapabilityInput {
   objective: string;
@@ -9,7 +9,7 @@ export interface EngineeringMissionCapabilityInput {
 }
 
 export function createEngineeringMissionCapability(
-  runtime: EngineeringMissionRuntime = new EngineeringAgentRuntime(),
+  runtime: EngineeringMissionRuntime = new SkillAwareEngineeringRuntime(),
 ): RuntimeCapability<EngineeringMissionCapabilityInput, EngineeringAutonomousMissionResult> {
   return {
     name: 'engineering.autonomous-mission',
