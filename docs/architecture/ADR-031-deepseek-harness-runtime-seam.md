@@ -19,6 +19,12 @@ Munin already has a local-first provider policy, execution plans, autonomous goa
 5. It must remain outside the production `ExecutionEngine` path until benchmarked on a real capability.
 6. Any future DSH/Cordis integration must sit behind this or an equivalent adapter so removal does not change Munin product contracts.
 
+## First proof: Browser Operator
+
+The existing Browser Operator is now exposed experimentally as `browser.operator` through the seam. The first proof intentionally permits only the non-destructive `health` action. A `before` interceptor named `browser-policy-gate` rejects every unapproved action before the backend can execute.
+
+This demonstrates the important DSH-derived properties without changing production execution: removable registration, policy-before-side-effect ordering, backend portability across Playwright CLI / Browser Use, and per-execution trace generation. Navigation, forms, downloads and uploads remain blocked until their existing benchmark proves action logging, replay and deterministic permission gating.
+
 ## Consequences
 
 ### Positive
@@ -27,12 +33,13 @@ Munin already has a local-first provider policy, execution plans, autonomous goa
 - Browser, MCP, shell and subagent experiments can share one registration/interception shape.
 - Upstream DSH churn cannot break Munin core.
 - Existing safety gates remain authoritative.
+- The Browser Operator proof shows an existing module can be adapted without rewriting its implementation.
 
 ### Negative
 
 - Munin temporarily maintains a small amount of native infrastructure rather than using Cordis directly.
 - We do not automatically inherit the broader DSH plugin ecosystem.
-- A second decision will be required after a representative benchmark.
+- A second decision will be required after representative benchmark evidence.
 
 ## Rejected alternatives
 
@@ -50,6 +57,6 @@ Rejected because its capability-seam, event interception and reversible-composit
 
 ## Validation / exit criteria
 
-This ADR may move to **Accepted** when one representative capability is implemented through the seam and demonstrates lower coupling with no regression in correctness, recoverability, traceability, local resource use, provider portability or safety policy.
+This ADR may move to **Accepted** when the representative capability evidence demonstrates lower coupling with no regression in correctness, recoverability, traceability, local resource use, provider portability or safety policy, and the full project test suite is green.
 
-It should move to **Rejected** if the native seam duplicates existing registries without making a real integration materially simpler.
+It should move to **Rejected** if the native seam duplicates existing registries without making real integrations materially simpler.
