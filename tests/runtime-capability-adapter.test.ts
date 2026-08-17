@@ -10,7 +10,7 @@ test('runtime capability adapter stays disabled by default when explicitly false
 
 test('runtime capability adapter exposes governed capabilities only when enabled',()=>{
  const adapter=new RuntimeCapabilityAdapter(new ExecutionEngine(),{enabled:true});
- assert.deepEqual(adapter.capabilityNames(),['browser.operator','execution.autonomous-loop','engineering.autonomous-mission']);
+ assert.deepEqual(adapter.capabilityNames(),['browser.operator','engineering.autonomous-mission','execution.autonomous-loop']);
 });
 
 test('disabled adapter fails closed before capability execution',async()=>{
