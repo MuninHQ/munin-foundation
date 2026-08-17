@@ -44,10 +44,53 @@ function timestamp(): string {
   return new Date().toISOString();
 }
 
+export class RuntimeCapabilityScope implements CapabilityRegistration {
+  private readonly registrations: CapabilityRegistration[] = [];
+  private active = true;
+
+  constructor(
+    readonly name: string,
+    private readonly registry: RuntimeCapabilityRegistry,
+  ) {
+    if (!name.trim()) throw new Error('Capability scope name is required.');
+  }
+
+  register<TInput, TOutput>(capability: RuntimeCapability<TInput, TOutput>): CapabilityRegistration {
+    this.assertActive();
+    const registration = this.registry.register(capability);
+    this.registrations.push(registration);
+    return registration;
+  }
+
+  intercept(hook: CapabilityHook): CapabilityRegistration {
+    this.assertActive();
+    const registration = this.registry.intercept(hook);
+    this.registrations.push(registration);
+    return registration;
+  }
+
+  dispose(): void {
+    if (!this.active) return;
+    this.active = false;
+    for (let index = this.registrations.length - 1; index >= 0; index -= 1) {
+      this.registrations[index].dispose();
+    }
+    this.registrations.length = 0;
+  }
+
+  private assertActive(): void {
+    if (!this.active) throw new Error(`Capability scope is disposed: ${this.name}`);
+  }
+}
+
 export class RuntimeCapabilityRegistry {
   private readonly capabilities = new Map<string, RuntimeCapability>();
   private readonly hooks: CapabilityHook[] = [];
   private sequence = 0;
+
+  scope(name: string): RuntimeCapabilityScope {
+    return new RuntimeCapabilityScope(name, this);
+  }
 
   register<TInput, TOutput>(capability: RuntimeCapability<TInput, TOutput>): CapabilityRegistration {
     const name = capability.name.trim();

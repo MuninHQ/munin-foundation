@@ -80,3 +80,33 @@ test('interceptors are reversibly removable', async () => {
 
   assert.equal(calls, 1);
 });
+
+test('scope mounts capabilities and hooks together and disposes them as one reversible unit', async () => {
+  const registry = new RuntimeCapabilityRegistry();
+  const scope = registry.scope('browser-bundle');
+  let calls = 0;
+
+  scope.intercept({ name: 'scope-policy', phase: 'before', run() { calls += 1; } });
+  scope.register({ name: 'scope.echo', async execute(input: { value: string }) { return input.value; } });
+
+  const result = await registry.execute<{ value: string }, string>('scope.echo', { value: 'ok' });
+  assert.equal(result.output, 'ok');
+  assert.equal(calls, 1);
+
+  scope.dispose();
+  assert.equal(registry.has('scope.echo'), false);
+  await assert.rejects(() => registry.execute('scope.echo', { value: 'x' }), /Capability not registered/);
+});
+
+test('scope disposal is idempotent and disposed scopes fail closed on new registrations', () => {
+  const registry = new RuntimeCapabilityRegistry();
+  const scope = registry.scope('temporary');
+  scope.register({ name: 'temporary.capability', async execute() { return true; } });
+
+  scope.dispose();
+  scope.dispose();
+
+  assert.equal(registry.has('temporary.capability'), false);
+  assert.throws(() => scope.register({ name: 'late', async execute() { return true; } }), /scope is disposed/);
+  assert.throws(() => scope.intercept({ name: 'late-hook', phase: 'before', run() {} }), /scope is disposed/);
+});
