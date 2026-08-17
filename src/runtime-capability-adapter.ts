@@ -6,6 +6,7 @@ import { registerEngineeringMissionCapability, type EngineeringMissionCapability
 import { ExecutionEngine } from './runtime.js';
 import { RuntimeCapabilityRegistry, type CapabilityExecutionResult } from './runtime-capability-seam.js';
 import { registerSemanticIntelligenceCapability, type SemanticIntelligenceCapabilityInput, type SemanticIntelligenceCapabilityOutput } from './semantic-intelligence-capability.js';
+import { registerSentryObservabilityCapability, type SentryObservabilityCapabilityInput, type SentryObservabilityCapabilityOutput } from './sentry-observability-capability.js';
 
 export interface RuntimeCapabilityAdapterOptions {
   enabled?: boolean;
@@ -31,6 +32,7 @@ export class RuntimeCapabilityAdapter {
       registerAutonomousLoopCapability(this.registry);
       registerEngineeringMissionCapability(this.registry, options.engineeringRuntime);
       registerSemanticIntelligenceCapability(this.registry);
+      registerSentryObservabilityCapability(this.registry);
     }
   }
 
@@ -67,6 +69,14 @@ export class RuntimeCapabilityAdapter {
     return this.registry.execute<SemanticIntelligenceCapabilityInput, SemanticIntelligenceCapabilityOutput>('code.semantic-intelligence', input, {
       source: 'execution-engine-adapter',
       experimental: true,
+    });
+  }
+
+  async sentryObservability(input:SentryObservabilityCapabilityInput):Promise<CapabilityExecutionResult<SentryObservabilityCapabilityOutput>>{
+    this.assertEnabled();
+    return this.registry.execute<SentryObservabilityCapabilityInput,SentryObservabilityCapabilityOutput>('observability.sentry',input,{
+      source:'execution-engine-adapter',
+      experimental:true,
     });
   }
 

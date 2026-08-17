@@ -10,7 +10,7 @@ test('runtime capability adapter stays disabled by default when explicitly false
 
 test('runtime capability adapter exposes governed capabilities only when enabled',()=>{
  const adapter=new RuntimeCapabilityAdapter(new ExecutionEngine(),{enabled:true});
- assert.deepEqual(adapter.capabilityNames(),['browser.operator','code.semantic-intelligence','engineering.autonomous-mission','execution.autonomous-loop']);
+ assert.deepEqual(adapter.capabilityNames(),['browser.operator','code.semantic-intelligence','engineering.autonomous-mission','execution.autonomous-loop','observability.sentry']);
 });
 
 test('disabled adapter fails closed before capability execution',async()=>{
@@ -19,6 +19,7 @@ test('disabled adapter fails closed before capability execution',async()=>{
  await assert.rejects(adapter.autonomousLoop({objective:'x',executor:async()=>({status:'PASS'})}),/capability seam is disabled/);
  await assert.rejects(adapter.engineeringMission({objective:'Build local feature'}),/capability seam is disabled/);
  await assert.rejects(adapter.semanticIntelligence({action:'health',backend:'native'}),/capability seam is disabled/);
+ await assert.rejects(adapter.sentryObservability({action:'health'}),/capability seam is disabled/);
 });
 
 test('enabled adapter executes browser health through policy-gated seam',async()=>{
@@ -60,5 +61,16 @@ test('enabled adapter exposes native semantic fallback without overclaiming Sere
  assert.equal(result.output.health.available,true);
  assert.equal(result.output.promotion.promoteSerena,false);
  assert.equal(result.output.policy.authoritativeSource,'repository');
+ assert.deepEqual(result.trace.map(event=>event.phase),['before','execute']);
+});
+
+test('enabled adapter triages Sentry evidence without enabling external mutation',async()=>{
+ const adapter=new RuntimeCapabilityAdapter(new ExecutionEngine(),{enabled:true});
+ const result=await adapter.sentryObservability({action:'triage',issue:{id:'s1',title:'Checkout crash',level:'error',count:101,userCount:21}});
+ assert.equal(result.capability,'observability.sentry');
+ assert.equal(result.output.action,'triage');
+ if(result.output.action!=='triage')throw new Error('unexpected output');
+ assert.equal(result.output.incident.severity,'high');
+ assert.equal(result.output.policy.externalWriteAllowed,false);
  assert.deepEqual(result.trace.map(event=>event.phase),['before','execute']);
 });
