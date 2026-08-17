@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { EngineeringAutonomousMission, type EngineeringMissionRuntime } from '../src/engineering-autonomous-mission.js';
+import type { EngineeringMissionVerifier } from '../src/engineering-browser-verifier.js';
 import type { EngineeringResult } from '../src/engineering-runtime.js';
 
 function result(overrides: Partial<EngineeringResult> = {}): EngineeringResult {
@@ -92,4 +93,43 @@ test('engineering mission fails verification when completed runtime lacks test e
 
   assert.equal(output.loop.status, 'FAILED');
   assert.match(output.loop.blocker ?? '', /engineering:validation-missing/);
+});
+
+test('engineering mission records successful external verification evidence', async () => {
+  const runtime: EngineeringMissionRuntime = { execute: async () => result() };
+  const verifier: EngineeringMissionVerifier = { verify: async () => ({ status:'PASS', summary:'UI snapshot verified.', evidence:'heading: Munin\nstatus: ready' }) };
+  const mission = new EngineeringAutonomousMission(runtime, {}, verifier);
+  const output = await mission.run('Build local UI feature');
+
+  assert.equal(output.loop.status,'DONE');
+  assert.match(output.loop.trace.at(-1)?.summary??'',/UI snapshot verified/);
+  assert.equal(output.engineering?.events.at(-1)?.phase,'validate');
+  assert.equal(output.engineering?.events.at(-1)?.evidence,'heading: Munin\nstatus: ready');
+});
+
+test('engineering mission retries when external verification is inconclusive and can converge', async () => {
+  let verifyCalls=0;
+  const runtime: EngineeringMissionRuntime = { execute: async () => result() };
+  const verifier: EngineeringMissionVerifier = { verify: async () => {
+    verifyCalls+=1;
+    return verifyCalls===1
+      ? {status:'RETRY',summary:'Snapshot empty.',fingerprint:'browser:empty-snapshot'}
+      : {status:'PASS',summary:'Snapshot verified.',evidence:'ok'};
+  }};
+  const mission = new EngineeringAutonomousMission(runtime, {maxIterations:2}, verifier);
+  const output = await mission.run('Build local UI feature');
+
+  assert.equal(output.loop.status,'DONE');
+  assert.equal(verifyCalls,2);
+  assert.deepEqual(output.loop.trace.map(item=>item.phase),['PLAN','BUILD','TEST','VERIFY','FIX','PLAN','BUILD','TEST','VERIFY']);
+});
+
+test('engineering mission stops when requested browser verification backend is unavailable', async () => {
+  const runtime: EngineeringMissionRuntime = { execute: async () => result() };
+  const verifier: EngineeringMissionVerifier = { verify: async () => ({status:'BLOCKED',summary:'Browser unavailable.',blocker:'Install Playwright CLI.',fingerprint:'browser:playwright-unavailable'}) };
+  const mission = new EngineeringAutonomousMission(runtime, {}, verifier);
+  const output = await mission.run('Build local UI feature');
+
+  assert.equal(output.loop.status,'BLOCKED');
+  assert.equal(output.loop.blocker,'Install Playwright CLI.');
 });
