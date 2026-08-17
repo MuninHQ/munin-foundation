@@ -1,5 +1,6 @@
 import { classifyActionIntent, evaluateAction } from './action-constitution.js';
 import { AutonomousExecutionLoop, type AutonomousLoopPolicy, type AutonomousPhaseExecutor, type AutonomousRunResult, type AutonomousStepResult } from './autonomous-execution-loop.js';
+import type { EngineeringMissionVerifier } from './engineering-browser-verifier.js';
 import { EngineeringAgentRuntime, type EngineeringResult } from './engineering-runtime.js';
 
 export interface EngineeringMissionRuntime {
@@ -20,6 +21,7 @@ export class EngineeringAutonomousMission {
   constructor(
     private readonly runtime: EngineeringMissionRuntime = new EngineeringAgentRuntime(),
     private readonly policy: Partial<AutonomousLoopPolicy> = {},
+    private readonly verifier?: EngineeringMissionVerifier,
   ) {}
 
   async run(objective: string): Promise<EngineeringAutonomousMissionResult> {
@@ -56,7 +58,13 @@ export class EngineeringAutonomousMission {
         if (!engineering) return { status: 'FAILED', summary: 'Nothing available to verify.', fingerprint: 'engineering:no-result' };
         if (engineering.status !== 'completed') return { status: 'FAILED', summary: engineering.message, fingerprint: failureFingerprint(engineering) };
         const evidence = [engineering.commit, engineering.pullRequest, engineering.branch, ...engineering.changedFiles].filter(Boolean);
-        return { status: 'PASS', summary: evidence.length ? `Engineering delivery verified: ${evidence.join(' · ')}` : 'Engineering objective verified with no repository change required.' };
+        const deliverySummary = evidence.length ? `Engineering delivery verified: ${evidence.join(' · ')}` : 'Engineering objective verified with no repository change required.';
+        if (!this.verifier) return { status: 'PASS', summary: deliverySummary };
+        const external = await this.verifier.verify();
+        if (external.status === 'BLOCKED') return { status: 'BLOCKED', summary: external.summary, blocker: external.blocker, fingerprint: external.fingerprint };
+        if (external.status === 'RETRY') return { status: 'RETRY', summary: external.summary, fingerprint: external.fingerprint };
+        if (external.evidence) engineering.events.push({ phase:'validate', message:external.summary, at:new Date().toISOString(), evidence:external.evidence });
+        return { status: 'PASS', summary: `${deliverySummary} ${external.summary}` };
       }
 
       if (context.phase === 'FIX') {
