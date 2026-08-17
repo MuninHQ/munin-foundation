@@ -77,6 +77,8 @@ Promote the seam into `ExecutionEngine` only if all are true:
 - the adapter adds no paid dependency and no mandatory DeepSeek API call;
 - ADR-031 is updated from experimental to accepted.
 
+The Browser Operator proof satisfies the real-capability integration criterion at the adapter level, but **does not** satisfy the production-promotion criterion yet because the full repository test suite and browser benchmark evidence are still required.
+
 ## Sources reviewed
 
 - Official DeepSeek Harness README: developer preview, Cordis, everything-is-a-plugin, MIT.
