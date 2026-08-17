@@ -35,5 +35,5 @@ test('enabled adapter executes autonomous loop through capability seam',async()=
  assert.equal(result.capability,'execution.autonomous-loop');
  assert.equal(result.output.status,'DONE');
  assert.equal(result.output.trace.length,4);
- assert.deepEqual(result.trace.map(event=>event.phase),['execute']);
+ assert.deepEqual(result.trace.map(event=>event.phase),['before','execute']);
 });
