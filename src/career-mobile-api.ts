@@ -5,6 +5,7 @@ import { buildCareerBrief, buildCareerProcesses } from './career-intelligence.js
 import { auditCareerContinuity } from './career-continuity-audit.js';
 import { careerContinuityMetrics, recordCareerContinuityFeedback } from './career-continuity-validation.js';
 import { ingestCareerItem, type CareerIntakeInput } from './career-intake.js';
+import { CareerVisionExtractor } from './career-vision-extractor.js';
 import { ContextStore } from './store.js';
 import { json, readJsonBody } from './http.js';
 
@@ -36,7 +37,7 @@ function careerIntakeFromBody(body:Record<string,unknown>):CareerIntakeInput {
   currency:typeof body.currency==='string'?body.currency:undefined,
   capturedAt:typeof body.capturedAt==='string'?body.capturedAt:undefined,
   metadata:body.metadata&&typeof body.metadata==='object'?body.metadata as Record<string,unknown>:undefined,
-  image:image&&typeof image.mimeType==='string'?{mimeType:image.mimeType,filename:typeof image.filename==='string'?image.filename:undefined,transientRef:typeof image.transientRef==='string'?image.transientRef:undefined}:undefined,
+  image:image&&typeof image.mimeType==='string'?{mimeType:image.mimeType,filename:typeof image.filename==='string'?image.filename:undefined,transientRef:typeof image.transientRef==='string'?image.transientRef:undefined,dataBase64:typeof image.dataBase64==='string'?image.dataBase64:undefined}:undefined,
  };
 }
 
@@ -44,7 +45,7 @@ export async function handleCareerMobileApi(request:IncomingMessage,response:Ser
  if(request.method==='OPTIONS')return json(request,response,204,{});if(!mobileAuthorized(request))return json(request,response,401,{error:'Unauthorized',code:'MOBILE_AUTH_REQUIRED'});
  const url=new URL(request.url??'/','http://localhost');try{
   if(request.method==='GET'&&url.pathname==='/api/mobile/career')return json(request,response,200,await mobileCareerSnapshot());
-  if(request.method==='POST'&&url.pathname==='/api/mobile/career/intake'){const body=await readJsonBody(request,100_000);const result=await ingestCareerItem(careerIntakeFromBody(body));return json(request,response,result.added?201:200,result);}
+  if(request.method==='POST'&&url.pathname==='/api/mobile/career/intake'){const body=await readJsonBody(request,15_000_000);const input=careerIntakeFromBody(body);const extractor=input.source==='screenshot'||input.source==='image'?new CareerVisionExtractor():undefined;const result=await ingestCareerItem(input,{extractor});return json(request,response,result.added?201:200,result);}
   if(request.method==='POST'&&url.pathname==='/api/mobile/career/feedback'){const body=await readJsonBody(request,20_000);const verdict=body.verdict==='correct'?'correct':body.verdict==='needs_correction'?'needs_correction':undefined;if(!verdict)return json(request,response,400,{error:'verdict must be correct or needs_correction'});const item=await recordCareerContinuityFeedback({jobId:typeof body.jobId==='string'?body.jobId:undefined,verdict,note:typeof body.note==='string'?body.note:undefined});return json(request,response,200,{item,validation:await careerContinuityMetrics()});}
   return json(request,response,404,{error:'Career mobile route not found'});
  }catch(error){return json(request,response,400,{error:error instanceof Error?error.message:String(error)})}
