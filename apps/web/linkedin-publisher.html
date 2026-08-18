@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Munin LinkedIn Publisher</title><link rel="stylesheet" href="/munin.css"/><script defer src="/munin-nav.js"></script>
+<style>
+.shell{max-width:1280px;margin:auto;padding:32px}.top,.row{display:flex;justify-content:space-between;align-items:center;gap:12px}.panel,.card{border:1px solid #193149;background:#08131f;border-radius:14px;padding:20px}.list{display:grid;gap:12px;margin-top:18px}.card{background:#091725}.muted,p{color:var(--text-muted)}button,a.btn{border:1px solid #28506c;background:#0d1d2b;color:#d8ecfa;border-radius:9px;padding:9px 12px;text-decoration:none;cursor:pointer}.primary{background:#126a9f;color:#fff}.approved{color:#8adcb0}.warn{color:#efc56d}.published{color:#72c6f5}.actions{display:flex;gap:8px;flex-wrap:wrap}.policy{padding:12px;border:1px solid #28506c;border-radius:10px;background:#091725;margin:18px 0}.status{font-size:11px;text-transform:uppercase;letter-spacing:.12em}.empty{padding:30px;text-align:center}@media(max-width:760px){.shell{padding:18px}.top,.row{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body><main class="shell"><div class="top"><div><div class="eyebrow">GOVERNED PUBLICATION</div><h1>LinkedIn Publisher</h1><p>Aprovação explícita, pacote de publicação e registro manual. O Munin não publica externamente sozinho.</p></div><div class="actions"><a class="btn" href="/linkedin.html">LinkedIn Studio</a><a class="btn" href="/linkedin-compose.html">Composer</a></div></div><div id="policy" class="policy"></div><section class="panel"><div class="row"><div><div class="eyebrow">QUEUE</div><h2>Publicações</h2></div><button onclick="load()">Atualizar</button></div><div id="items" class="list"></div></section></main>
+<script>
+async function api(path,options){const r=await fetch(path,{headers:{'content-type':'application/json'},...options}),d=await r.json();if(!r.ok)throw new Error(d.error||'Falha');return d}
+const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+function cls(s){return s==='approved'?'approved':s==='published'?'published':'warn'}
+async function load(){try{const data=await api('/api/linkedin-publisher');policy.innerHTML=`<b>Contrato:</b> aprovação obrigatória · publicação externa automática: <b>${data.policy.externalWriteAllowed?'habilitada':'desabilitada'}</b> · boundary: ${esc(data.policy.publicationBoundary)}`;items.innerHTML=data.items.length?data.items.map(x=>`<article class="card"><div class="row"><div><div class="status ${cls(x.status)}">${esc(x.status)}</div><h3>${esc(x.title)}</h3><small class="muted">${(x.themes||[]).map(esc).join(' · ')}</small></div><div class="actions">${x.status!=='approved'&&x.status!=='published'?`<button class="primary" onclick="approve('${x.postId}')">Aprovar</button>`:''}${x.status==='approved'?`<button onclick="copyPackage('${x.postId}')">Copiar pacote</button><button onclick="markPublished('${x.postId}')">Registrar publicação</button><button onclick="revoke('${x.postId}')">Revogar</button>`:''}${x.publishedUrl?`<a class="btn" target="_blank" rel="noreferrer" href="${esc(x.publishedUrl)}">Abrir post</a>`:''}</div></div></article>`).join(''):'<div class="empty">Nenhum draft aguardando governança.</div>'}catch(e){items.innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
+async function approve(id){await api(`/api/linkedin-publisher/${id}/approve`,{method:'POST',body:'{}'});await load()}
+async function revoke(id){await api(`/api/linkedin-publisher/${id}/revoke`,{method:'POST',body:JSON.stringify({note:'Approval revoked from Publisher UI'})});await load()}
+async function copyPackage(id){const p=await api(`/api/linkedin-publisher/${id}/package`);await navigator.clipboard.writeText(p.body);alert('Texto aprovado copiado. A publicação continua manual.')}
+async function markPublished(id){const url=prompt('Cole a URL do post já publicado manualmente no LinkedIn:');if(!url)return;await api(`/api/linkedin-publisher/${id}/published`,{method:'POST',body:JSON.stringify({url,confirmation:'I_PUBLISHED_THIS_MANUALLY'})});await load()}
+load();
+</script></body></html>
