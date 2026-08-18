@@ -15,6 +15,13 @@ test('durable decision and action events are mirrored into the memory ledger', a
  assert.equal(actions.length,1);assert.match(actions[0]?.summary??'',/Core validated/);
 });
 
+test('career state events are automatically scoped to the career project',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'munin-store-ledger-'));const store=new ContextStore(root);
+ await store.event('job.updated','job','job-1',{status:'interview'});
+ const entries=await new MemoryLedger(root).list({projectId:'career'});
+ assert.equal(entries.length,1);assert.equal(entries[0]?.entityId,'job-1');
+});
+
 test('unrelated system events remain out of the durable memory ledger',async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'munin-store-ledger-'));const store=new ContextStore(root);
  await store.event('runtime.heartbeat','system','runtime-1',{status:'ok'});
