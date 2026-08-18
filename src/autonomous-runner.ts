@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { JsonOutcomeStore, type OutcomeRecord, type OutcomeStore } from './adaptive-execution.js';
 import { planAutonomousGoalCycle, prioritizeGoals, type AutonomousCycleRecord, type AutonomousLoopResult } from './autonomous-goals.js';
+import { hydrateControlRoomState, summarizeHydratedState } from './control-room-state.js';
 import { ExecutionEngine, type ExecutionPlan } from './runtime.js';
 import { MuninService } from './service.js';
 import { ContextStore } from './store.js';
@@ -15,6 +16,7 @@ export class AutonomousGoalRunner {
     private readonly store = new ContextStore(),
     private readonly runtime: GoalRuntime = new ExecutionEngine(),
     private readonly outcomes: OutcomeStore = new JsonOutcomeStore(),
+    private readonly controlRoomRoot = process.cwd(),
   ) {}
 
   private async saveRuntimeFailure(goalId: string, goalTitle: string, actionId: string, actionTitle: string, evidence: string[]): Promise<void> {
@@ -35,6 +37,8 @@ export class AutonomousGoalRunner {
 
   async run(maxCycles = 5): Promise<AutonomousLoopResult> {
     if (!Number.isInteger(maxCycles) || maxCycles < 1 || maxCycles > 20) throw new Error('maxCycles must be an integer between 1 and 20.');
+    const controlRoomState = await hydrateControlRoomState(this.controlRoomRoot);
+    await this.store.event('control_room.state_hydrated', 'system', 'control-room', summarizeHydratedState(controlRoomState));
     const cycles: AutonomousCycleRecord[] = [];
     const service = new MuninService(this.store);
 
