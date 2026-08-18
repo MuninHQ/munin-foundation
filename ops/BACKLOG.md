@@ -75,7 +75,7 @@
 - [x] **External connector security/privacy review** — Gmail/Outlook permission inventory and consequential-action boundary are documented; OAuth authorization/refresh now asserts the repository-managed scopes remain read-only.
 - [ ] **Secure token-at-rest adapter** — evaluate OS keychain/credential-vault storage for local OAuth tokens; current v0.1 explicitly relies on local runtime JSON plus host OS/filesystem protection.
 - [x] Execution/retry/blocker observability foundations and optional read-only Sentry ingestion exist.
-- [ ] Consolidated operator-facing observability/SITREP across orchestrator, engineering jobs, browser verification and connector state.
+- [x] **Consolidated operator-facing observability/SITREP** — one deterministic snapshot aggregates canonical Control Room readiness, engineering job health, Playwright verification availability/read-only policy, Memory Ledger volume and connector security state; exposed via CLI and `/api/orchestrate/status`.
 
 ## Done in current phase
 
@@ -86,5 +86,6 @@
 - [x] Control Room cross-run continuity and engineering QA-recovery acceptance.
 - [x] Canonical Munin v0.1 product/build contract.
 - [x] Read-only external OAuth connector security contract.
+- [x] Unified operator SITREP across core runtime surfaces.
 - [x] Canonical Brand Asset Registry.
 - [x] Daily Munin progress/blocker review automation created in ChatGPT.
