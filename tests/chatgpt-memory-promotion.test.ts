@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { ContinuityMemoryStore, type MemoryInput } from '../src/continuity-memory.js';
 import { MemoryLedger } from '../src/memory-ledger.js';
-import { promoteChatGptProjectMemory, reviewChatGptRecordForProject } from '../src/chatgpt-memory-promotion.js';
+import { promoteChatGptProjectMemory, reviewChatGptRecordForProject, sensitiveHistoricalContent } from '../src/chatgpt-memory-promotion.js';
 
 const base=(patch:Partial<MemoryInput>):MemoryInput=>({kind:'event',subject:'Conversation',content:'Some meaningful historical context',tags:['chatgpt-export'],source:'chatgpt-export:test',confidence:'confirmed',observedAt:'2026-08-18T10:00:00.000Z',lastConfirmedAt:'2026-08-18T10:00:00.000Z',...patch});
 
@@ -16,6 +16,15 @@ test('review gate keeps Munin project context and rejects unrelated personal mem
  assert.ok(personal.reasons.includes('personal-kind-without-project-context'));
 });
 
+test('review gate rejects secret-bearing project history even when Munin-relevant',()=>{
+ assert.deepEqual(sensitiveHistoricalContent('password: hunter2'),['password']);
+ assert.deepEqual(sensitiveHistoricalContent('Bearer abcdefghijklmnop1234'),['bearer-token']);
+ const decision=reviewChatGptRecordForProject(base({kind:'project',content:'Munin deployment password: supersecret123',tags:['chatgpt-export','munin']}));
+ assert.equal(decision.accepted,false);
+ assert.ok(decision.reasons.includes('explicit-munin-tag'));
+ assert.ok(decision.reasons.includes('sensitive-content:password'));
+});
+
 test('promotion writes only accepted records to continuity memory and ledger',async()=>{
  const root=await mkdtemp(path.join(tmpdir(),'munin-chatgpt-promotion-'));
  const continuity=new ContinuityMemoryStore(path.join(root,'continuity.json'));
@@ -23,11 +32,12 @@ test('promotion writes only accepted records to continuity memory and ledger',as
  const records=[
   base({kind:'decision',subject:'Munin architecture',content:'Decidimos manter o Munin provider-neutral.',tags:['chatgpt-export','munin','decision']}),
   base({kind:'career',subject:'Interview',content:'Interview preparation for an external banking role',tags:['chatgpt-export','career']}),
+  base({kind:'project',subject:'Munin credential',content:'Munin api key: sk-abcdefghijklmnop123456',tags:['chatgpt-export','munin']}),
  ];
  const result=await promoteChatGptProjectMemory(records,{continuity,ledger});
- assert.equal(result.reviewed,2);
+ assert.equal(result.reviewed,3);
  assert.equal(result.accepted,1);
- assert.equal(result.rejected,1);
+ assert.equal(result.rejected,2);
  assert.equal(result.continuity.added,1);
  assert.equal(result.ledgerAdded,1);
  const stored=await continuity.list();
