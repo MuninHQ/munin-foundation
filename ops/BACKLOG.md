@@ -72,7 +72,8 @@
 - [x] Failure recovery, bounded retry, leases/fencing/outbox and idempotent runtime primitives exist.
 - [x] Provider policy and bounded execution/cost-control foundations exist.
 - [x] **Historical conversation ingestion privacy review** — relevance, provenance, local-storage and secret-rejection boundaries are implemented and documented.
-- [ ] **External connector security/privacy review** — inventory connector permissions, data-retention boundaries and consequential-action gates.
+- [x] **External connector security/privacy review** — Gmail/Outlook permission inventory and consequential-action boundary are documented; OAuth authorization/refresh now asserts the repository-managed scopes remain read-only.
+- [ ] **Secure token-at-rest adapter** — evaluate OS keychain/credential-vault storage for local OAuth tokens; current v0.1 explicitly relies on local runtime JSON plus host OS/filesystem protection.
 - [x] Execution/retry/blocker observability foundations and optional read-only Sentry ingestion exist.
 - [ ] Consolidated operator-facing observability/SITREP across orchestrator, engineering jobs, browser verification and connector state.
 
@@ -84,5 +85,6 @@
 - [x] Memory Ledger, governed/secret-safe ChatGPT project-memory promotion and Career Mobile Intake core.
 - [x] Control Room cross-run continuity acceptance.
 - [x] Canonical Munin v0.1 product/build contract.
+- [x] Read-only external OAuth connector security contract.
 - [x] Canonical Brand Asset Registry.
 - [x] Daily Munin progress/blocker review automation created in ChatGPT.
