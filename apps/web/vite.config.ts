@@ -30,6 +30,7 @@ export default defineConfig({
         'linkedin-assets': path.resolve(root, 'linkedin-assets.html'),
         'linkedin-compose': path.resolve(root, 'linkedin-compose.html'),
         'linkedin-history': path.resolve(root, 'linkedin-history.html'),
+        'linkedin-publisher': path.resolve(root, 'linkedin-publisher.html'),
         linkedin: path.resolve(root, 'linkedin.html'),
         settings: path.resolve(root, 'settings.html'),
       },
