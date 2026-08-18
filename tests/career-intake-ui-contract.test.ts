@@ -40,3 +40,10 @@ test('career intake keeps screenshot payload ephemeral until analysis', async ()
   assert.match(html, /payload\(false\)/);
   assert.match(html, /p\.extractedText=lastAnalysis\.extractedText\|\|p\.text/);
 });
+
+test('career intake bounds backend waits and recovers the analyze button', async () => {
+  const html = await careerIntakeHtml();
+  assert.match(html, /AbortSignal\.timeout\(30000\)/);
+  assert.match(html, /A análise excedeu 30 segundos/);
+  assert.match(html, /finally\{\$\('analyze'\)\.disabled=false\}/);
+});
