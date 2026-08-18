@@ -14,7 +14,7 @@ export async function handleMemoryLedgerMobileApi(request:IncomingMessage,respon
  const kindValue=url.searchParams.get('kind');const scopeValue=url.searchParams.get('scope');
  if(kindValue&&!kinds.has(kindValue as MemoryLedgerKind))return json(request,response,400,{error:'invalid kind'});
  if(scopeValue&&!scopes.has(scopeValue as MemoryLedgerScope))return json(request,response,400,{error:'invalid scope'});
- const limitValue=Number(url.searchParams.get('limit')??100);const limit=Number.isFinite(limitValue)?Math.max(1,Math.min(Math.floor(limitValue),1000)):100;
+ const rawLimit=url.searchParams.get('limit');const parsedLimit=rawLimit===null?100:Number(rawLimit);if(rawLimit!==null&&(!Number.isFinite(parsedLimit)||parsedLimit<1))return json(request,response,400,{error:'limit must be a positive number'});const limit=Math.min(Math.floor(parsedLimit),1000);
  const entries=await new MemoryLedger().list({kind:kindValue as MemoryLedgerKind||undefined,scope:scopeValue as MemoryLedgerScope||undefined,source:url.searchParams.get('source')??undefined,projectId:url.searchParams.get('projectId')??undefined,entityId:url.searchParams.get('entityId')??undefined,limit});
  return json(request,response,200,{count:entries.length,entries});
 }
