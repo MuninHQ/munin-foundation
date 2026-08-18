@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { addLinkedInPost } from '../src/linkedin-content.js';
+import { addLinkedInPost, loadLinkedInContent } from '../src/linkedin-content.js';
 import { approveForPublication, markManuallyPublished, publicationPackage, publisherPolicy, revokePublicationApproval } from '../src/linkedin-publisher.js';
 
 test('publisher requires explicit approval and never enables external writes', async () => {
@@ -22,6 +22,11 @@ test('publisher requires explicit approval and never enables external writes', a
     const published=await markManuallyPublished(post.id,{url:'https://www.linkedin.com/posts/example',confirmation:'I_PUBLISHED_THIS_MANUALLY'});
     assert.equal(published.status,'published');
     assert.match(published.publishedUrl??'',/^https:\/\//);
+    const history=await loadLinkedInContent();
+    const synced=history.posts.find(item=>item.id===post.id);
+    assert.equal(synced?.status,'published');
+    assert.equal(synced?.sourceUrl,published.publishedUrl);
+    assert.equal(synced?.publishedAt,published.publishedAt);
   } finally { if(previous===undefined)delete process.env.MUNIN_DATA_DIR;else process.env.MUNIN_DATA_DIR=previous;await rm(dir,{recursive:true,force:true}); }
 });
 
