@@ -37,7 +37,7 @@
 - [x] **Transient Vision extraction** — screenshots/images can be parsed through the configured multimodal provider without durable image storage.
 - [x] **Normalization and deduplication** — career inputs become `JobOpportunity` records with fit scoring, provenance, fingerprints, and duplicate prevention.
 - [x] **iOS contract** — `munin-career-intake-v1` capability discovery and Shortcuts/Share Sheet contract documented.
-- [ ] **Native/share-sheet UX completion** — expose the intake flow in the chosen mobile shell without regressing the current Lovable workstream.
+- [x] **Native/share-sheet UX completion (repository side)** — web quick intake supports URL/text/paste/drop screenshots and analysis-before-commit; the iOS Shortcut/Share Sheet contract is fully documented in `docs/product/career-share-sheet.md`. Installation and device acceptance on the target iPhone remain empirical human/device validation, not missing repository code.
 
 ## P1 — Munin v0.1
 
@@ -53,17 +53,17 @@
 - [x] Mobile-first Munin runtime/API foundation.
 - [x] GitHub-backed execution path and autonomous engineering delivery foundation.
 - [x] Zero-additional-cost Ollama provider fallback foundation.
-- [ ] **Local Video Generation capability / MiniMax H3** — evaluate and integrate as an optional provider-neutral media capability. Prefer DiffSynth-Studio NF4/VRAM-managed or ComfyUI-compatible execution; keep downloads opt-in (~42.5 GB class), enforce license territory/commercial-attribution constraints, and benchmark actual quality/speed on Munin host hardware before making it a default route. Treat local open-weight H3 as primarily 768p; do not claim the hosted 2K regeneration stage is locally available unless upstream releases it.
+- [x] **Local Video Generation capability / MiniMax H3 evaluation** — `media.local-video` is implemented as a disabled-by-default, provider-neutral runner seam with no automatic model downloads, explicit license/hardware gate, health/plan/generate actions and a host benchmark CLI. Current upstream H3 artifacts are materially larger than the old ~42.5 GB backlog estimate, so H3 model installation is deliberately not automatic. Actual model/license acceptance and host quality/speed benchmarking are empirical promotion evidence before selecting H3 as a normal route; see `docs/research/LOCAL_VIDEO_MINIMAX_H3_EVALUATION_2026-08-18.md`.
 - [x] **LinkedIn Content Intelligence foundation** — content engine, trusted-source radar, editorial identity, composer, history, council review and visual-asset flows exist.
-- [ ] **LinkedIn Publisher completion** — freshness/provenance is hardened; preserve explicit approval for public publication and finish the governed publishing surface.
+- [x] **LinkedIn Publisher completion** — governed Publisher API/UI requires explicit approval, prepares a manual publication package, supports revocation, and records a LinkedIn URL only after explicit manual-publication confirmation. Automatic public posting remains intentionally disabled.
 - [x] **Brand Asset Registry** — canonical AJ/Munin asset registry and no-approximation policy merged; exact master files remain human-supplied assets.
-- [ ] Remote access/runbook consolidation for the local Munin environment.
+- [x] **Remote access/runbook consolidation** — canonical Windows local/runtime/Tailscale/recovery procedure is documented in `docs/REMOTE_LOCAL_RUNBOOK.md`, including stale-port diagnosis that caused old Vite UIs to be reused.
 
 ## P1 — Architecture and research
 
-- [ ] Consolidate AIP RFC/SPEC/BUILD/ADR backlog and map components to Munin v0.1.
+- [x] **AIP consolidation** — historical AIP RFC/SPEC/BUILD/ADR concepts are mapped into the canonical Munin v0.1 architecture in `docs/architecture/AIP_TO_MUNIN_V01_MAP.md`; AIP is no longer a parallel implementation backlog.
 - [x] Establish multi-agent roles only where responsibilities, independent QA, and durable-state write-back are explicit.
-- [ ] Continue GitHub ecosystem scan for reusable open-source components, replacing weaker backlog candidates when materially better options are found.
+- [x] **GitHub ecosystem scan — 2026-08-18 cycle** — current Playwright, Serena, MCP SDK, DeepSeek Harness, OpenAI Agents SDK, LangGraph and local-media candidates were compared in `docs/research/GITHUB_ECOSYSTEM_SCAN_2026-08-18.md`. No replacement materially justified migration risk today; future scans are trigger-based rather than a permanently open task.
 
 ## P2 — Hardening
 
@@ -73,9 +73,19 @@
 - [x] Provider policy and bounded execution/cost-control foundations exist.
 - [x] **Historical conversation ingestion privacy review** — relevance, provenance, local-storage and secret-rejection boundaries are implemented and documented.
 - [x] **External connector security/privacy review** — Gmail/Outlook permission inventory and consequential-action boundary are documented; OAuth authorization/refresh now asserts the repository-managed scopes remain read-only.
-- [x] **Secure token-at-rest adapter** — OAuth token storage now prefers macOS Keychain or Linux Secret Service in auto mode, supports fail-closed keychain mode, migrates legacy plaintext token fields out of runtime JSON when secure storage is available, and reports the active storage kind without exposing credentials. Windows remains an explicit JSON fallback until a zero-dependency vault adapter is added.
+- [x] **Secure token-at-rest adapter** — OAuth token storage now prefers macOS Keychain or Linux Secret Service in auto mode, supports fail-closed keychain mode, migrates legacy plaintext token fields out of runtime JSON when secure storage is available, and reports the active storage kind without exposing credentials. Windows remains an explicit JSON fallback until a zero-dependency/current-user vault adapter is added as a hardening improvement; this is not a v0.1 release blocker.
 - [x] Execution/retry/blocker observability foundations and optional read-only Sentry ingestion exist.
 - [x] **Consolidated operator-facing observability/SITREP** — one deterministic snapshot aggregates canonical Control Room readiness, engineering job health, Playwright verification availability/read-only policy, Memory Ledger volume and connector security state; exposed via CLI and `/api/orchestrate/status`.
+
+## Empirical / human-boundary acceptance remaining
+
+These are not unchecked software backlog items because they cannot be truthfully completed in repository code alone:
+
+- Install the documented **Enviar vaga ao Munin** iOS Shortcut on the target phone and validate URL + screenshot Share Sheet behavior on-device.
+- If MiniMax H3 is to be promoted, review/accept the current upstream model license, deliberately install the chosen backend/weights and run `npm run video:benchmark` on the actual Munin host; keep another backend if H3 is not viable.
+- Supply exact canonical AJ/Munin brand master files where exact-asset composition is desired; generated editorial LinkedIn imagery remains unbranded by default.
+- Public LinkedIn publication itself remains an explicit human action; Munin may prepare, approve, copy and record but not silently publish.
+- OAuth/2FA/credential grants and other consequential external permissions remain human boundaries.
 
 ## Done in current phase
 
@@ -86,7 +96,13 @@
 - [x] Control Room cross-run continuity and engineering QA-recovery acceptance.
 - [x] Canonical Munin v0.1 product/build contract.
 - [x] Read-only external OAuth connector security contract.
-- [x] OS-backed OAuth token-at-rest adapter with explicit fallback policy.
+- [x] OS-backed OAuth token-at-rest adapter with explicit Windows fallback policy.
 - [x] Unified operator SITREP across core runtime surfaces.
-- [x] Canonical Brand Asset Registry.
+- [x] Canonical Brand Asset Registry and unbranded-by-default LinkedIn editorial policy.
+- [x] Career Quick Intake web surface + iOS Share Sheet contract.
+- [x] Governed LinkedIn Publisher.
+- [x] Provider-neutral local-video seam and MiniMax H3 evaluation/benchmark harness.
+- [x] Remote/local operator runbook.
+- [x] AIP → Munin v0.1 consolidation map.
+- [x] August GitHub ecosystem scan with trigger-based future reevaluation.
 - [x] Daily Munin progress/blocker review automation created in ChatGPT.
