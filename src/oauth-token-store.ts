@@ -80,8 +80,8 @@ export class LinuxSecretServiceOAuthTokenStore implements OAuthTokenStore{
  }
 }
 
-const DPAPI_ENCRYPT_SCRIPT=`$plain=[Console]::In.ReadToEnd();$bytes=[Text.Encoding]::UTF8.GetBytes($plain);$protected=[Security.Cryptography.ProtectedData]::Protect($bytes,$null,[Security.Cryptography.DataProtectionScope]::CurrentUser);[Console]::Out.Write([Convert]::ToBase64String($protected))`;
-const DPAPI_DECRYPT_SCRIPT=`$cipher=[Console]::In.ReadToEnd().Trim();$bytes=[Convert]::FromBase64String($cipher);$plain=[Security.Cryptography.ProtectedData]::Unprotect($bytes,$null,[Security.Cryptography.DataProtectionScope]::CurrentUser);[Console]::Out.Write([Text.Encoding]::UTF8.GetString($plain))`;
+const DPAPI_ENCRYPT_SCRIPT=`$plain=[Console]::In.ReadToEnd();$bytes=[System.Text.Encoding]::UTF8.GetBytes($plain);$protected=[System.Security.Cryptography.ProtectedData]::Protect($bytes,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser);[Console]::Out.Write([Convert]::ToBase64String($protected))`;
+const DPAPI_DECRYPT_SCRIPT=`$cipher=[Console]::In.ReadToEnd().Trim();$bytes=[Convert]::FromBase64String($cipher);$plain=[System.Security.Cryptography.ProtectedData]::Unprotect($bytes,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser);[Console]::Out.Write([System.Text.Encoding]::UTF8.GetString($plain))`;
 
 export class WindowsDpapiOAuthTokenStore implements OAuthTokenStore{
  readonly kind='windows-dpapi' as const;
@@ -92,7 +92,6 @@ export class WindowsDpapiOAuthTokenStore implements OAuthTokenStore{
   let cipher:string;
   try{cipher=(await readFile(this.encryptedFile,'utf8')).trim();}catch(error:any){
    if(error?.code!=='ENOENT')throw error;
-   // A no-file load still probes DPAPI so auto mode only promotes a working store.
    const probe=await this.protect('{}');const plain=await this.unprotect(probe);if(plain.trim()!=='{}')throw new Error('Windows DPAPI round-trip probe failed');return{};
   }
   if(!cipher)return{};
