@@ -6,44 +6,55 @@
 
 ## Current objective
 
-Establish Munin as a persistent, model-agnostic execution environment that can continue work across conversations and tools without requiring repeated manual reconstruction of context.
+Establish Munin as a persistent, model-agnostic execution environment that accepts objectives, coordinates specialist agents, and continues safe work across conversations and tools without repeated manual continuation prompts.
 
 ## Current phase
 
-**Control Room runtime foundation / autonomous execution implementation**
+**Multi-agent orchestration / Control Room execution integration**
 
 ## Active architecture decision
 
 Use a layered operating model:
 
-`ChatGPT Project / Control Room → durable repo state → Codex or other executor → GitHub verification and history`
+`User objective → Munin Orchestrator → specialist agents → independent QA → durable state/memory → operational verification`
 
-The repository, not any individual chat, is the durable source of truth for execution state.
+The repository, not any individual chat, remains the durable source of truth for execution state. Existing autonomous execution, engineering runtime, memory, Control Room state, provider routing, recovery, and observability components are reused rather than duplicated.
+
+## Specialist model
+
+- **Product & State Manager** — decomposes objectives, maintains executable backlog/state, and selects the next unblocked action.
+- **Researcher** — gathers evidence and compares alternatives when uncertainty must be resolved.
+- **Engineer** — implements through the bounded `PLAN → BUILD → TEST → VERIFY → FIX` loop.
+- **QA & Verifier** — independently validates acceptance criteria and routes defects back to Engineer.
+- **Memory Curator** — promotes durable decisions, constraints, evidence, and lessons into project continuity.
+- **Operator** — verifies CI/runtime health and attempts safe operational recovery.
 
 ## Completed in this phase
 
-- Control Room architecture merged to `main` through PR #210.
-- Canonical commands defined: `BUILD`, `CONT`, `SITREP`, `NEXT`.
-- Autonomous execution loop defined: `PLAN → BUILD → TEST → VERIFY → FIX`.
-- Human-blocker policy defined.
-- Durable `CURRENT_STATE`, `BACKLOG`, and `SESSION_LOG` established.
+- Control Room architecture and durable operational files established.
+- Autonomous execution loop implemented.
+- Human-blocker policy implemented.
 - Provider-neutral executor handoff contract established.
-- Runtime state hydration implemented for canonical operational files.
-- Runtime write-back implemented for current state, backlog, and session events.
-- Control Room state CLI and automated tests added.
+- Multi-agent registry and supervisor core implemented on `agent/munin-multi-agent-orchestrator`.
+- Automatic specialist routing implemented by work type.
+- QA failure routing implemented as `QA → Engineer → QA` without a manual continuation prompt.
+- Recoverable blocker retry implemented.
+- Human-only blocker classification implemented for credentials, 2FA, financial commitments, irreversible high-impact actions, external permission, and unresolved strategic ambiguity.
+- Agent contracts created for Orchestrator, Product/State, Researcher, Engineer, QA, Memory Curator, and Operator.
+- Automated tests added for routing, recovery, QA repair loop, and human-blocker escalation.
 
 ## In progress
 
-- Validation and integration of the state hydration/write-back runtime increment.
-- Autonomous Execution Harness implementation.
-- Real-blocker classifier integration.
+- CI validation of the multi-agent orchestration branch.
+- Production adapters binding every specialist role to the appropriate existing Munin runtime.
+- Canonical Control Room entrypoint that hydrates state, invokes the Orchestrator, and writes results back.
 
 ## Next executable work
 
-1. Validate and merge Control Room state hydration/write-back.
-2. Integrate hydrated state into the autonomous execution entrypoint.
-3. Implement the real-blocker classifier.
-4. Make canonical `BUILD`, `CONT`, `SITREP`, and `NEXT` workflows consume hydrated state by default.
+1. Pass repository CI for the multi-agent orchestration increment and repair any failures.
+2. Bind Engineer to `EngineeringAutonomousMission` and map the remaining specialists to existing state, research, memory, QA, and operations capabilities.
+3. Expose the Orchestrator as the default objective-level Control Room execution entrypoint.
+4. Persist orchestration traces and specialist evidence into canonical state/session memory.
 5. Add end-to-end resume/write-back verification.
 
 ## Real blockers
@@ -57,3 +68,4 @@ None for repository-side implementation.
 - Prefer zero-additional-cost tooling where viable.
 - Preserve model/provider portability.
 - Reversible technical decisions may proceed autonomously when consistent with accepted principles.
+- While a safe, reversible, executable next action exists, the Orchestrator continues without requiring `cont`, `next`, or `build` from the user.
