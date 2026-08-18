@@ -9,6 +9,7 @@ export interface CareerIntakeImage {
   mimeType: string;
   filename?: string;
   transientRef?: string;
+  dataBase64?: string;
 }
 
 export interface CareerIntakeInput {
@@ -65,6 +66,7 @@ export function careerIntakeFingerprint(input: CareerIntakeInput): string {
     title: normalizeSpace(input.title).toLowerCase(),
     company: normalizeSpace(input.company).toLowerCase(),
     role: normalizeSpace(input.role).toLowerCase(),
+    transientRef: normalizeSpace(input.image?.transientRef),
   });
   return createHash('sha256').update(material).digest('hex');
 }
@@ -106,7 +108,7 @@ export async function ingestCareerItem(input: CareerIntakeInput, dependencies: C
   const store = dependencies.store ?? new ContextStore();
   const ledger = dependencies.ledger ?? new MemoryLedger();
   const content = await resolveContent(input, dependencies.extractor);
-  const fingerprint = careerIntakeFingerprint({ ...input, extractedText: content });
+  const fingerprint = careerIntakeFingerprint({ ...input, extractedText: content, image: input.image ? { ...input.image, dataBase64: undefined } : undefined });
   const state = await store.load();
   const duplicate = state.jobs.find(job => job.notes?.includes(`intake:${fingerprint}`) || (input.url && job.link === input.url));
   if (duplicate) return { job: duplicate, added: false, duplicateOf: duplicate.id, intakeFingerprint: fingerprint };
