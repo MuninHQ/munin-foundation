@@ -40,3 +40,26 @@ Promote Munin from command-by-command execution to objective-level orchestration
 ### Next
 
 Validate through repository CI, bind specialist roles to production runtime adapters, and expose one Control Room objective entrypoint.
+
+## 2026-08-18 — OAuth token-at-rest hardening completed
+
+### Decision
+
+Prefer OS-backed credential storage for repository-managed OAuth tokens without broadening external permissions or adding a paid/runtime dependency. Preserve explicit fallback behavior instead of making unsupported hosts fail unexpectedly.
+
+### Changes
+
+- Added a provider-neutral OAuth token-store seam.
+- Added macOS Keychain and Linux Secret Service adapters.
+- Added `auto`, explicit `json`, and fail-closed `keychain` policies.
+- Added legacy runtime-JSON token migration when secure storage is active.
+- Kept PKCE pending state local and kept token values out of status/log/memory surfaces.
+- Extended operator connector status with the active storage kind.
+- Added deterministic adapter/security-policy tests and updated the external connector security contract.
+- First CI attempt found an Operator SITREP fixture type mismatch; corrected the fixture and reran validation.
+- Final validation passed core build, web build, test suite and Markdown checks.
+- Squash-merged PR #224 to `main`.
+
+### Next
+
+Continue with remote/local execution runbook consolidation, AIP-to-v0.1 mapping and safe publisher completion while preserving Lovable/publication boundaries.
