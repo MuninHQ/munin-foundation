@@ -59,10 +59,10 @@ function portOpen(port, host = '127.0.0.1') {
 
 async function apiHealthy() {
   try {
-    const response = await fetch(`http://127.0.0.1:${API_PORT}/api/health`, { signal: AbortSignal.timeout(1200) });
+    const response = await fetch(`http://127.0.0.1:${API_PORT}/api/unified-health`, { signal: AbortSignal.timeout(1200) });
     if (!response.ok) return false;
     const data = await response.json();
-    return data?.status === 'ok' && data?.service === 'munin-workspace';
+    return data?.status === 'ok' && data?.service === 'munin-workspace' && data?.mode === 'unified' && data?.capabilities?.includes?.('career-intake');
   } catch { return false; }
 }
 
@@ -113,16 +113,16 @@ process.on('SIGINT', () => shutdown(0)); process.on('SIGTERM', () => shutdown(0)
 
 console.log('Starting Munin Workspace...');
 if (await apiHealthy()) {
-  console.log(`[Munin] Healthy API already running on 127.0.0.1:${API_PORT}; reusing it.`);
+  console.log(`[Munin] Healthy unified API already running on 127.0.0.1:${API_PORT}; reusing it.`);
 } else {
   if (await portOpen(API_PORT)) {
-    console.error(`[Munin] Port ${API_PORT} is occupied by a process that is not a healthy Munin API.`);
-    console.error('[Munin] Stop that process before starting Munin. Refusing to reuse a stale/foreign service.');
+    console.error(`[Munin] Port ${API_PORT} is occupied by a stale, legacy or foreign API process.`);
+    console.error('[Munin] Stop that process and start the workspace again. Refusing to reuse an API that does not expose the unified Career Intake contract.');
     process.exit(1);
   }
   await runToCompletion('npm', ['run', 'build:core'], 'TypeScript build');
   run('node', ['dist/src/server.js'], 'Munin API');
-  if (!(await waitFor(apiHealthy))) console.error(`[Munin] API did not become healthy on port ${API_PORT}.`);
+  if (!(await waitFor(apiHealthy))) console.error(`[Munin] Unified API did not become healthy on port ${API_PORT}.`);
 }
 
 if (await portOpen(WEB_PORT)) console.log(`[Munin] Web UI already running at http://127.0.0.1:${WEB_PORT}; reusing it.`);
