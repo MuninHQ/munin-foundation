@@ -48,6 +48,7 @@ function stableFingerprint(input: AppendMemoryLedgerInput): string {
     summary: input.summary.trim(),
     projectId: input.projectId,
     entityId: input.entityId,
+    occurredAt: input.occurredAt,
     payload: input.payload ?? {},
   });
   return createHash('sha256').update(material).digest('hex');
