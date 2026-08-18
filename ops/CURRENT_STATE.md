@@ -6,11 +6,11 @@
 
 ## Current objective
 
-Turn Munin into a coherent persistent execution environment that can accept objectives, continue safe work autonomously, verify outcomes, preserve durable context, and expose the same truth across web, mobile, GitHub and local execution.
+Operate Munin as a coherent persistent execution environment that accepts objectives, continues safe work autonomously, verifies outcomes, preserves durable context, and exposes the same truth across web, mobile, GitHub and local execution.
 
 ## Current phase
 
-**Integration hardening / operator completion**
+**v0.1 backlog closeout / empirical acceptance**
 
 ## Active architecture decision
 
@@ -18,43 +18,53 @@ Turn Munin into a coherent persistent execution environment that can accept obje
 
 The repository is the durable source of truth for product/execution state. Runtime-only private data stays outside Git. Reversible work continues autonomously until a genuine human-only boundary is reached.
 
-## Completed foundations
+## Completed foundations and integrations
 
 - Control Room protocol, canonical backlog/state/session files and bounded `PLAN → BUILD → TEST → VERIFY → FIX` loop.
 - Multi-agent supervisor, production specialist adapters, CLI/API orchestration entrypoints and real-blocker classification.
 - Skill-aware autonomous engineering, governed read-only Playwright verification, provider capability seams, recovery, leases/fencing/outbox and optional Ollama fallback.
+- External Intelligence Provider, independent engineering reviewer and internal Munin MCP bridge without introducing a second orchestrator.
 - Cross-run Control Room continuity acceptance and engineering QA-recovery end-to-end acceptance.
 - Append-only Memory Ledger, governed/secret-safe ChatGPT historical project-memory promotion and mobile memory access.
-- Career Continuity Realm, Career Inbox/Intelligence, Career Mobile Intake, transient Vision parsing, normalization/deduplication and stable iOS intake contract.
+- Career Continuity Realm, Career Inbox/Intelligence, Career Mobile Intake, transient Vision parsing, normalization/deduplication, Career Quick Intake web UI and stable iOS Share Sheet/Shortcut contract.
 - Munin v0.1 product/build contract consolidated around bounded execution and durable continuity.
-- LinkedIn Content Intelligence foundation plus Trusted Source Radar freshness/provenance hardening.
+- AIP architecture concepts consolidated into the canonical Munin v0.1 map; AIP is not a parallel implementation backlog.
+- LinkedIn Content Intelligence foundation, Trusted Source Radar freshness/provenance hardening, unbranded-by-default editorial policy and governed Publisher approval/manual-publication surface.
 - Canonical Brand Asset Registry with no-approximation policy.
 - Read-only Gmail/Outlook connector permission contract and unified operator SITREP.
 - OAuth token-at-rest hardening: auto-prefer macOS Keychain/Linux Secret Service, fail-closed keychain mode, legacy JSON migration and explicit unsupported-host fallback.
+- Provider-neutral `media.local-video` capability with no automatic model downloads, explicit runner configuration and host benchmark CLI; MiniMax H3 evaluation recorded without making it a default dependency.
+- Remote/local Windows + Tailscale operator runbook including deterministic stale-port/UI recovery.
+- August 2026 GitHub ecosystem scan completed; future scans are trigger-based instead of a permanently open queue item.
+- Web navigation hardening includes shared standalone navigation/styles, missing Intelligence page restoration, Career Quick Intake exposure and a navigation integrity test.
 
-## In progress / remaining integration work
+## Executable backlog state
 
-- Native/share-sheet Career intake UX around the stable API contract, while preserving the Lovable frontend boundary.
-- Governed LinkedIn publishing surface; actual public publication remains explicit-approval only.
-- Remote access/runbook consolidation for the local Munin environment.
-- AIP RFC/SPEC/BUILD/ADR consolidation mapped to Munin v0.1.
-- Continued open-source ecosystem scan for materially better reusable components.
-- Optional local video-generation evaluation; real host benchmark remains empirical and downloads stay opt-in.
+The canonical `ops/BACKLOG.md` has **no unchecked repository-software items in the current v0.1 phase**.
 
-## Next executable work
+New engineering work should be created only when:
 
-1. Consolidate the remote/local execution runbook without changing runtime behavior.
-2. Map the remaining AIP architecture documents to the canonical Munin v0.1 capability map and remove obsolete overlap.
-3. Continue safe LinkedIn Publisher completion up to, but not across, the public-publication approval boundary.
-4. Evaluate a zero-dependency Windows Credential Manager adapter as a follow-on to the now-merged macOS/Linux secure token-store seam.
-5. Preserve the Lovable frontend boundary until native/share-sheet UI work can be integrated without conflict.
+- empirical acceptance exposes a defect or missing capability;
+- a current dependency becomes unsafe/unmaintained;
+- a benchmark proves a materially better replacement;
+- a new user objective creates a new scoped requirement.
 
-## Real blockers
+## Empirical / human-boundary acceptance remaining
 
-- Exact AJ/Munin brand master files are human-supplied assets before those registry entries can become `approved`.
-- Empirical Career Continuity success, native-device behavior and host-hardware/media benchmarks require real device/local evidence; repository tests cannot fabricate these observations.
-- Public publication, paid-service activation, credentials/2FA and irreversible consequential actions remain explicit human boundaries.
-- Lovable-controlled frontend areas should not be modified concurrently where doing so creates merge/regression risk; core/API/docs work remains unblocked.
+These observations/actions cannot be truthfully completed through repository edits alone:
+
+1. Install and validate the documented **Enviar vaga ao Munin** iOS Shortcut on the target iPhone using a real LinkedIn URL and screenshot; confirm no unwanted image is saved.
+2. If local MiniMax H3 is worth promoting, review/accept the current upstream model license, deliberately install the chosen backend/weights on the actual host and run `npm run video:benchmark`; retain another backend if quality/speed/storage are not acceptable.
+3. Supply exact AJ/Munin master assets where exact-asset composition is desired. LinkedIn editorial artwork remains unbranded when they are absent.
+4. Public LinkedIn publication remains a human action after Publisher approval/package preparation; Munin records the resulting URL rather than silently posting.
+5. Credentials, OAuth grants, 2FA, paid-service activation and irreversible consequential actions remain explicit human boundaries.
+
+## Follow-on hardening opportunities (not v0.1 blockers)
+
+- Add a Windows current-user secure vault/DPAPI adapter to replace the explicit OAuth JSON fallback when a reliable zero-additional-cost implementation is validated.
+- Add richer AI-provider latency/retry observability if runtime evidence shows operator value.
+- Promote Serena or another semantic backend only if the existing benchmark proves material improvement over native repository intelligence.
+- Expose a standards-compliant external MCP transport around the existing internal Munin MCP bridge if a real external client requires it.
 
 ## Guardrails
 
