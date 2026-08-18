@@ -22,6 +22,12 @@ test('career state events are automatically scoped to the career project',async(
  assert.equal(entries.length,1);assert.equal(entries[0]?.entityId,'job-1');
 });
 
+test('career intake event is not mirrored because intake writes its richer ledger record',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'munin-store-ledger-'));const store=new ContextStore(root);
+ await store.event('career.intake.created','job','job-1',{source:'screenshot',fitScore:90});
+ assert.equal((await new MemoryLedger(root).list()).length,0);
+});
+
 test('unrelated system events remain out of the durable memory ledger',async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'munin-store-ledger-'));const store=new ContextStore(root);
  await store.event('runtime.heartbeat','system','runtime-1',{status:'ok'});
