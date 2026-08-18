@@ -1,4 +1,4 @@
-import { appendFile, readFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 export type ControlRoomState = {
@@ -28,6 +28,8 @@ async function readOptional(root:string,relative:string):Promise<{content:string
  }
 }
 
+async function ensureOps(root:string){await mkdir(path.join(root,'ops'),{recursive:true})}
+
 export async function hydrateControlRoomState(root=process.cwd()):Promise<ControlRoomState>{
  const [currentState,backlog,sessionLog]=await Promise.all([
   readOptional(root,STATE_PATHS.currentState),
@@ -41,7 +43,18 @@ export async function hydrateControlRoomState(root=process.cwd()):Promise<Contro
  return {currentState:currentState.content,backlog:backlog.content,sessionLog:sessionLog.content,missing};
 }
 
+export async function writeCurrentState(content:string,root=process.cwd()):Promise<void>{
+ await ensureOps(root);
+ await writeFile(path.join(root,STATE_PATHS.currentState),content.endsWith('\n')?content:`${content}\n`,'utf8');
+}
+
+export async function writeBacklog(content:string,root=process.cwd()):Promise<void>{
+ await ensureOps(root);
+ await writeFile(path.join(root,STATE_PATHS.backlog),content.endsWith('\n')?content:`${content}\n`,'utf8');
+}
+
 export async function appendSessionEvent(event:SessionEvent,root=process.cwd()):Promise<void>{
+ await ensureOps(root);
  const stamp=(event.timestamp??new Date()).toISOString();
  const block=`\n## ${stamp} — ${event.title}\n\n${event.summary.trim()}\n`;
  await appendFile(path.join(root,STATE_PATHS.sessionLog),block,'utf8');
