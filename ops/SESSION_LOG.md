@@ -94,3 +94,23 @@ Close repository-software backlog items when their implementation and governed o
 ### Validation note
 
 The implementation and deterministic tests are present in the repository. A fresh full local/CI run for this final multi-commit batch still requires executable CI or the canonical Windows checkout; no green result is inferred without evidence.
+
+## 2026-08-18 — Windows OAuth DPAPI hardening
+
+### Decision
+
+Close the remaining zero-cost Windows token-at-rest gap with the operating system's CurrentUser DPAPI instead of leaving Windows on plaintext runtime JSON by default.
+
+### Changes
+
+- Added `windows-dpapi` as a secure OAuth token storage kind.
+- Auto mode now probes and prefers Windows DPAPI on `win32` alongside macOS Keychain and Linux Secret Service.
+- Token plaintext is supplied to PowerShell over stdin; it is not placed in process arguments.
+- Only the DPAPI-encrypted blob is persisted in the runtime data directory and is tied to the current Windows user context.
+- Required-secure mode fails closed if DPAPI cannot complete a round-trip probe.
+- Added deterministic mocked DPAPI tests so Linux CI can verify selection, stdin handling and round-trip behavior without requiring a Windows runner.
+- Removed the Windows JSON-fallback hardening item from current-state follow-ons and updated the canonical backlog.
+
+### Validation note
+
+The DPAPI implementation still requires the same final full-batch build/test evidence as the rest of this closeout; no green result is inferred from source edits alone.
