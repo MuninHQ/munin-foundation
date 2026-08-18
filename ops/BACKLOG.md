@@ -73,7 +73,7 @@
 - [x] Provider policy and bounded execution/cost-control foundations exist.
 - [x] **Historical conversation ingestion privacy review** — relevance, provenance, local-storage and secret-rejection boundaries are implemented and documented.
 - [x] **External connector security/privacy review** — Gmail/Outlook permission inventory and consequential-action boundary are documented; OAuth authorization/refresh now asserts the repository-managed scopes remain read-only.
-- [ ] **Secure token-at-rest adapter** — evaluate OS keychain/credential-vault storage for local OAuth tokens; current v0.1 explicitly relies on local runtime JSON plus host OS/filesystem protection.
+- [x] **Secure token-at-rest adapter** — OAuth token storage now prefers macOS Keychain or Linux Secret Service in auto mode, supports fail-closed keychain mode, migrates legacy plaintext token fields out of runtime JSON when secure storage is available, and reports the active storage kind without exposing credentials. Windows remains an explicit JSON fallback until a zero-dependency vault adapter is added.
 - [x] Execution/retry/blocker observability foundations and optional read-only Sentry ingestion exist.
 - [x] **Consolidated operator-facing observability/SITREP** — one deterministic snapshot aggregates canonical Control Room readiness, engineering job health, Playwright verification availability/read-only policy, Memory Ledger volume and connector security state; exposed via CLI and `/api/orchestrate/status`.
 
@@ -86,6 +86,7 @@
 - [x] Control Room cross-run continuity and engineering QA-recovery acceptance.
 - [x] Canonical Munin v0.1 product/build contract.
 - [x] Read-only external OAuth connector security contract.
+- [x] OS-backed OAuth token-at-rest adapter with explicit fallback policy.
 - [x] Unified operator SITREP across core runtime surfaces.
 - [x] Canonical Brand Asset Registry.
 - [x] Daily Munin progress/blocker review automation created in ChatGPT.
