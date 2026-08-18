@@ -16,6 +16,13 @@ test('memory ledger is append-only and idempotent for the same semantic entry', 
   assert.equal((await ledger.list()).length, 1);
 });
 
+test('same semantic event at different explicit times remains distinct',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'munin-ledger-'));const ledger=new MemoryLedger(root);
+ await ledger.append({kind:'action',source:'event:action.executed',summary:'sync',entityId:'act-1',occurredAt:'2026-08-18T09:00:00.000Z'});
+ await ledger.append({kind:'action',source:'event:action.executed',summary:'sync',entityId:'act-1',occurredAt:'2026-08-18T10:00:00.000Z'});
+ assert.equal((await ledger.list()).length,2);
+});
+
 test('memory ledger filters project and kind', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'munin-ledger-'));
   const ledger = new MemoryLedger(root);
