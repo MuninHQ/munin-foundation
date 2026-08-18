@@ -5,6 +5,7 @@ import type { EngineeringAutonomousMissionResult, EngineeringMissionRuntime } fr
 import { registerEngineeringMissionCapability, type EngineeringMissionCapabilityInput } from './engineering-mission-capability.js';
 import { registerExternalIntelligenceCapability, type ExternalIntelligenceInput, type ExternalIntelligenceOutput } from './external-intelligence-capability.js';
 import { registerIndependentReviewCapability, type IndependentReviewInput, type IndependentReviewOutput } from './independent-review-capability.js';
+import { registerLocalVideoCapability, type LocalVideoInput, type LocalVideoOutput } from './local-video-capability.js';
 import { MuninMcpBridge } from './munin-mcp-bridge.js';
 import { ExecutionEngine } from './runtime.js';
 import { RuntimeCapabilityRegistry, type CapabilityExecutionResult } from './runtime-capability-seam.js';
@@ -39,6 +40,7 @@ export class RuntimeCapabilityAdapter {
       if (!this.registry.has('observability.sentry')) registerSentryObservabilityCapability(this.registry);
       if (!this.registry.has('intelligence.external')) registerExternalIntelligenceCapability(this.registry);
       if (!this.registry.has('engineering.independent-review')) registerIndependentReviewCapability(this.registry);
+      if (!this.registry.has('media.local-video')) registerLocalVideoCapability(this.registry);
     }
     this.mcp = new MuninMcpBridge(this.registry);
   }
@@ -93,6 +95,13 @@ export class RuntimeCapabilityAdapter {
     this.assertEnabled();
     return this.registry.execute<IndependentReviewInput, IndependentReviewOutput>('engineering.independent-review', input, {
       source: 'execution-engine-adapter', independent: true,
+    });
+  }
+
+  async localVideo(input: LocalVideoInput): Promise<CapabilityExecutionResult<LocalVideoOutput>> {
+    this.assertEnabled();
+    return this.registry.execute<LocalVideoInput, LocalVideoOutput>('media.local-video', input, {
+      source: 'execution-engine-adapter', local: true, optIn: true,
     });
   }
 
