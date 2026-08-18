@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import { mkdtemp } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import test from 'node:test';
+import { MemoryLedger } from '../src/memory-ledger.js';
+
+test('memory ledger is append-only and idempotent for the same semantic entry', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'munin-ledger-'));
+  const ledger = new MemoryLedger(root);
+  const first = await ledger.append({ kind: 'decision', source: 'chatgpt', summary: 'Keep Lovable isolated from core work', projectId: 'munin', payload: { priority: 'P0' } });
+  const second = await ledger.append({ kind: 'decision', source: 'chatgpt', summary: 'Keep Lovable isolated from core work', projectId: 'munin', payload: { priority: 'P0' } });
+  assert.equal(first.added, true);
+  assert.equal(second.added, false);
+  assert.equal(second.entry.id, first.entry.id);
+  assert.equal((await ledger.list()).length, 1);
+});
+
+test('same semantic event at different explicit times remains distinct',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'munin-ledger-'));const ledger=new MemoryLedger(root);
+ await ledger.append({kind:'action',source:'event:action.executed',summary:'sync',entityId:'act-1',occurredAt:'2026-08-18T09:00:00.000Z'});
+ await ledger.append({kind:'action',source:'event:action.executed',summary:'sync',entityId:'act-1',occurredAt:'2026-08-18T10:00:00.000Z'});
+ assert.equal((await ledger.list()).length,2);
+});
+
+test('memory ledger filters project and kind', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'munin-ledger-'));
+  const ledger = new MemoryLedger(root);
+  await ledger.append({ kind: 'observation', source: 'test', summary: 'one', projectId: 'career' });
+  await ledger.append({ kind: 'decision', source: 'test', summary: 'two', projectId: 'munin' });
+  const result = await ledger.list({ kind: 'observation', projectId: 'career' });
+  assert.equal(result.length, 1);
+  assert.equal(result[0]?.summary, 'one');
+});
+
+test('memory ledger supports text search across summary and payload',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'munin-ledger-'));const ledger=new MemoryLedger(root);
+ await ledger.append({kind:'decision',source:'test',summary:'Use Lovable only for UI',projectId:'munin',payload:{reason:'keep core isolated'}});
+ await ledger.append({kind:'observation',source:'test',summary:'Career intake ready',projectId:'career'});
+ assert.equal((await ledger.list({text:'core isolated'})).length,1);
+ assert.equal((await ledger.list({text:'lovable'}))[0]?.projectId,'munin');
+});
+
+test('memory ledger enforces bounded query results',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'munin-ledger-'));const ledger=new MemoryLedger(root);
+ for(let i=0;i<5;i++)await ledger.append({kind:'observation',source:'test',summary:`entry-${i}`,projectId:'munin'});
+ assert.equal((await ledger.list({projectId:'munin',limit:2})).length,2);
+});
