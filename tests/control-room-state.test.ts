@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { appendSessionEvent, hydrateControlRoomState, summarizeHydratedState } from '../src/control-room-state.js';
+import { appendSessionEvent, hydrateControlRoomState, summarizeHydratedState, writeBacklog, writeCurrentState } from '../src/control-room-state.js';
 
 test('hydrates canonical Control Room state from ops files',async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'munin-state-'));
@@ -30,14 +30,17 @@ test('missing optional state is reported instead of crashing hydration',async()=
  }finally{await rm(root,{recursive:true,force:true})}
 });
 
-test('write-back appends a durable session event',async()=>{
- const root=await mkdtemp(path.join(os.tmpdir(),'munin-state-log-'));
+test('write-back persists current state, backlog, and session event',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'munin-state-writeback-'));
  try{
-  await mkdir(path.join(root,'ops'));
-  await writeFile(path.join(root,'ops','SESSION_LOG.md'),'# log\n');
+  await writeCurrentState('# current',root);
+  await writeBacklog('# backlog',root);
   await appendSessionEvent({title:'state hydration verified',summary:'Hydration and write-back passed.',timestamp:new Date('2026-08-18T01:00:00.000Z')},root);
-  const content=await readFile(path.join(root,'ops','SESSION_LOG.md'),'utf8');
-  assert.match(content,/2026-08-18T01:00:00.000Z — state hydration verified/);
-  assert.match(content,/Hydration and write-back passed\./);
+  const state=await hydrateControlRoomState(root);
+  assert.equal(state.currentState,'# current\n');
+  assert.equal(state.backlog,'# backlog\n');
+  assert.match(state.sessionLog,/2026-08-18T01:00:00.000Z — state hydration verified/);
+  assert.match(state.sessionLog,/Hydration and write-back passed\./);
+  assert.deepEqual(state.missing,[]);
  }finally{await rm(root,{recursive:true,force:true})}
 });
