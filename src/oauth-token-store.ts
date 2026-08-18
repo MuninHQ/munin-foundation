@@ -1,7 +1,4 @@
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-
-const execFileAsync=promisify(execFile);
+import { spawn } from 'node:child_process';
 
 export type OAuthTokenRecord={accessToken:string;refreshToken?:string;expiresAt:number;scope?:string};
 export type OAuthTokenMap=Partial<Record<'gmail'|'outlook',OAuthTokenRecord>>;
@@ -28,9 +25,21 @@ export function configuredOAuthTokenStoreMode():OAuthTokenStoreMode{
  return normalizeMode(process.env.MUNIN_OAUTH_TOKEN_STORE);
 }
 
-async function defaultExec(file:string,args:string[],options?:{input?:string}){
- const result=await execFileAsync(file,args,{encoding:'utf8',input:options?.input});
- return{stdout:String(result.stdout??''),stderr:String(result.stderr??'')};
+async function defaultExec(file:string,args:string[],options?:{input?:string}):Promise<{stdout:string;stderr:string}>{
+ return new Promise((resolve,reject)=>{
+  const child=spawn(file,args,{stdio:['pipe','pipe','pipe']});
+  let stdout='',stderr='';
+  child.stdout.setEncoding('utf8').on('data',chunk=>{stdout+=chunk});
+  child.stderr.setEncoding('utf8').on('data',chunk=>{stderr+=chunk});
+  child.on('error',reject);
+  child.on('close',code=>{
+   if(code===0)return resolve({stdout,stderr});
+   const error=Object.assign(new Error(`${file} exited with code ${code}`),{code,stdout,stderr});
+   reject(error);
+  });
+  if(options?.input)child.stdin.write(options.input);
+  child.stdin.end();
+ });
 }
 
 export class MacOSKeychainOAuthTokenStore implements OAuthTokenStore{
@@ -46,8 +55,7 @@ export class MacOSKeychainOAuthTokenStore implements OAuthTokenStore{
   }
  }
  async save(tokens:OAuthTokenMap):Promise<void>{
-  const payload=JSON.stringify(tokens);
-  await this.exec('security',['add-generic-password','-U','-s',SERVICE,'-a',ACCOUNT,'-w',payload]);
+  await this.exec('security',['add-generic-password','-U','-s',SERVICE,'-a',ACCOUNT,'-w',JSON.stringify(tokens)]);
  }
 }
 
@@ -60,7 +68,7 @@ export class LinuxSecretServiceOAuthTokenStore implements OAuthTokenStore{
    return stdout.trim()?JSON.parse(stdout.trim()) as OAuthTokenMap:{};
   }catch(error:any){
    const message=String(error?.stderr??error?.message??'');
-   if(/not found|No such secret|exit code 1/i.test(message))return{};
+   if(/not found|No such secret|exited with code 1/i.test(message))return{};
    throw error;
   }
  }
