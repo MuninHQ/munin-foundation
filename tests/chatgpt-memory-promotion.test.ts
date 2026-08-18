@@ -22,7 +22,7 @@ test('promotion writes only accepted records to continuity memory and ledger',as
  const ledger=new MemoryLedger(root);
  const records=[
   base({kind:'decision',subject:'Munin architecture',content:'Decidimos manter o Munin provider-neutral.',tags:['chatgpt-export','munin','decision']}),
-  base({kind:'career',subject:'Interview',content:'Interview preparation unrelated to Munin product work',tags:['chatgpt-export','career']}),
+  base({kind:'career',subject:'Interview',content:'Interview preparation for an external banking role',tags:['chatgpt-export','career']}),
  ];
  const result=await promoteChatGptProjectMemory(records,{continuity,ledger});
  assert.equal(result.reviewed,2);
