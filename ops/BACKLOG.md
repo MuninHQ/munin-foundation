@@ -42,6 +42,7 @@
 - [ ] Mobile-first Control Room experience.
 - [ ] GitHub/Codex execution path with status visibility.
 - [ ] Zero-additional-cost local model fallback through Ollama where appropriate.
+- [ ] **Local Video Generation capability / MiniMax H3** — evaluate and integrate as an optional provider-neutral media capability. Prefer DiffSynth-Studio NF4/VRAM-managed or ComfyUI-compatible execution; keep downloads opt-in (~42.5 GB class), enforce license territory/commercial-attribution constraints, and benchmark actual quality/speed on Munin host hardware before making it a default route. Treat local open-weight H3 as primarily 768p; do not claim the hosted 2K regeneration stage is locally available unless upstream releases it.
 - [ ] LinkedIn Content Intelligence / Publisher: analyze previous posts, images, identity, reliable public sources, generate recommendations, and preserve explicit publication approval.
 - [ ] Remote access/runbook consolidation for the local Munin environment.
 
