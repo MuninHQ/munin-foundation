@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { apiBaseUrl, dataDir } from './config.js';
+import { configuredOAuthTokenStoreMode, resolveSecureOAuthTokenStore, type OAuthTokenMap } from './oauth-token-store.js';
 import { writeJsonAtomic } from './storage.js';
 
 export type OAuthProvider = 'gmail' | 'outlook';
@@ -12,12 +13,33 @@ const root=()=>dataDir(); const file=()=>path.join(root(),'oauth.json');
 const GMAIL_SCOPE='openid email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly';
 const OUTLOOK_SCOPE='openid offline_access User.Read Mail.Read';
 const WRITE_SCOPE_PATTERNS=[/gmail\.modify/i,/gmail\.compose/i,/gmail\.send/i,/calendar(?!\.readonly)/i,/mail\.readwrite/i,/mail\.send/i,/calendars\.readwrite/i,/contacts\.readwrite/i];
-async function load():Promise<OAuthState>{await mkdir(root(),{recursive:true});try{return JSON.parse(await readFile(file(),'utf8')) as OAuthState}catch{return{tokens:{},pending:{}}}}
-async function save(state:OAuthState){await writeJsonAtomic(file(),state)}const b64=(value:Buffer)=>value.toString('base64url');const redirect=()=>`${apiBaseUrl()}/api/oauth/callback`;
+async function loadJson():Promise<OAuthState>{await mkdir(root(),{recursive:true});try{return JSON.parse(await readFile(file(),'utf8')) as OAuthState}catch{return{tokens:{},pending:{}}}}
+async function load():Promise<OAuthState>{
+ const state=await loadJson();
+ const secure=await resolveSecureOAuthTokenStore();
+ if(!secure)return state;
+ const secureTokens=await secure.load();
+ if(Object.keys(secureTokens).length>0)return{...state,tokens:secureTokens};
+ if(Object.keys(state.tokens).length>0){
+  await secure.save(state.tokens as OAuthTokenMap);
+  await writeJsonAtomic(file(),{tokens:{},pending:state.pending});
+ }
+ return state;
+}
+async function save(state:OAuthState){
+ const secure=await resolveSecureOAuthTokenStore();
+ if(secure){
+  await secure.save(state.tokens as OAuthTokenMap);
+  await writeJsonAtomic(file(),{tokens:{},pending:state.pending});
+  return;
+ }
+ await writeJsonAtomic(file(),state);
+}
+const b64=(value:Buffer)=>value.toString('base64url');const redirect=()=>`${apiBaseUrl()}/api/oauth/callback`;
 function config(provider:OAuthProvider){if(provider==='gmail')return{clientId:process.env.MUNIN_GOOGLE_CLIENT_ID,clientSecret:process.env.MUNIN_GOOGLE_CLIENT_SECRET,authorize:'https://accounts.google.com/o/oauth2/v2/auth',token:'https://oauth2.googleapis.com/token',scope:GMAIL_SCOPE};return{clientId:process.env.MUNIN_MICROSOFT_CLIENT_ID,clientSecret:process.env.MUNIN_MICROSOFT_CLIENT_SECRET,authorize:'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',token:'https://login.microsoftonline.com/common/oauth2/v2.0/token',scope:OUTLOOK_SCOPE}}
-export function oauthSecurityProfile(provider:OAuthProvider){const scopes=config(provider).scope.split(/\s+/).filter(Boolean);const writeScopes=scopes.filter(scope=>WRITE_SCOPE_PATTERNS.some(pattern=>pattern.test(scope)));return{provider,scopes,writeScopes,readOnly:writeScopes.length===0,tokenStorage:'local-runtime-json' as const,externalMutationAllowed:false as const};}
+export function oauthSecurityProfile(provider:OAuthProvider){const scopes=config(provider).scope.split(/\s+/).filter(Boolean);const writeScopes=scopes.filter(scope=>WRITE_SCOPE_PATTERNS.some(pattern=>pattern.test(scope)));const configuredTokenStorage=configuredOAuthTokenStoreMode();return{provider,scopes,writeScopes,readOnly:writeScopes.length===0,tokenStorage:configuredTokenStorage==='json'?'local-runtime-json':configuredTokenStorage==='keychain'?'os-keychain-required':'auto-prefer-os-keychain',externalMutationAllowed:false as const};}
 export function assertReadOnlyOAuthScopes(provider:OAuthProvider){const profile=oauthSecurityProfile(provider);if(!profile.readOnly)throw new Error(`${provider} requests write-capable OAuth scopes: ${profile.writeScopes.join(', ')}`);return profile;}
-export async function connectionStatus(){const state=await load();return(['gmail','outlook'] as OAuthProvider[]).map(provider=>({provider,connected:Boolean(state.tokens[provider]?.refreshToken||state.tokens[provider]?.accessToken),configured:Boolean(config(provider).clientId),expiresAt:state.tokens[provider]?.expiresAt,scope:state.tokens[provider]?.scope,security:oauthSecurityProfile(provider)}))}
+export async function connectionStatus(){const state=await load();const secure=await resolveSecureOAuthTokenStore();return(['gmail','outlook'] as OAuthProvider[]).map(provider=>({provider,connected:Boolean(state.tokens[provider]?.refreshToken||state.tokens[provider]?.accessToken),configured:Boolean(config(provider).clientId),expiresAt:state.tokens[provider]?.expiresAt,scope:state.tokens[provider]?.scope,security:{...oauthSecurityProfile(provider),activeTokenStorage:secure?.kind??'local-runtime-json'}}))}
 export async function beginOAuth(provider:OAuthProvider):Promise<string>{const cfg=config(provider);assertReadOnlyOAuthScopes(provider);if(!cfg.clientId)throw new Error(`${provider} client ID is not configured`);const verifier=b64(randomBytes(32)),challenge=b64(createHash('sha256').update(verifier).digest()),stateId=b64(randomBytes(18)),state=await load();state.pending[stateId]={verifier,provider,createdAt:Date.now()};await save(state);const url=new URL(cfg.authorize);url.searchParams.set('client_id',cfg.clientId);url.searchParams.set('redirect_uri',redirect());url.searchParams.set('response_type','code');url.searchParams.set('scope',cfg.scope);url.searchParams.set('state',stateId);url.searchParams.set('code_challenge',challenge);url.searchParams.set('code_challenge_method','S256');url.searchParams.set('access_type','offline');url.searchParams.set('prompt','consent');return url.toString()}
 export async function completeOAuth(code:string,stateId:string):Promise<OAuthProvider>{const state=await load(),pending=state.pending[stateId];if(!pending||Date.now()-pending.createdAt>600000)throw new Error('OAuth state expired');assertReadOnlyOAuthScopes(pending.provider);const cfg=config(pending.provider),form=new URLSearchParams({client_id:cfg.clientId!,code,redirect_uri:redirect(),grant_type:'authorization_code',code_verifier:pending.verifier});if(cfg.clientSecret)form.set('client_secret',cfg.clientSecret);const response=await fetch(cfg.token,{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:form}),data=await response.json() as any;if(!response.ok)throw new Error(data.error_description??data.error??'OAuth token exchange failed');state.tokens[pending.provider]={accessToken:data.access_token,refreshToken:data.refresh_token,expiresAt:Date.now()+Number(data.expires_in??3600)*1000,scope:data.scope};delete state.pending[stateId];await save(state);return pending.provider}
 export async function accessToken(provider:OAuthProvider):Promise<string>{assertReadOnlyOAuthScopes(provider);const state=await load(),token=state.tokens[provider];if(!token)throw new Error(`${provider} is not connected`);if(token.expiresAt>Date.now()+60000)return token.accessToken;if(!token.refreshToken)throw new Error(`${provider} token expired; reconnect account`);const cfg=config(provider),form=new URLSearchParams({client_id:cfg.clientId!,refresh_token:token.refreshToken,grant_type:'refresh_token'});if(cfg.clientSecret)form.set('client_secret',cfg.clientSecret);if(provider==='outlook')form.set('scope',cfg.scope);const response=await fetch(cfg.token,{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:form}),data=await response.json() as any;if(!response.ok)throw new Error(data.error_description??data.error??'OAuth refresh failed');state.tokens[provider]={...token,accessToken:data.access_token,refreshToken:data.refresh_token??token.refreshToken,expiresAt:Date.now()+Number(data.expires_in??3600)*1000,scope:data.scope??token.scope};await save(state);return data.access_token}
