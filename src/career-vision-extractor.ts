@@ -8,6 +8,7 @@ function requireImage(input:CareerIntakeInput):{mimeType:string;base64:string}{
  if(!/^image\/(png|jpeg|jpg|webp)$/i.test(image.mimeType))throw new Error('CAREER_INTAKE_IMAGE_TYPE_UNSUPPORTED');
  const base64=image.dataBase64.replace(/^data:[^;]+;base64,/i,'').trim();
  if(!base64)throw new Error('CAREER_INTAKE_IMAGE_DATA_REQUIRED');
+ if(base64.length>14_000_000)throw new Error('CAREER_INTAKE_IMAGE_TOO_LARGE');
  return {mimeType:image.mimeType.replace('jpg','jpeg'),base64};
 }
 
