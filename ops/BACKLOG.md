@@ -13,9 +13,10 @@
 - [x] **State write-back** — meaningful progress updates current state, backlog, session log, and decision records.
 - [x] **Real-blocker classifier** — distinguish human-only blockers from issues the system can diagnose, retry, infer, or safely decide.
 - [x] **Executor handoff contract** — standard task package for ChatGPT/Codex/Claude/local models including goal, constraints, files, acceptance criteria, verification, and write-back requirements.
-- [x] **Default specialist executor adapters** — production bindings now connect state hydration, local research orchestration, autonomous engineering, QA evidence gating, memory write-back, and operational handoff.
+- [x] **Default specialist executor adapters** — production bindings connect state hydration, local research orchestration, autonomous engineering, QA evidence gating, memory write-back, and operational handoff.
 - [x] **Orchestrator Control Room entrypoint** — one canonical objective runtime hydrates state and invokes the multi-agent supervisor with production adapters.
-- [ ] **Control Room CLI/API exposure** — expose the canonical orchestrator through user-facing `EXECUTE`/API surfaces and return concise SITREP-compatible results.
+- [x] **Control Room CLI exposure** — `munin orchestrate <objective>` invokes the canonical supervisor from the existing CLI.
+- [ ] **Control Room API exposure** — expose the same objective runtime through the API/mobile Control Room and return concise SITREP-compatible results.
 - [ ] **Browser automation evaluation** — evaluate and, if suitable, integrate Playwright CLI/MCP for browser automation and end-to-end verification.
 - [ ] **Engineering skills evaluation** — assess reusable engineering skills/patterns inspired by Superpowers and comparable harnesses while remaining model-agnostic.
 - [ ] **DeepSeek Harness evaluation** — extract useful orchestration, verification, and execution patterns without creating provider lock-in.
@@ -65,4 +66,5 @@
 - [x] Autonomous loop and human-blocker policy implemented.
 - [x] Multi-agent Orchestrator core and specialist contracts implemented.
 - [x] Production specialist adapters and canonical Control Room runtime entrypoint implemented.
+- [x] CLI objective entrypoint implemented as `munin orchestrate <objective>`.
 - [x] Daily Munin progress/blocker review automation created in ChatGPT.
