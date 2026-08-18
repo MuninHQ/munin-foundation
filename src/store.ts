@@ -9,6 +9,7 @@ import type { MuninEvent, MuninState } from './types.js';
 const emptyState: MuninState = { projects: [], decisions: [], actions: [], jobs: [], research: [], goals: [], relations: [] };
 
 function ledgerKind(type:string):MemoryLedgerKind|undefined {
+ if(type==='career.intake.created')return undefined;
  if(type.startsWith('decision.'))return 'decision';
  if(type.startsWith('action.'))return 'action';
  if(type.startsWith('project.')||type.startsWith('goal.')||type.startsWith('job.')||type.startsWith('research.'))return 'observation';
