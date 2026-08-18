@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "brandCanon": "AJ-BRAND-CANON-2.0",
+  "policy": {
+    "generatedLogosAllowed": false,
+    "approximateMarksAllowed": false,
+    "missingAssetBehavior": "omit",
+    "defaultSocialMark": "aj-master"
+  },
+  "assets": {
+    "aj-master": {
+      "label": "AJ Master Mark",
+      "role": "personal-primary",
+      "status": "awaiting-master-file",
+      "requiredFormat": ["svg", "png-transparent"],
+      "canonicalPath": null,
+      "allowedContexts": ["linkedin", "personal-editorial", "career"],
+      "placement": {
+        "preferred": ["bottom-right", "bottom-left"],
+        "maxWidthPercent": 7,
+        "preserveAspectRatio": true,
+        "recolor": false,
+        "effects": false
+      }
+    },
+    "munin-raven-seal": {
+      "label": "Munin Raven Seal",
+      "role": "product-primary",
+      "status": "awaiting-master-file",
+      "requiredFormat": ["svg", "png-transparent"],
+      "canonicalPath": null,
+      "allowedContexts": ["munin-product", "munin-docs"],
+      "placement": {
+        "preserveAspectRatio": true,
+        "recolor": false,
+        "effects": false
+      }
+    },
+    "odin-mark": {
+      "label": "Odin Specialist Mark",
+      "role": "specialist",
+      "status": "reserved",
+      "canonicalPath": null,
+      "allowedContexts": ["odin-only"]
+    },
+    "document-seal": {
+      "label": "Document Seal",
+      "role": "specialist",
+      "status": "reserved",
+      "canonicalPath": null,
+      "allowedContexts": ["formal-document-only"]
+    }
+  }
+}
