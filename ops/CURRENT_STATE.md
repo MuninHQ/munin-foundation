@@ -10,7 +10,7 @@ Establish Munin as a persistent, model-agnostic execution environment that accep
 
 ## Current phase
 
-**Multi-agent orchestration / Control Room execution integration**
+**Multi-agent orchestration / Control Room surface integration**
 
 ## Active architecture decision
 
@@ -22,44 +22,40 @@ The repository, not any individual chat, remains the durable source of truth for
 
 ## Specialist model
 
-- **Product & State Manager** — decomposes objectives, maintains executable backlog/state, and selects the next unblocked action.
-- **Researcher** — gathers evidence and compares alternatives when uncertainty must be resolved.
-- **Engineer** — implements through the bounded `PLAN → BUILD → TEST → VERIFY → FIX` loop.
-- **QA & Verifier** — independently validates acceptance criteria and routes defects back to Engineer.
-- **Memory Curator** — promotes durable decisions, constraints, evidence, and lessons into project continuity.
-- **Operator** — verifies CI/runtime health and attempts safe operational recovery.
+- **Product & State Manager** — hydrates canonical state and establishes executable context.
+- **Researcher** — uses the zero-additional-cost local orchestration runtime for evidence gathering when required.
+- **Engineer** — executes through `EngineeringAutonomousMission` and the bounded `PLAN → BUILD → TEST → VERIFY → FIX` loop.
+- **QA & Verifier** — independently gates engineering completion on durable evidence and routes defects back to Engineer.
+- **Memory Curator** — appends durable orchestration outcomes and evidence to the canonical session log.
+- **Operator** — checks the completed trace for unresolved execution issues before operational handoff.
 
 ## Completed in this phase
 
 - Control Room architecture and durable operational files established.
-- Autonomous execution loop implemented.
-- Human-blocker policy implemented.
-- Provider-neutral executor handoff contract established.
-- Multi-agent registry and supervisor core implemented on `agent/munin-multi-agent-orchestrator`.
-- Automatic specialist routing implemented by work type.
-- QA failure routing implemented as `QA → Engineer → QA` without a manual continuation prompt.
-- Recoverable blocker retry implemented.
-- Human-only blocker classification implemented for credentials, 2FA, financial commitments, irreversible high-impact actions, external permission, and unresolved strategic ambiguity.
-- Agent contracts created for Orchestrator, Product/State, Researcher, Engineer, QA, Memory Curator, and Operator.
-- Automated tests added for routing, recovery, QA repair loop, and human-blocker escalation.
+- Autonomous execution loop and human-blocker policy implemented.
+- Multi-agent registry, supervisor core, specialist contracts, routing, recovery, and QA repair loop implemented.
+- Production specialist adapters implemented for state, research, engineering, QA, memory, and operations.
+- Canonical `MuninControlRoomOrchestrator` entrypoint implemented with automatic state hydration.
+- CLI objective surface implemented as `munin orchestrate <objective>`.
+- Automated tests exist for routing, recovery, QA repair loop, and human-blocker escalation.
 
 ## In progress
 
-- CI validation of the multi-agent orchestration branch.
-- Production adapters binding every specialist role to the appropriate existing Munin runtime.
-- Canonical Control Room entrypoint that hydrates state, invokes the Orchestrator, and writes results back.
+- Independent build/test validation of the expanded orchestration branch.
+- API/mobile exposure of the same canonical objective runtime.
+- End-to-end orchestration trace/resume verification.
 
 ## Next executable work
 
-1. Pass repository CI for the multi-agent orchestration increment and repair any failures.
-2. Bind Engineer to `EngineeringAutonomousMission` and map the remaining specialists to existing state, research, memory, QA, and operations capabilities.
-3. Expose the Orchestrator as the default objective-level Control Room execution entrypoint.
-4. Persist orchestration traces and specialist evidence into canonical state/session memory.
-5. Add end-to-end resume/write-back verification.
+1. Expose the canonical orchestrator through the API used by the mobile Control Room.
+2. Add focused tests for production adapters and Control Room entrypoint.
+3. Validate build/test and repair any type/runtime failures.
+4. Add end-to-end resume/write-back verification.
+5. Merge the orchestration increment only after verification evidence is available.
 
 ## Real blockers
 
-None for repository-side implementation.
+None for repository-side implementation. Full local validation still requires an execution environment with repository dependencies available.
 
 ## Guardrails
 
