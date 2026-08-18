@@ -36,6 +36,7 @@ export interface MemoryLedgerQuery {
   source?: string;
   projectId?: string;
   entityId?: string;
+  text?: string;
   limit?: number;
 }
 
@@ -90,6 +91,7 @@ export class MemoryLedger {
     if (query.source) entries = entries.filter(entry => entry.source === query.source);
     if (query.projectId) entries = entries.filter(entry => entry.projectId === query.projectId);
     if (query.entityId) entries = entries.filter(entry => entry.entityId === query.entityId);
+    if (query.text) { const needle=query.text.toLowerCase(); entries=entries.filter(entry=>`${entry.summary}\n${JSON.stringify(entry.payload)}`.toLowerCase().includes(needle)); }
     entries.sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt));
     return entries.slice(0, Math.max(1, Math.min(query.limit ?? 100, 1000)));
   }
