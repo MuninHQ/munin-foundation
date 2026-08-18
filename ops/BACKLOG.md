@@ -28,6 +28,7 @@
 - [x] **Conversation export parser foundation** — ChatGPT export parsing exists as a structured ingestion primitive.
 - [x] **Conversation ingestion promotion path** — reviewed historical ChatGPT records can be promoted into continuity memory + Memory Ledger with project provenance and an accepted/rejected report.
 - [x] **Context relevance policy** — historical records require explicit Munin/project signals; unrelated personal identity/preferences and generic local context are not promoted to project memory by default.
+- [x] **Historical secret hygiene** — private keys, credential-shaped tokens/passwords and OTP/2FA values fail closed before governed project-memory promotion.
 - [x] **Session log** — concise execution events reconstruct work without replaying every chat.
 
 ## P0 — Career mobile intake
@@ -45,7 +46,7 @@
 - [x] `SITREP`, `BUILD`, `CONT`, `NEXT`, and `EXECUTE` command semantics.
 - [x] Career operations/intelligence foundation.
 - [x] Repository state visibility foundations.
-- [ ] Accepted Munin v0.1 product specification and implementation plan consolidation.
+- [x] **Munin v0.1 product specification and implementation plan consolidation** — current product contract, trust boundaries, capability map, acceptance criteria and remaining integration sequence are canonical in `docs/product/`.
 
 ## P1 — Integrations and operator experience
 
@@ -66,10 +67,12 @@
 
 ## P2 — Hardening
 
-- [ ] End-to-end acceptance tests for canonical objective → execution → verification → write-back workflows.
+- [x] **Control Room cross-run continuity acceptance** — deterministic acceptance proves objective execution writes canonical state/session evidence and a fresh runtime rehydrates it.
+- [ ] **Engineering end-to-end acceptance** — prove canonical objective → autonomous engineering → independent verification → FIX/recovery → durable write-back using production boundaries without real external mutation.
 - [x] Failure recovery, bounded retry, leases/fencing/outbox and idempotent runtime primitives exist.
 - [x] Provider policy and bounded execution/cost-control foundations exist.
-- [ ] Security/privacy review for historical conversation ingestion and external connectors.
+- [x] **Historical conversation ingestion privacy review** — relevance, provenance, local-storage and secret-rejection boundaries are implemented and documented.
+- [ ] **External connector security/privacy review** — inventory connector permissions, data-retention boundaries and consequential-action gates.
 - [x] Execution/retry/blocker observability foundations and optional read-only Sentry ingestion exist.
 - [ ] Consolidated operator-facing observability/SITREP across orchestrator, engineering jobs, browser verification and connector state.
 
@@ -78,6 +81,8 @@
 - [x] Control Room architecture, durable state, autonomous loop, multi-agent supervisor and production specialist adapters.
 - [x] CLI and API objective entrypoints.
 - [x] Governed browser verification and skill-aware autonomous engineering.
-- [x] Memory Ledger, governed ChatGPT project-memory promotion and Career Mobile Intake core.
+- [x] Memory Ledger, governed/secret-safe ChatGPT project-memory promotion and Career Mobile Intake core.
+- [x] Control Room cross-run continuity acceptance.
+- [x] Canonical Munin v0.1 product/build contract.
 - [x] Canonical Brand Asset Registry.
 - [x] Daily Munin progress/blocker review automation created in ChatGPT.
