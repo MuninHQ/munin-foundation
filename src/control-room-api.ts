@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { MuninControlRoomOrchestrator } from './control-room-orchestrator.js';
+import { buildOperatorSitrep } from './operator-sitrep.js';
 import { json, readJsonBody, requireText } from './http.js';
 
 const orchestrator = new MuninControlRoomOrchestrator();
@@ -8,6 +9,9 @@ export async function handleControlRoomApi(request: IncomingMessage, response: S
   if (request.method === 'OPTIONS') return json(request, response, 204, {});
   const pathname = new URL(request.url ?? '/', 'http://127.0.0.1').pathname;
   try {
+    if (request.method === 'GET' && pathname === '/api/orchestrate/status') {
+      return json(request, response, 200, await buildOperatorSitrep());
+    }
     if (request.method === 'POST' && pathname === '/api/orchestrate') {
       const input = await readJsonBody(request, 1_000_000);
       const objective = requireText(input.objective, 'objective');
