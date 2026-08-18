@@ -10,7 +10,8 @@ async function navSource() {
 
 test('global navigation is collapsed by default on mobile surfaces', async () => {
   const source = await navSource();
-  assert.match(source, /nav\.hidden=true/);
+  assert.match(source, /nav\.hidden=!open/);
+  assert.match(source, /setOpen\(false\)/);
   assert.match(source, /aria-expanded','false'/);
   assert.match(source, /toggle\.onclick=/);
 });
