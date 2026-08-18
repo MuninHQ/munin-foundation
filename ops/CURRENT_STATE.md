@@ -10,7 +10,7 @@ Establish Munin as a persistent, model-agnostic execution environment that can c
 
 ## Current phase
 
-**Control Room foundation / autonomous execution preparation**
+**Control Room runtime foundation / autonomous execution implementation**
 
 ## Active architecture decision
 
@@ -22,31 +22,33 @@ The repository, not any individual chat, is the durable source of truth for exec
 
 ## Completed in this phase
 
-- Architecture direction accepted by executive owner.
-- Control Room concept defined.
+- Control Room architecture merged to `main` through PR #210.
 - Canonical commands defined: `BUILD`, `CONT`, `SITREP`, `NEXT`.
 - Autonomous execution loop defined: `PLAN → BUILD → TEST → VERIFY → FIX`.
 - Human-blocker policy defined.
-- Daily Munin progress/blocker review automation enabled in ChatGPT.
+- Durable `CURRENT_STATE`, `BACKLOG`, and `SESSION_LOG` established.
+- Provider-neutral executor handoff contract established.
+- Runtime state hydration implemented for canonical operational files.
+- Runtime write-back implemented for current state, backlog, and session events.
+- Control Room state CLI and automated tests added.
 
 ## In progress
 
-- Durable operational state files.
-- Consolidation of the existing backlog into a canonical repo-backed backlog.
-- Integration of the Control Room protocol with the existing Munin v0.1 roadmap.
+- Validation and integration of the state hydration/write-back runtime increment.
+- Autonomous Execution Harness implementation.
+- Real-blocker classifier integration.
 
 ## Next executable work
 
-1. Consolidate backlog items from current Munin work into `ops/BACKLOG.md`.
-2. Add session/event logging contract.
-3. Add accepted decision record for the Control Room architecture.
-4. Update portfolio documentation to remove provider-specific ownership assumptions where appropriate.
-5. Define executor handoff contract for Codex/Claude/local agents.
-6. Implement autonomous execution harness incrementally.
+1. Validate and merge Control Room state hydration/write-back.
+2. Integrate hydrated state into the autonomous execution entrypoint.
+3. Implement the real-blocker classifier.
+4. Make canonical `BUILD`, `CONT`, `SITREP`, and `NEXT` workflows consume hydrated state by default.
+5. Add end-to-end resume/write-back verification.
 
 ## Real blockers
 
-None for repository-side documentation and architecture work.
+None for repository-side implementation.
 
 ## Guardrails
 
