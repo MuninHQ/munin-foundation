@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -32,14 +32,17 @@ test('career intake normalizes a shared job and persists it once', async () => {
 
 test('image intake uses an injected extractor without storing image bytes', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'munin-career-intake-'));
-  const result = await ingestCareerItem({ source: 'screenshot', image: { mimeType: 'image/png', transientRef: 'ios-share-sheet:42' }, title: 'Principal Product Manager at Fintech X' }, {
+  const secretImage='SUPER_SECRET_IMAGE_BYTES';
+  const result = await ingestCareerItem({ source: 'screenshot', image: { mimeType: 'image/png', transientRef: 'ios-share-sheet:42', dataBase64: secretImage }, title: 'Principal Product Manager at Fintech X' }, {
     store: new ContextStore(root),
     ledger: new MemoryLedger(root),
-    extractor: { extract: async () => 'Principal Product Manager. Payments and Open Banking.' },
+    extractor: { extract: async input => { assert.equal(input.image?.dataBase64,secretImage); return 'Principal Product Manager. Payments and Open Banking.'; } },
   });
   assert.equal(result.added, true);
   assert.equal(result.job.company, 'Fintech X');
-  assert.ok(!JSON.stringify(result.job).includes('ios-share-sheet:42'));
+  assert.ok(!JSON.stringify(result.job).includes(secretImage));
+  assert.ok(!(await readFile(path.join(root,'memory-ledger.jsonl'),'utf8')).includes(secretImage));
+  assert.ok(!(await readFile(path.join(root,'events.jsonl'),'utf8')).includes(secretImage));
 });
 
 test('screenshot without extracted text or extractor fails explicitly', async () => {
