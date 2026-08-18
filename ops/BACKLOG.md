@@ -7,11 +7,16 @@
 ## P0 — Execution foundation
 
 - [x] **Munin Control Room Protocol** — make repo state the durable source of truth across ChatGPT, Codex, Claude, local agents, and future providers.
-- [ ] **Autonomous Execution Harness** — implement `PLAN → BUILD → TEST → VERIFY → FIX`, repeating until acceptance criteria are met or a real human blocker exists.
+- [x] **Autonomous Execution Harness** — implement `PLAN → BUILD → TEST → VERIFY → FIX`, repeating until acceptance criteria are met or a real human blocker exists.
+- [x] **Multi-agent Orchestrator** — route objectives across Product/State, Researcher, Engineer, QA, Memory Curator, and Operator; recover automatically when a safe next action exists.
 - [x] **State hydration** — any new execution session reads canonical state before acting.
 - [x] **State write-back** — meaningful progress updates current state, backlog, session log, and decision records.
-- [ ] **Real-blocker classifier** — distinguish human-only blockers from issues the system can diagnose, retry, infer, or safely decide.
+- [x] **Real-blocker classifier** — distinguish human-only blockers from issues the system can diagnose, retry, infer, or safely decide.
 - [x] **Executor handoff contract** — standard task package for ChatGPT/Codex/Claude/local models including goal, constraints, files, acceptance criteria, verification, and write-back requirements.
+- [x] **Default specialist executor adapters** — production bindings connect state hydration, local research orchestration, autonomous engineering, QA evidence gating, memory write-back, and operational handoff.
+- [x] **Orchestrator Control Room entrypoint** — one canonical objective runtime hydrates state and invokes the multi-agent supervisor with production adapters.
+- [x] **Control Room CLI exposure** — `munin orchestrate <objective>` invokes the canonical supervisor from the existing CLI.
+- [ ] **Control Room API exposure** — expose the same objective runtime through the API/mobile Control Room and return concise SITREP-compatible results.
 - [ ] **Browser automation evaluation** — evaluate and, if suitable, integrate Playwright CLI/MCP for browser automation and end-to-end verification.
 - [ ] **Engineering skills evaluation** — assess reusable engineering skills/patterns inspired by Superpowers and comparable harnesses while remaining model-agnostic.
 - [ ] **DeepSeek Harness evaluation** — extract useful orchestration, verification, and execution patterns without creating provider lock-in.
@@ -37,13 +42,14 @@
 - [ ] Mobile-first Control Room experience.
 - [ ] GitHub/Codex execution path with status visibility.
 - [ ] Zero-additional-cost local model fallback through Ollama where appropriate.
+- [ ] **Local Video Generation capability / MiniMax H3** — evaluate and integrate as an optional provider-neutral media capability. Prefer DiffSynth-Studio NF4/VRAM-managed or ComfyUI-compatible execution; keep downloads opt-in (~42.5 GB class), enforce license territory/commercial-attribution constraints, and benchmark actual quality/speed on Munin host hardware before making it a default route. Treat local open-weight H3 as primarily 768p; do not claim the hosted 2K regeneration stage is locally available unless upstream releases it.
 - [ ] LinkedIn Content Intelligence / Publisher: analyze previous posts, images, identity, reliable public sources, generate recommendations, and preserve explicit publication approval.
 - [ ] Remote access/runbook consolidation for the local Munin environment.
 
 ## P1 — Architecture and research
 
 - [ ] Consolidate AIP RFC/SPEC/BUILD/ADR backlog and map components to Munin v0.1.
-- [ ] Reassess council/multi-agent patterns only where they improve decision quality enough to justify complexity.
+- [x] Establish the initial multi-agent pattern only where roles have explicit responsibilities, independent QA, and durable-state write-back.
 - [ ] Continue GitHub ecosystem scan for reusable open-source components, replacing weaker backlog candidates when materially better options are found.
 
 ## P2 — Hardening
@@ -58,5 +64,8 @@
 
 - [x] Architecture direction accepted: Project/Control Room + durable repo state + executor + GitHub history.
 - [x] Control Room command semantics drafted.
-- [x] Autonomous loop and human-blocker policy drafted.
+- [x] Autonomous loop and human-blocker policy implemented.
+- [x] Multi-agent Orchestrator core and specialist contracts implemented.
+- [x] Production specialist adapters and canonical Control Room runtime entrypoint implemented.
+- [x] CLI objective entrypoint implemented as `munin orchestrate <objective>`.
 - [x] Daily Munin progress/blocker review automation created in ChatGPT.
