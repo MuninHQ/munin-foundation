@@ -32,7 +32,7 @@ The repository is the durable source of truth for product/execution state. Runti
 - LinkedIn Content Intelligence foundation, Trusted Source Radar freshness/provenance hardening, unbranded-by-default editorial policy and governed Publisher approval/manual-publication surface.
 - Canonical Brand Asset Registry with no-approximation policy.
 - Read-only Gmail/Outlook connector permission contract and unified operator SITREP.
-- OAuth token-at-rest hardening: auto-prefer macOS Keychain/Linux Secret Service, fail-closed keychain mode, legacy JSON migration and explicit unsupported-host fallback.
+- OAuth token-at-rest hardening: auto-prefer macOS Keychain, Linux Secret Service or Windows CurrentUser DPAPI; fail-closed required-secure mode; legacy JSON migration; secrets never passed in Windows command-line arguments and only an encrypted DPAPI blob remains in the runtime directory.
 - Provider-neutral `media.local-video` capability with no automatic model downloads, explicit runner configuration and host benchmark CLI; MiniMax H3 evaluation recorded without making it a default dependency.
 - Remote/local Windows + Tailscale operator runbook including deterministic stale-port/UI recovery.
 - August 2026 GitHub ecosystem scan completed; future scans are trigger-based instead of a permanently open queue item.
@@ -61,7 +61,6 @@ These observations/actions cannot be truthfully completed through repository edi
 
 ## Follow-on hardening opportunities (not v0.1 blockers)
 
-- Add a Windows current-user secure vault/DPAPI adapter to replace the explicit OAuth JSON fallback when a reliable zero-additional-cost implementation is validated.
 - Add richer AI-provider latency/retry observability if runtime evidence shows operator value.
 - Promote Serena or another semantic backend only if the existing benchmark proves material improvement over native repository intelligence.
 - Expose a standards-compliant external MCP transport around the existing internal Munin MCP bridge if a real external client requires it.
