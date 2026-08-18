@@ -5,6 +5,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { handleApi, startBackgroundJobs } from './api.js';
 import { handleVisualAssets } from './visual-assets-api.js';
 import { handleLinkedInComposer } from './linkedin-composer-api.js';
+import { handleLinkedInPublisher } from './linkedin-publisher-api.js';
 import { handleContextMemory } from './context-memory-api.js';
 import { handleExecutiveBriefing } from './executive-briefing-api.js';
 import { handleCareerIntelligence } from './career-intelligence-api.js';
@@ -20,7 +21,7 @@ import { handleDocumentMobileApi } from './document-mobile-api.js';
 import { handleControlRoomApi } from './control-room-api.js';
 import { apiPort } from './config.js';
 type Handler=(request:IncomingMessage,response:ServerResponse)=>Promise<void>;
-const routes:Array<[prefix:string,handler:Handler]>=[['/api/orchestrate',handleControlRoomApi],['/api/mobile/memory-ledger',handleMemoryLedgerMobileApi],['/api/mobile/documents',handleDocumentMobileApi],['/api/mobile/engineering',handleEngineeringApi],['/api/mobile/career',handleCareerMobileApi],['/api/mobile',handleMobileApi],['/api/visual-assets',handleVisualAssets],['/api/linkedin-composer',handleLinkedInComposer],['/api/context-memory',handleContextMemory],['/api/executive-briefing',handleExecutiveBriefing],['/api/career-intelligence',handleCareerIntelligence],['/api/career-intake',handleCareerIntakeApi],['/api/council',handleCouncil],['/api/orchestration',handleOrchestration],['/api/portfolio',handlePortfolio]];
+const routes:Array<[prefix:string,handler:Handler]>=[['/api/orchestrate',handleControlRoomApi],['/api/mobile/memory-ledger',handleMemoryLedgerMobileApi],['/api/mobile/documents',handleDocumentMobileApi],['/api/mobile/engineering',handleEngineeringApi],['/api/mobile/career',handleCareerMobileApi],['/api/mobile',handleMobileApi],['/api/visual-assets',handleVisualAssets],['/api/linkedin-composer',handleLinkedInComposer],['/api/linkedin-publisher',handleLinkedInPublisher],['/api/context-memory',handleContextMemory],['/api/executive-briefing',handleExecutiveBriefing],['/api/career-intelligence',handleCareerIntelligence],['/api/career-intake',handleCareerIntakeApi],['/api/council',handleCouncil],['/api/orchestration',handleOrchestration],['/api/portfolio',handlePortfolio]];
 export async function handleUnified(request:IncomingMessage,response:ServerResponse):Promise<void>{const pathname=new URL(request.url??'/','http://127.0.0.1').pathname;for(const[prefix,handler]of routes)if(pathname===prefix||pathname.startsWith(prefix+'/'))return handler(request,response);return handleApi(request,response)}
 export function createUnifiedServer(){startBackgroundJobs();return createServer((request,response)=>void handleUnified(request,response))}
 if(process.argv[1]?.endsWith('server.js')){const port=apiPort();const host=process.env.MUNIN_API_HOST?.trim()||'127.0.0.1';createUnifiedServer().listen(port,host,()=>console.log(`Munin API (unified) running at http://${host}:${port}`))}
