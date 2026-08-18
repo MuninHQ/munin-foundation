@@ -1,9 +1,12 @@
 import { spawn } from 'node:child_process';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { dataDir } from './config.js';
 
 export type OAuthTokenRecord={accessToken:string;refreshToken?:string;expiresAt:number;scope?:string};
 export type OAuthTokenMap=Partial<Record<'gmail'|'outlook',OAuthTokenRecord>>;
 export type OAuthTokenStoreMode='json'|'keychain'|'auto';
-export type OAuthTokenStorageKind='local-runtime-json'|'macos-keychain'|'linux-secret-service';
+export type OAuthTokenStorageKind='local-runtime-json'|'macos-keychain'|'linux-secret-service'|'windows-dpapi';
 
 export interface OAuthTokenStore{
  readonly kind:OAuthTokenStorageKind;
@@ -27,7 +30,7 @@ export function configuredOAuthTokenStoreMode():OAuthTokenStoreMode{
 
 async function defaultExec(file:string,args:string[],options?:{input?:string}):Promise<{stdout:string;stderr:string}>{
  return new Promise((resolve,reject)=>{
-  const child=spawn(file,args,{stdio:['pipe','pipe','pipe']});
+  const child=spawn(file,args,{stdio:['pipe','pipe','pipe'],windowsHide:true,shell:false});
   let stdout='',stderr='';
   child.stdout.setEncoding('utf8').on('data',chunk=>{stdout+=chunk});
   child.stderr.setEncoding('utf8').on('data',chunk=>{stderr+=chunk});
@@ -37,7 +40,7 @@ async function defaultExec(file:string,args:string[],options?:{input?:string}):P
    const error=Object.assign(new Error(`${file} exited with code ${code}`),{code,stdout,stderr});
    reject(error);
   });
-  if(options?.input)child.stdin.write(options.input);
+  if(options?.input!==undefined)child.stdin.write(options.input);
   child.stdin.end();
  });
 }
@@ -77,9 +80,33 @@ export class LinuxSecretServiceOAuthTokenStore implements OAuthTokenStore{
  }
 }
 
+const DPAPI_ENCRYPT_SCRIPT=`$plain=[Console]::In.ReadToEnd();$bytes=[Text.Encoding]::UTF8.GetBytes($plain);$protected=[Security.Cryptography.ProtectedData]::Protect($bytes,$null,[Security.Cryptography.DataProtectionScope]::CurrentUser);[Console]::Out.Write([Convert]::ToBase64String($protected))`;
+const DPAPI_DECRYPT_SCRIPT=`$cipher=[Console]::In.ReadToEnd().Trim();$bytes=[Convert]::FromBase64String($cipher);$plain=[Security.Cryptography.ProtectedData]::Unprotect($bytes,$null,[Security.Cryptography.DataProtectionScope]::CurrentUser);[Console]::Out.Write([Text.Encoding]::UTF8.GetString($plain))`;
+
+export class WindowsDpapiOAuthTokenStore implements OAuthTokenStore{
+ readonly kind='windows-dpapi' as const;
+ constructor(private readonly exec:Exec=defaultExec,private readonly encryptedFile=path.join(dataDir(),'oauth.tokens.dpapi')){}
+ private async protect(plain:string){const {stdout}=await this.exec('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-Command',DPAPI_ENCRYPT_SCRIPT],{input:plain});if(!stdout.trim())throw new Error('Windows DPAPI returned an empty ciphertext');return stdout.trim();}
+ private async unprotect(cipher:string){const {stdout}=await this.exec('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-Command',DPAPI_DECRYPT_SCRIPT],{input:cipher});return stdout;}
+ async load():Promise<OAuthTokenMap>{
+  let cipher:string;
+  try{cipher=(await readFile(this.encryptedFile,'utf8')).trim();}catch(error:any){
+   if(error?.code!=='ENOENT')throw error;
+   // A no-file load still probes DPAPI so auto mode only promotes a working store.
+   const probe=await this.protect('{}');const plain=await this.unprotect(probe);if(plain.trim()!=='{}')throw new Error('Windows DPAPI round-trip probe failed');return{};
+  }
+  if(!cipher)return{};
+  const plain=await this.unprotect(cipher);return plain.trim()?JSON.parse(plain) as OAuthTokenMap:{};
+ }
+ async save(tokens:OAuthTokenMap):Promise<void>{
+  const cipher=await this.protect(JSON.stringify(tokens));await mkdir(path.dirname(this.encryptedFile),{recursive:true});await writeFile(this.encryptedFile,cipher,{encoding:'utf8',mode:0o600});
+ }
+}
+
 export function platformSecureTokenStore(platform:NodeJS.Platform=process.platform,exec?:Exec):OAuthTokenStore|undefined{
  if(platform==='darwin')return new MacOSKeychainOAuthTokenStore(exec);
  if(platform==='linux')return new LinuxSecretServiceOAuthTokenStore(exec);
+ if(platform==='win32')return new WindowsDpapiOAuthTokenStore(exec);
  return undefined;
 }
 
