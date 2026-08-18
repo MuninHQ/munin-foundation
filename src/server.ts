@@ -13,11 +13,12 @@ import { handleOrchestration } from './orchestration-api.js';
 import { handlePortfolio } from './portfolio-api.js';
 import { handleMobileApi } from './mobile-api.js';
 import { handleCareerMobileApi } from './career-mobile-api.js';
+import { handleMemoryLedgerMobileApi } from './memory-ledger-mobile-api.js';
 import { handleEngineeringApi } from './engineering-api.js';
 import { handleDocumentMobileApi } from './document-mobile-api.js';
 import { apiPort } from './config.js';
 type Handler=(request:IncomingMessage,response:ServerResponse)=>Promise<void>;
-const routes:Array<[prefix:string,handler:Handler]>=[['/api/mobile/documents',handleDocumentMobileApi],['/api/mobile/engineering',handleEngineeringApi],['/api/mobile/career',handleCareerMobileApi],['/api/mobile',handleMobileApi],['/api/visual-assets',handleVisualAssets],['/api/linkedin-composer',handleLinkedInComposer],['/api/context-memory',handleContextMemory],['/api/executive-briefing',handleExecutiveBriefing],['/api/career-intelligence',handleCareerIntelligence],['/api/council',handleCouncil],['/api/orchestration',handleOrchestration],['/api/portfolio',handlePortfolio]];
+const routes:Array<[prefix:string,handler:Handler]>=[['/api/mobile/memory-ledger',handleMemoryLedgerMobileApi],['/api/mobile/documents',handleDocumentMobileApi],['/api/mobile/engineering',handleEngineeringApi],['/api/mobile/career',handleCareerMobileApi],['/api/mobile',handleMobileApi],['/api/visual-assets',handleVisualAssets],['/api/linkedin-composer',handleLinkedInComposer],['/api/context-memory',handleContextMemory],['/api/executive-briefing',handleExecutiveBriefing],['/api/career-intelligence',handleCareerIntelligence],['/api/council',handleCouncil],['/api/orchestration',handleOrchestration],['/api/portfolio',handlePortfolio]];
 export async function handleUnified(request:IncomingMessage,response:ServerResponse):Promise<void>{const pathname=new URL(request.url??'/','http://127.0.0.1').pathname;for(const[prefix,handler]of routes)if(pathname===prefix||pathname.startsWith(prefix+'/'))return handler(request,response);return handleApi(request,response)}
 export function createUnifiedServer(){startBackgroundJobs();return createServer((request,response)=>void handleUnified(request,response))}
 if(process.argv[1]?.endsWith('server.js')){const port=apiPort();const host=process.env.MUNIN_API_HOST?.trim()||'127.0.0.1';createUnifiedServer().listen(port,host,()=>console.log(`Munin API (unified) running at http://${host}:${port}`))}
