@@ -5,7 +5,7 @@ Munin may ingest a ChatGPT `conversations.json` export, but historical conversat
 ## Two-stage model
 
 1. `parseChatGptExport()` converts user-authored export messages into typed continuity-memory candidates with source provenance and timestamps.
-2. `promoteChatGptProjectMemory()` reviews those candidates for explicit Munin/project relevance before writing them into continuity memory and the append-only Memory Ledger.
+2. `promoteChatGptProjectMemory()` reviews those candidates for explicit Munin/project relevance and sensitive-content risk before writing them into continuity memory and the append-only Memory Ledger.
 
 The safe CLI entrypoint is:
 
@@ -24,6 +24,12 @@ A record is promoted to Munin project memory only when at least one explicit pro
 
 Unrelated identity/preferences are rejected unless the record also contains explicit project context. Generic career, family, gaming, health, finance, lifestyle, or other personal conversation content is not promoted merely because it exists in the export.
 
+## Sensitive-content gate
+
+Project relevance never overrides secret hygiene. A candidate is rejected before durable storage when it contains credential-shaped material such as a private key, labeled API/access/secret key, bearer token, common provider token, labeled password/senha, or OTP/2FA verification code.
+
+The rejection is fail-closed: the import report records only the decision reason (for example `sensitive-content:password`); the rejected record is not written to Continuity Memory or Memory Ledger by the governed promotion path.
+
 ## Provenance and storage
 
 Promoted records preserve their original `chatgpt-export:<conversation-id>` source, observed timestamp, confidence, tags, subject, and content. The Memory Ledger additionally records `provenance: chatgpt-export-reviewed` and `projectId: munin`.
@@ -34,5 +40,6 @@ The import report exposes reviewed, accepted and rejected counts plus the decisi
 
 - The source export remains user-controlled; Munin does not upload it to GitHub.
 - Runtime memory is private local state and is not committed by this feature.
+- Rejected secret-bearing records are not copied into governed project memory.
 - Promotion is relevance-based, not a claim that every historical statement is still current. Existing continuity freshness/correction semantics remain authoritative.
 - Public publication, credential changes, financial actions, or other consequential external actions are never authorized by imported conversation content alone.
