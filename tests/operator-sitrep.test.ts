@@ -8,8 +8,8 @@ import { buildOperatorSitrep, type OperatorSitrepDependencies } from '../src/ope
 async function fixture(){const root=await mkdtemp(path.join(os.tmpdir(),'munin-operator-sitrep-'));await mkdir(path.join(root,'ops'),{recursive:true});await writeFile(path.join(root,'ops/CURRENT_STATE.md'),'# Current\n','utf8');await writeFile(path.join(root,'ops/BACKLOG.md'),'# Backlog\n','utf8');await writeFile(path.join(root,'ops/SESSION_LOG.md'),'# Sessions\n','utf8');return root}
 
 const connectors:NonNullable<OperatorSitrepDependencies['connectors']>=async()=>[
- {provider:'gmail',connected:true,configured:true,expiresAt:Date.now()+1000,scope:'gmail.readonly',security:{provider:'gmail',scopes:['gmail.readonly'],writeScopes:[],readOnly:true,tokenStorage:'local-runtime-json',externalMutationAllowed:false}},
- {provider:'outlook',connected:false,configured:false,expiresAt:undefined,scope:undefined,security:{provider:'outlook',scopes:['Mail.Read'],writeScopes:[],readOnly:true,tokenStorage:'local-runtime-json',externalMutationAllowed:false}},
+ {provider:'gmail',connected:true,configured:true,expiresAt:Date.now()+1000,scope:'gmail.readonly',security:{provider:'gmail',scopes:['gmail.readonly'],writeScopes:[],readOnly:true,tokenStorage:'local-runtime-json',activeTokenStorage:'local-runtime-json',externalMutationAllowed:false}},
+ {provider:'outlook',connected:false,configured:false,expiresAt:undefined,scope:undefined,security:{provider:'outlook',scopes:['Mail.Read'],writeScopes:[],readOnly:true,tokenStorage:'local-runtime-json',activeTokenStorage:'local-runtime-json',externalMutationAllowed:false}},
 ];
 
 test('operator SITREP aggregates healthy execution surfaces into one snapshot',async()=>{
