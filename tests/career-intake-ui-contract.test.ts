@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import test from 'node:test';
 
-const htmlPath = new URL('../apps/web/career-intake.html', import.meta.url);
+const htmlPath = resolve(process.cwd(), 'apps/web/career-intake.html');
 
 async function careerIntakeHtml() {
   return readFile(htmlPath, 'utf8');
