@@ -2,70 +2,82 @@
 
 > Repo-backed execution queue for Munin. Priorities are P0 highest to P3 lowest.
 >
-> Last updated: 2026-08-17
+> Last updated: 2026-08-18
 
 ## P0 — Execution foundation
 
-- [x] **Munin Control Room Protocol** — make repo state the durable source of truth across ChatGPT, Codex, Claude, local agents, and future providers.
-- [x] **Autonomous Execution Harness** — implement `PLAN → BUILD → TEST → VERIFY → FIX`, repeating until acceptance criteria are met or a real human blocker exists.
-- [x] **Multi-agent Orchestrator** — route objectives across Product/State, Researcher, Engineer, QA, Memory Curator, and Operator; recover automatically when a safe next action exists.
-- [x] **State hydration** — any new execution session reads canonical state before acting.
-- [x] **State write-back** — meaningful progress updates current state, backlog, session log, and decision records.
-- [x] **Real-blocker classifier** — distinguish human-only blockers from issues the system can diagnose, retry, infer, or safely decide.
-- [x] **Executor handoff contract** — standard task package for ChatGPT/Codex/Claude/local models including goal, constraints, files, acceptance criteria, verification, and write-back requirements.
-- [x] **Default specialist executor adapters** — production bindings connect state hydration, local research orchestration, autonomous engineering, QA evidence gating, memory write-back, and operational handoff.
-- [x] **Orchestrator Control Room entrypoint** — one canonical objective runtime hydrates state and invokes the multi-agent supervisor with production adapters.
-- [x] **Control Room CLI exposure** — `munin orchestrate <objective>` invokes the canonical supervisor from the existing CLI.
-- [ ] **Control Room API exposure** — expose the same objective runtime through the API/mobile Control Room and return concise SITREP-compatible results.
-- [ ] **Browser automation evaluation** — evaluate and, if suitable, integrate Playwright CLI/MCP for browser automation and end-to-end verification.
-- [ ] **Engineering skills evaluation** — assess reusable engineering skills/patterns inspired by Superpowers and comparable harnesses while remaining model-agnostic.
-- [ ] **DeepSeek Harness evaluation** — extract useful orchestration, verification, and execution patterns without creating provider lock-in.
+- [x] **Munin Control Room Protocol** — repo state is the durable source of truth across ChatGPT, Codex, Claude, local agents, and future providers.
+- [x] **Autonomous Execution Harness** — `PLAN → BUILD → TEST → VERIFY → FIX` repeats until acceptance criteria are met or a real human blocker exists.
+- [x] **Multi-agent Orchestrator** — routes objectives across Product/State, Researcher, Engineer, QA, Memory Curator, and Operator and recovers automatically when a safe next action exists.
+- [x] **State hydration** — every execution session can read canonical state before acting.
+- [x] **State write-back** — meaningful progress can update current state, backlog, session log, and durable memory.
+- [x] **Real-blocker classifier** — distinguishes human-only blockers from issues the system can diagnose, retry, infer, or safely decide.
+- [x] **Executor handoff contract** — standard task package for model/provider-neutral execution.
+- [x] **Default specialist executor adapters** — production bindings connect state hydration, research, autonomous engineering, QA evidence gating, memory write-back, and operational handoff.
+- [x] **Orchestrator Control Room entrypoint** — one canonical objective runtime hydrates state and invokes the multi-agent supervisor.
+- [x] **Control Room CLI exposure** — `munin orchestrate <objective>` invokes the canonical supervisor.
+- [x] **Control Room API exposure** — `/api/orchestrate` exposes the canonical runtime for web/mobile Control Room clients.
+- [x] **Browser automation evaluation** — Playwright CLI was evaluated and promoted for governed read-only browser verification; mobile engineering can request browser-verified builds.
+- [x] **Engineering skills evaluation** — model-agnostic TDD, systematic debugging, code-review and UI/UX methodology skills are integrated through the Skill Registry.
+- [x] **DeepSeek Harness evaluation** — useful reversible capability-seam patterns were adapted natively without provider lock-in.
 
 ## P0 — Context continuity
 
 - [x] **Canonical project memory foundation** — persist core Munin execution state, decisions, and session events outside individual chats.
-- [ ] **Conversation ingestion path** — define a safe way to import relevant historical conversations/exports into structured project knowledge.
-- [ ] **Context relevance policy** — separate durable Munin knowledge from unrelated personal/local conversational memory.
-- [x] **Session log** — append concise execution events so a new session can reconstruct what happened without replaying every chat.
+- [x] **Memory Ledger** — append-only typed project memory with search, semantic deduplication, mobile read API, and durable event mirroring.
+- [x] **Conversation export parser foundation** — ChatGPT export parsing exists as a structured ingestion primitive.
+- [ ] **Conversation ingestion promotion path** — wire reviewed historical conversation imports into the Memory Ledger/project-memory boundary with provenance and relevance gating.
+- [ ] **Context relevance policy** — formalize which imported conversational facts become durable Munin knowledge versus unrelated personal/local context.
+- [x] **Session log** — concise execution events reconstruct work without replaying every chat.
+
+## P0 — Career mobile intake
+
+- [x] **Career Mobile Intake core** — accepts Share Sheet, URL, text, screenshot, and image inputs through `/api/mobile/career/intake`.
+- [x] **Transient Vision extraction** — screenshots/images can be parsed through the configured multimodal provider without durable image storage.
+- [x] **Normalization and deduplication** — career inputs become `JobOpportunity` records with fit scoring, provenance, fingerprints, and duplicate prevention.
+- [x] **iOS contract** — `munin-career-intake-v1` capability discovery and Shortcuts/Share Sheet contract documented.
+- [ ] **Native/share-sheet UX completion** — expose the intake flow in the chosen mobile shell without regressing the current Lovable workstream.
 
 ## P1 — Munin v0.1
 
-- [ ] Project portfolio dashboard.
-- [ ] Persistent context and memory model.
-- [ ] `SITREP`, `BUILD`, `CONT`, `NEXT`, and `EXECUTE` workflows.
-- [ ] Career operations center.
-- [ ] Repository state visibility.
-- [ ] Accepted Munin v0.1 product specification and implementation plan.
+- [x] Project portfolio intelligence foundation.
+- [x] Persistent context and memory foundations.
+- [x] `SITREP`, `BUILD`, `CONT`, `NEXT`, and `EXECUTE` command semantics.
+- [x] Career operations/intelligence foundation.
+- [x] Repository state visibility foundations.
+- [ ] Accepted Munin v0.1 product specification and implementation plan consolidation.
 
 ## P1 — Integrations and operator experience
 
-- [ ] Mobile-first Control Room experience.
-- [ ] GitHub/Codex execution path with status visibility.
-- [ ] Zero-additional-cost local model fallback through Ollama where appropriate.
+- [x] Mobile-first Munin runtime/API foundation.
+- [x] GitHub-backed execution path and autonomous engineering delivery foundation.
+- [x] Zero-additional-cost Ollama provider fallback foundation.
 - [ ] **Local Video Generation capability / MiniMax H3** — evaluate and integrate as an optional provider-neutral media capability. Prefer DiffSynth-Studio NF4/VRAM-managed or ComfyUI-compatible execution; keep downloads opt-in (~42.5 GB class), enforce license territory/commercial-attribution constraints, and benchmark actual quality/speed on Munin host hardware before making it a default route. Treat local open-weight H3 as primarily 768p; do not claim the hosted 2K regeneration stage is locally available unless upstream releases it.
-- [ ] LinkedIn Content Intelligence / Publisher: analyze previous posts, images, identity, reliable public sources, generate recommendations, and preserve explicit publication approval.
+- [x] **LinkedIn Content Intelligence foundation** — content engine, trusted-source radar, editorial identity, composer, history, council review and visual-asset flows exist.
+- [ ] **LinkedIn Publisher completion** — harden freshness/provenance and preserve explicit approval for public publication.
+- [x] **Brand Asset Registry** — canonical AJ/Munin asset registry and no-approximation policy merged; exact master files remain human-supplied assets.
 - [ ] Remote access/runbook consolidation for the local Munin environment.
 
 ## P1 — Architecture and research
 
 - [ ] Consolidate AIP RFC/SPEC/BUILD/ADR backlog and map components to Munin v0.1.
-- [x] Establish the initial multi-agent pattern only where roles have explicit responsibilities, independent QA, and durable-state write-back.
+- [x] Establish multi-agent roles only where responsibilities, independent QA, and durable-state write-back are explicit.
 - [ ] Continue GitHub ecosystem scan for reusable open-source components, replacing weaker backlog candidates when materially better options are found.
 
 ## P2 — Hardening
 
-- [ ] End-to-end acceptance tests for canonical workflows.
-- [ ] Failure recovery and idempotent resume behavior.
-- [ ] Cost guardrails and provider routing policy.
-- [ ] Security/privacy review for context ingestion and external connectors.
-- [ ] Observability for execution attempts, retries, blockers, and outcomes.
+- [ ] End-to-end acceptance tests for canonical objective → execution → verification → write-back workflows.
+- [x] Failure recovery, bounded retry, leases/fencing/outbox and idempotent runtime primitives exist.
+- [x] Provider policy and bounded execution/cost-control foundations exist.
+- [ ] Security/privacy review for historical conversation ingestion and external connectors.
+- [x] Execution/retry/blocker observability foundations and optional read-only Sentry ingestion exist.
+- [ ] Consolidated operator-facing observability/SITREP across orchestrator, engineering jobs, browser verification and connector state.
 
 ## Done in current phase
 
-- [x] Architecture direction accepted: Project/Control Room + durable repo state + executor + GitHub history.
-- [x] Control Room command semantics drafted.
-- [x] Autonomous loop and human-blocker policy implemented.
-- [x] Multi-agent Orchestrator core and specialist contracts implemented.
-- [x] Production specialist adapters and canonical Control Room runtime entrypoint implemented.
-- [x] CLI objective entrypoint implemented as `munin orchestrate <objective>`.
+- [x] Control Room architecture, durable state, autonomous loop, multi-agent supervisor and production specialist adapters.
+- [x] CLI and API objective entrypoints.
+- [x] Governed browser verification and skill-aware autonomous engineering.
+- [x] Memory Ledger and Career Mobile Intake core.
+- [x] Canonical Brand Asset Registry.
 - [x] Daily Munin progress/blocker review automation created in ChatGPT.
