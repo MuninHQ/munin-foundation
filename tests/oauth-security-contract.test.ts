@@ -21,10 +21,21 @@ test('Outlook connector requests Mail.Read but no send/read-write scope',()=>{
  assert.equal(profile.scopes.some(scope=>/Mail\.(?:ReadWrite|Send)/i.test(scope)),false);
 });
 
-test('security profile makes local token-at-rest boundary explicit',()=>{
- for(const provider of ['gmail','outlook'] as const){
-  const profile=oauthSecurityProfile(provider);
-  assert.equal(profile.tokenStorage,'local-runtime-json');
-  assert.equal(profile.readOnly,true);
+test('security profile prefers OS credential storage while preserving explicit fallback',()=>{
+ const previous=process.env.MUNIN_OAUTH_TOKEN_STORE;
+ try{
+  delete process.env.MUNIN_OAUTH_TOKEN_STORE;
+  for(const provider of ['gmail','outlook'] as const){
+   const profile=oauthSecurityProfile(provider);
+   assert.equal(profile.tokenStorage,'auto-prefer-os-keychain');
+   assert.equal(profile.readOnly,true);
+  }
+  process.env.MUNIN_OAUTH_TOKEN_STORE='json';
+  assert.equal(oauthSecurityProfile('gmail').tokenStorage,'local-runtime-json');
+  process.env.MUNIN_OAUTH_TOKEN_STORE='keychain';
+  assert.equal(oauthSecurityProfile('outlook').tokenStorage,'os-keychain-required');
+ }finally{
+  if(previous===undefined)delete process.env.MUNIN_OAUTH_TOKEN_STORE;
+  else process.env.MUNIN_OAUTH_TOKEN_STORE=previous;
  }
 });
