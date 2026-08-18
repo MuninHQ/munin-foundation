@@ -26,8 +26,8 @@
 - [x] **Canonical project memory foundation** — persist core Munin execution state, decisions, and session events outside individual chats.
 - [x] **Memory Ledger** — append-only typed project memory with search, semantic deduplication, mobile read API, and durable event mirroring.
 - [x] **Conversation export parser foundation** — ChatGPT export parsing exists as a structured ingestion primitive.
-- [ ] **Conversation ingestion promotion path** — wire reviewed historical conversation imports into the Memory Ledger/project-memory boundary with provenance and relevance gating.
-- [ ] **Context relevance policy** — formalize which imported conversational facts become durable Munin knowledge versus unrelated personal/local context.
+- [x] **Conversation ingestion promotion path** — reviewed historical ChatGPT records can be promoted into continuity memory + Memory Ledger with project provenance and an accepted/rejected report.
+- [x] **Context relevance policy** — historical records require explicit Munin/project signals; unrelated personal identity/preferences and generic local context are not promoted to project memory by default.
 - [x] **Session log** — concise execution events reconstruct work without replaying every chat.
 
 ## P0 — Career mobile intake
@@ -54,7 +54,7 @@
 - [x] Zero-additional-cost Ollama provider fallback foundation.
 - [ ] **Local Video Generation capability / MiniMax H3** — evaluate and integrate as an optional provider-neutral media capability. Prefer DiffSynth-Studio NF4/VRAM-managed or ComfyUI-compatible execution; keep downloads opt-in (~42.5 GB class), enforce license territory/commercial-attribution constraints, and benchmark actual quality/speed on Munin host hardware before making it a default route. Treat local open-weight H3 as primarily 768p; do not claim the hosted 2K regeneration stage is locally available unless upstream releases it.
 - [x] **LinkedIn Content Intelligence foundation** — content engine, trusted-source radar, editorial identity, composer, history, council review and visual-asset flows exist.
-- [ ] **LinkedIn Publisher completion** — harden freshness/provenance and preserve explicit approval for public publication.
+- [ ] **LinkedIn Publisher completion** — freshness/provenance is hardened; preserve explicit approval for public publication and finish the governed publishing surface.
 - [x] **Brand Asset Registry** — canonical AJ/Munin asset registry and no-approximation policy merged; exact master files remain human-supplied assets.
 - [ ] Remote access/runbook consolidation for the local Munin environment.
 
@@ -78,6 +78,6 @@
 - [x] Control Room architecture, durable state, autonomous loop, multi-agent supervisor and production specialist adapters.
 - [x] CLI and API objective entrypoints.
 - [x] Governed browser verification and skill-aware autonomous engineering.
-- [x] Memory Ledger and Career Mobile Intake core.
+- [x] Memory Ledger, governed ChatGPT project-memory promotion and Career Mobile Intake core.
 - [x] Canonical Brand Asset Registry.
 - [x] Daily Munin progress/blocker review automation created in ChatGPT.
