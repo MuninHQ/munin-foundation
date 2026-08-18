@@ -6,22 +6,22 @@
 
 ## P0 — Execution foundation
 
-- [ ] **Munin Control Room Protocol** — make repo state the durable source of truth across ChatGPT, Codex, Claude, local agents, and future providers.
+- [x] **Munin Control Room Protocol** — make repo state the durable source of truth across ChatGPT, Codex, Claude, local agents, and future providers.
 - [ ] **Autonomous Execution Harness** — implement `PLAN → BUILD → TEST → VERIFY → FIX`, repeating until acceptance criteria are met or a real human blocker exists.
-- [ ] **State hydration** — any new execution session reads canonical state before acting.
-- [ ] **State write-back** — meaningful progress updates current state, backlog, session log, and decision records.
+- [x] **State hydration** — any new execution session reads canonical state before acting.
+- [x] **State write-back** — meaningful progress updates current state, backlog, session log, and decision records.
 - [ ] **Real-blocker classifier** — distinguish human-only blockers from issues the system can diagnose, retry, infer, or safely decide.
-- [ ] **Executor handoff contract** — standard task package for ChatGPT/Codex/Claude/local models including goal, constraints, files, acceptance criteria, verification, and write-back requirements.
+- [x] **Executor handoff contract** — standard task package for ChatGPT/Codex/Claude/local models including goal, constraints, files, acceptance criteria, verification, and write-back requirements.
 - [ ] **Browser automation evaluation** — evaluate and, if suitable, integrate Playwright CLI/MCP for browser automation and end-to-end verification.
 - [ ] **Engineering skills evaluation** — assess reusable engineering skills/patterns inspired by Superpowers and comparable harnesses while remaining model-agnostic.
 - [ ] **DeepSeek Harness evaluation** — extract useful orchestration, verification, and execution patterns without creating provider lock-in.
 
 ## P0 — Context continuity
 
-- [ ] **Canonical project memory** — persist relevant Munin decisions, actions, architecture, and state outside individual chats.
+- [x] **Canonical project memory foundation** — persist core Munin execution state, decisions, and session events outside individual chats.
 - [ ] **Conversation ingestion path** — define a safe way to import relevant historical conversations/exports into structured project knowledge.
 - [ ] **Context relevance policy** — separate durable Munin knowledge from unrelated personal/local conversational memory.
-- [ ] **Session log** — append concise execution events so a new session can reconstruct what happened without replaying every chat.
+- [x] **Session log** — append concise execution events so a new session can reconstruct what happened without replaying every chat.
 
 ## P1 — Munin v0.1
 
