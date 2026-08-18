@@ -63,3 +63,34 @@ Prefer OS-backed credential storage for repository-managed OAuth tokens without 
 ### Next
 
 Continue with remote/local execution runbook consolidation, AIP-to-v0.1 mapping and safe publisher completion while preserving Lovable/publication boundaries.
+
+## 2026-08-18 — v0.1 executable backlog closed
+
+### Decision
+
+Close repository-software backlog items when their implementation and governed operator contract are complete, while keeping real device, credential, license, hardware benchmark and public-publication observations as explicit empirical/human boundaries rather than pretending repository code can satisfy them.
+
+### Changes
+
+- Added governed LinkedIn Publisher state/API/UI with explicit approval, revocation, manual publication package and post-URL recording; automatic external publication remains disabled.
+- Removed residual AJ/monogram instructions from LinkedIn Studio visual-profile memory and locked unbranded-by-default prompts with regression tests.
+- Completed Career Quick Intake web exposure and documented the iOS Share Sheet/Shortcut contract for URL, selected text and transient screenshot inputs.
+- Consolidated the Windows/local/Tailscale operator runbook, including stale `5173`/`4310` process recovery after the old Vite-instance issue was reproduced during live use.
+- Consolidated historical AIP RFC/SPEC/BUILD/ADR concepts into Munin v0.1 and converted the product roadmap file into an index of canonical execution state instead of a competing backlog.
+- Completed the August GitHub ecosystem scan and converted future ecosystem research to trigger-based reevaluation; no candidate materially justified replacing the current orchestrator/runtime stack in this cycle.
+- Added provider-neutral `media.local-video`, disabled by default, with no automatic weight download, absolute local runner boundary, planning/health operations and a host benchmark CLI.
+- Recorded current MiniMax H3 evaluation/license/storage/hardware promotion gates without installing model weights or claiming host performance without evidence.
+- Added/extended regression tests for LinkedIn Publisher governance, unbranded editorial prompts and local-video runtime policy.
+- Updated `ops/BACKLOG.md` so the current v0.1 phase has no unchecked repository-software items.
+- Updated `ops/CURRENT_STATE.md` to `v0.1 backlog closeout / empirical acceptance` and enumerated the remaining real human/device boundaries.
+
+### Remaining empirical acceptance
+
+- Install and validate the iOS Career Share Sheet Shortcut on the target phone.
+- If H3 is to be promoted, explicitly review/accept the model license, install the chosen local backend/weights and benchmark the actual host using `npm run video:benchmark`.
+- Supply exact brand master assets if exact-asset composition is desired.
+- Public LinkedIn posting, OAuth/2FA/credentials, paid activation and irreversible external actions remain human-controlled.
+
+### Validation note
+
+The implementation and deterministic tests are present in the repository. A fresh full local/CI run for this final multi-commit batch still requires executable CI or the canonical Windows checkout; no green result is inferred without evidence.
