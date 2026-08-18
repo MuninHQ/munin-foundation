@@ -68,7 +68,7 @@
 ## P2 — Hardening
 
 - [x] **Control Room cross-run continuity acceptance** — deterministic acceptance proves objective execution writes canonical state/session evidence and a fresh runtime rehydrates it.
-- [ ] **Engineering end-to-end acceptance** — prove canonical objective → autonomous engineering → independent verification → FIX/recovery → durable write-back using production boundaries without real external mutation.
+- [x] **Engineering end-to-end acceptance** — deterministic Control Room acceptance exercises production Product State, QA, Memory Curator and Operator boundaries while replacing only the external-mutating Engineer; it proves missing evidence triggers Engineer → QA recovery, corrected evidence passes QA, durable write-back occurs and the Operator closes healthy.
 - [x] Failure recovery, bounded retry, leases/fencing/outbox and idempotent runtime primitives exist.
 - [x] Provider policy and bounded execution/cost-control foundations exist.
 - [x] **Historical conversation ingestion privacy review** — relevance, provenance, local-storage and secret-rejection boundaries are implemented and documented.
@@ -83,7 +83,7 @@
 - [x] CLI and API objective entrypoints.
 - [x] Governed browser verification and skill-aware autonomous engineering.
 - [x] Memory Ledger, governed/secret-safe ChatGPT project-memory promotion and Career Mobile Intake core.
-- [x] Control Room cross-run continuity acceptance.
+- [x] Control Room cross-run continuity and engineering QA-recovery acceptance.
 - [x] Canonical Munin v0.1 product/build contract.
 - [x] Read-only external OAuth connector security contract.
 - [x] Canonical Brand Asset Registry.

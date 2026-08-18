@@ -1,4 +1,4 @@
-import { MuninAgentOrchestrator, type OrchestratorRunResult } from './agent-orchestrator.js';
+import { MuninAgentOrchestrator, type MuninAgentExecutors, type OrchestratorRunResult } from './agent-orchestrator.js';
 import { createProductionAgentExecutors } from './agent-runtime-adapters.js';
 import { hydrateControlRoomState } from './control-room-state.js';
 
@@ -7,8 +7,13 @@ export interface ControlRoomObjective {
   context?: Record<string, unknown>;
 }
 
+export type ControlRoomExecutorFactory=(root:string)=>MuninAgentExecutors;
+
 export class MuninControlRoomOrchestrator {
-  constructor(private readonly root = process.cwd()) {}
+  constructor(
+    private readonly root = process.cwd(),
+    private readonly executorFactory:ControlRoomExecutorFactory=createProductionAgentExecutors,
+  ) {}
 
   async execute(input: ControlRoomObjective): Promise<OrchestratorRunResult> {
     if (!input.objective.trim()) throw new Error('Objective is required.');
@@ -22,6 +27,6 @@ export class MuninControlRoomOrchestrator {
         missing: state.missing,
       },
     };
-    return new MuninAgentOrchestrator(createProductionAgentExecutors(this.root)).run(input.objective, context);
+    return new MuninAgentOrchestrator(this.executorFactory(this.root)).run(input.objective, context);
   }
 }
