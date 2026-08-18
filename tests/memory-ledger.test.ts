@@ -25,3 +25,9 @@ test('memory ledger filters project and kind', async () => {
   assert.equal(result.length, 1);
   assert.equal(result[0]?.summary, 'one');
 });
+
+test('memory ledger enforces bounded query results',async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'munin-ledger-'));const ledger=new MemoryLedger(root);
+ for(let i=0;i<5;i++)await ledger.append({kind:'observation',source:'test',summary:`entry-${i}`,projectId:'munin'});
+ assert.equal((await ledger.list({projectId:'munin',limit:2})).length,2);
+});
