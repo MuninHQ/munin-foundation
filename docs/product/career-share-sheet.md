@@ -37,7 +37,7 @@ The current contract identifier is `munin-career-intake-v1` and accepts URL, tex
 Create an iOS Shortcut named **Enviar vaga ao Munin** and enable **Show in Share Sheet**.
 
 1. Receive `URLs` and `Text` from Share Sheet.
-2. If the input is a URL, build JSON:
+1. If the input is a URL, build JSON:
 
 ```json
 {
@@ -47,7 +47,7 @@ Create an iOS Shortcut named **Enviar vaga ao Munin** and enable **Show in Share
 }
 ```
 
-3. If the input is text, build JSON:
+1. If the input is text, build JSON:
 
 ```json
 {
@@ -57,13 +57,13 @@ Create an iOS Shortcut named **Enviar vaga ao Munin** and enable **Show in Share
 }
 ```
 
-4. Use **Get Contents of URL**:
+1. Use **Get Contents of URL**:
    - Method: `POST`
    - URL: `http://<tailscale-host>:4310/api/mobile/career/intake` when the governed mobile API is intentionally reachable on the Tailscale interface, or the equivalent reverse-proxied mobile endpoint.
    - Header `Authorization`: `Bearer <token>`
    - Header `Content-Type`: `application/json`
    - Request Body: JSON.
-5. Show the returned company/role/fit result with **Show Result**.
+1. Show the returned company/role/fit result with **Show Result**.
 
 Prefer the web proxy/remote launcher contract when available; do not expose port `4310` to the public internet.
 
@@ -72,9 +72,9 @@ Prefer the web proxy/remote launcher contract when available; do not expose port
 Add `Images` to accepted Share Sheet input types.
 
 1. Receive the image directly from Share Sheet. Do **not** add a “Save to Photos” action.
-2. Convert image to JPEG or PNG if necessary.
-3. Base64 encode the image.
-4. Build JSON:
+1. Convert image to JPEG or PNG if necessary.
+1. Base64 encode the image.
+1. Build JSON:
 
 ```json
 {
@@ -88,8 +88,8 @@ Add `Images` to accepted Share Sheet input types.
 }
 ```
 
-5. POST to `/api/mobile/career/intake` with the same Bearer authorization.
-6. Display the normalized result.
+1. POST to `/api/mobile/career/intake` with the same Bearer authorization.
+1. Display the normalized result.
 
 The server uses the image as transient input for Vision extraction and intentionally excludes the binary payload from durable career-memory records.
 
