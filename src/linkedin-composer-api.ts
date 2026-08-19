@@ -6,13 +6,17 @@ import { trustedSourceRadar } from './trusted-source-radar.js';
 import { OllamaProvider } from './ollama-provider.js';
 import { reviewLinkedInDraft } from './linkedin-council-review.js';
 import { andreBrandProfile, authorityFlywheel, brandPromptContext } from './personal-brand-intelligence.js';
+import { linkedinAuthorityLearning, recordLinkedInPerformance } from './linkedin-authority-learning.js';
 import { json, readJsonBody, requireText, stringList } from './http.js';
 
 const body=(request:IncomingMessage)=>readJsonBody(request,1_000_000);
+const metric=(value:unknown)=>typeof value==='number'?value:undefined;
 
 export async function handleLinkedInComposer(request:IncomingMessage,response:ServerResponse):Promise<void>{if(request.method==='OPTIONS')return json(request,response,204,{});const url=new URL(request.url??'/','http://127.0.0.1');try{
-  if(request.method==='GET'&&url.pathname==='/api/linkedin-composer/status')return json(request,response,200,{localText:await new OllamaProvider().health(),text:await llmProviderStatus(),image:await imageProviderStatus(),routing:['ollama-local','configured-llm','deterministic-local'],brandIntelligence:true});
+  if(request.method==='GET'&&url.pathname==='/api/linkedin-composer/status')return json(request,response,200,{localText:await new OllamaProvider().health(),text:await llmProviderStatus(),image:await imageProviderStatus(),routing:['ollama-local','configured-llm','deterministic-local'],brandIntelligence:true,authorityLearning:true});
   if(request.method==='GET'&&url.pathname==='/api/linkedin-composer/brand')return json(request,response,200,{profile:andreBrandProfile,promptContext:brandPromptContext(),authorityFlywheel:authorityFlywheel()});
+  if(request.method==='GET'&&url.pathname==='/api/linkedin-composer/learning')return json(request,response,200,await linkedinAuthorityLearning());
+  if(request.method==='POST'&&url.pathname==='/api/linkedin-composer/performance'){const input=await body(request);return json(request,response,201,await recordLinkedInPerformance({postId:requireText(input.postId,'postId'),impressions:metric(input.impressions),reactions:metric(input.reactions),comments:metric(input.comments),reposts:metric(input.reposts),relevantConversations:metric(input.relevantConversations),inboundOpportunities:metric(input.inboundOpportunities),profileViews:metric(input.profileViews),followersGained:metric(input.followersGained),note:typeof input.note==='string'?input.note:undefined,observedAt:typeof input.observedAt==='string'?input.observedAt:undefined}));}
   if(request.method==='GET'&&url.pathname==='/api/linkedin-composer/sources')return json(request,response,200,await trustedSourceRadar(url.searchParams.get('refresh')==='1'));
   if(request.method==='GET'&&url.pathname==='/api/linkedin-composer/suggestions')return json(request,response,200,await composerSuggestions(url.searchParams.get('refresh')==='1'));
   if(request.method==='POST'&&url.pathname==='/api/linkedin-composer/compose'){const input=await body(request);const result=await composeLinkedInPost({suggestionId:typeof input.suggestionId==='string'?input.suggestionId:undefined,generateImage:input.generateImage===true,refreshSources:input.refreshSources===true});return json(request,response,201,result);}
