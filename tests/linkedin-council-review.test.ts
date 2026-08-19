@@ -12,14 +12,15 @@ class ReviewProvider implements ExecutionProvider {
   }
 }
 
-test('LinkedIn review runs editorial, evidence and positioning seats plus synthesis', async () => {
+test('LinkedIn review runs editorial, evidence, positioning and thesis guardian seats plus synthesis', async () => {
   const provider = new ReviewProvider();
   const result = await reviewLinkedInDraft({ title: 'Stablecoins e infraestrutura', body: 'Um post executivo de teste.', themes: ['Stablecoins'] }, provider);
   assert.equal(result.ready, true);
-  assert.equal(result.review?.seats.length, 3);
-  assert.deepEqual(result.review?.seats.map(item => item.seat.id), ['editor', 'fact-checker', 'positioning']);
-  assert.equal(provider.requests.length, 4);
-  assert.equal(provider.requests[3].capability, 'synthesis');
+  assert.equal(result.review?.seats.length, 4);
+  assert.deepEqual(result.review?.seats.map(item => item.seat.id), ['editor', 'fact-checker', 'positioning', 'thesis-guardian']);
+  assert.equal(provider.requests.length, 5);
+  assert.equal(provider.requests[4].capability, 'synthesis');
+  assert.ok(result.brandEvaluation);
 });
 
 test('LinkedIn review rejects empty drafts before calling provider', async () => {

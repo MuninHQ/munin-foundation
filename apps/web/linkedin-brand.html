@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Munin Personal Brand Intelligence</title>
+  <link rel="stylesheet" href="/munin.css" />
+  <style>
+    .shell{max-width:1280px;margin:auto;padding:32px}.top,.row{display:flex;justify-content:space-between;align-items:center;gap:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.panel{border:1px solid #193149;background:#08131f;border-radius:14px;padding:20px;margin-top:16px}.hero{font-size:23px;line-height:1.45;color:#d9effc}.muted,p{color:var(--text-muted)}.theses,.candidates{display:grid;gap:10px}.thesis,.candidate{border:1px solid #17364b;background:#071725;border-radius:11px;padding:14px}.id,.score{font-size:10px;color:#7acbfa}.score.pass{color:#8ce0af}.score.review{color:#e7b85e}.tag{display:inline-block;border:1px solid #2d607e;color:#7acbfa;padding:4px 8px;border-radius:20px;font-size:10px;margin:3px}.meter{height:7px;background:#102536;border-radius:10px;overflow:hidden;margin-top:8px}.meter>span{display:block;height:100%;background:#64c9ff}.reason{font-size:11px;line-height:1.45}.flywheel{display:flex;gap:7px;flex-wrap:wrap;align-items:center}.node{border:1px solid #28506c;border-radius:20px;padding:7px 10px;font-size:11px}.arrow{color:#55788f}button,a.btn{border:1px solid #28506c;background:#0d1d2b;color:#d8ecfa;border-radius:9px;padding:10px 13px;text-decoration:none;cursor:pointer}.notice{position:fixed;right:24px;top:24px;background:#0f2b20;border:1px solid #39795a;padding:12px 16px;border-radius:9px}@media(max-width:850px){.grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.shell{padding:18px}}
+  </style>
+  <script defer src="/munin-nav.js"></script>
+</head>
+<body>
+<main class="shell">
+  <div class="top"><div><div class="eyebrow">MUNIN PERSONAL BRAND INTELLIGENCE</div><h1>Authority Engine</h1><p>Posicionamento persistente, teses próprias, risco de repetição e gate editorial antes da geração.</p></div><div><a class="btn" href="/linkedin-compose.html">Abrir Composer</a></div></div>
+  <section class="grid">
+    <article class="panel"><div class="eyebrow">TRIBE</div><div id="tribe" class="hero"></div><div class="eyebrow" style="margin-top:20px">MANIFESTO</div><p id="manifesto"></p></article>
+    <article class="panel"><div class="eyebrow">POSITIONING</div><div id="positioning" class="hero"></div><div class="eyebrow" style="margin-top:20px">PERMISSION TO EARN</div><p id="permission"></p></article>
+  </section>
+  <article class="panel"><div class="row"><div><div class="eyebrow">OWNED INTELLECTUAL PROPERTY</div><h2>Thesis Library</h2></div><span id="thesisCount" class="tag"></span></div><div id="theses" class="theses"></div></article>
+  <article class="panel"><div class="eyebrow">AUTHORITY FLYWHEEL</div><h2>O que o conteúdo precisa produzir</h2><div id="flywheel" class="flywheel"></div></article>
+  <article class="panel"><div class="row"><div><div class="eyebrow">EDITORIAL GATE</div><h2>Próximos candidatos</h2></div><button onclick="load(true)">Atualizar fontes</button></div><p>O score combina novidade editorial com aderência à marca, evidência e risco de repetição. PASS pode seguir para composição; REVIEW pede um ângulo melhor.</p><div id="candidates" class="candidates"></div></article>
+</main>
+<script>
+  let brand=null,suggestions=null;
+  const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'})[c]);
+  function toast(t){const n=document.createElement('div');n.className='notice';n.textContent=t;document.body.appendChild(n);setTimeout(()=>n.remove(),3500)}
+  async function req(path){const r=await fetch(path);const d=await r.json();if(!r.ok)throw new Error(d.error||'Falha');return d}
+  async function load(refresh=false){try{[brand,suggestions]=await Promise.all([req('/api/linkedin-composer/brand'),req(`/api/linkedin-composer/suggestions${refresh?'?refresh=1':''}`)]);render(refresh)}catch(e){toast(e.message)}}
+  function render(refreshed=false){
+    tribe.textContent=brand.profile.tribe;manifesto.textContent=brand.profile.manifesto;positioning.textContent=brand.profile.positioning;permission.textContent=brand.profile.permissionGoal;
+    thesisCount.textContent=`${brand.profile.theses.length} teses ativas`;
+    theses.innerHTML=brand.profile.theses.map(t=>`<div class="thesis"><div class="id">${esc(t.id)} · ${esc(t.status.toUpperCase())}</div><strong>${esc(t.statement)}</strong><div>${t.domains.map(d=>`<span class="tag">${esc(d)}</span>`).join('')}</div></div>`).join('');
+    flywheel.innerHTML=brand.authorityFlywheel.map((x,i)=>`${i?'<span class="arrow">→</span>':''}<span class="node">${esc(x)}</span>`).join('');
+    candidates.innerHTML=(suggestions.suggestions||[]).slice(0,8).map(s=>{const b=s.brandEvaluation;const cls=b.publish?'pass':'review';return `<div class="candidate"><div class="row"><div class="score ${cls}">${b.publish?'PASS':'REVIEW'} · BRAND ${b.score}% · EDITORIAL ${s.editorialScore}% · REPETITION ${b.repetitionRisk}%</div><a class="btn" href="/linkedin-compose.html">Compor</a></div><h3>${esc(s.title)}</h3><p>${esc(s.angle)}</p><div>${b.matchedTheses.map(t=>`<span class="tag">${esc(t.id)}</span>`).join('')}<span class="tag">${esc(b.distinctiveness)}</span></div><div class="meter"><span style="width:${Math.max(0,Math.min(100,s.editorialScore))}%"></span></div><p class="reason">${b.reasons.map(esc).join(' · ')}</p></div>`}).join('')||'<p class="muted">Sem candidatos.</p>';
+    if(refreshed) toast('Fontes e scores atualizados');
+  }
+  load();
+</script>
+</body>
+</html>
