@@ -4,7 +4,7 @@ import { andreBrandProfile, authorityFlywheel, evaluateBrandCandidate, type Bran
 export type RepetitionRisk='low'|'medium'|'high';
 export type LinkedInBrandEvaluation=BrandEvaluation&{
   thesisIds:string[];
-  repetitionRisk:RepetitionRisk;
+  semanticRepetitionRisk:RepetitionRisk;
   repetitionScore:number;
   authorityScore:number;
   finalScore:number;
@@ -19,22 +19,22 @@ function similarity(a:string,b:string){const A=words(a),B=words(b);if(!A.size||!
 export function repetitionAgainstHistory(candidate:{title:string;angle:string},posts:LinkedInPost[]){
   const published=posts.filter(post=>post.status==='published').slice(0,12);
   const score=published.reduce((max,post)=>Math.max(max,similarity(`${candidate.title} ${candidate.angle}`,`${post.title} ${post.body}`)),0);
-  const repetitionRisk:RepetitionRisk=score>=0.55?'high':score>=0.32?'medium':'low';
-  return {repetitionScore:Math.round(score*100),repetitionRisk};
+  const semanticRepetitionRisk:RepetitionRisk=score>=0.55?'high':score>=0.32?'medium':'low';
+  return {repetitionScore:Math.round(score*100),semanticRepetitionRisk};
 }
 
 export function evaluateLinkedInBrandSuggestion(suggestion:ContentSuggestion,posts:LinkedInPost[],hasTrustedEvidence=false):LinkedInBrandEvaluation{
   const base=evaluateBrandCandidate({topic:`${suggestion.title} ${suggestion.themes.join(' ')}`,angle:suggestion.angle,source:hasTrustedEvidence||suggestion.sourceSignals.some(x=>!/editorial gap/i.test(x))?'evidence':'',});
   const repetition=repetitionAgainstHistory(suggestion,posts);
-  const repetitionPenalty=repetition.repetitionRisk==='high'?30:repetition.repetitionRisk==='medium'?12:0;
+  const repetitionPenalty=repetition.semanticRepetitionRisk==='high'?30:repetition.semanticRepetitionRisk==='medium'?12:0;
   const authorityScore=Math.max(0,Math.min(100,Math.round(base.score*.65+suggestion.novelty*.2+suggestion.visualNovelty*.15)));
   const finalScore=Math.max(0,Math.min(100,authorityScore-repetitionPenalty));
   const reasons=[...base.reasons];
-  if(repetition.repetitionRisk==='high')reasons.push('high semantic repetition risk against recent published posts');
-  else if(repetition.repetitionRisk==='medium')reasons.push('moderate semantic repetition risk; require a materially new angle');
+  if(repetition.semanticRepetitionRisk==='high')reasons.push('high semantic repetition risk against recent published posts');
+  else if(repetition.semanticRepetitionRisk==='medium')reasons.push('moderate semantic repetition risk; require a materially new angle');
   else reasons.push('low recent repetition risk');
   const thesisIds=base.matchedTheses.map(item=>item.id);
-  return {...base,...repetition,thesisIds,authorityScore,finalScore,publish:base.publish&&finalScore>=70&&repetition.repetitionRisk!=='high',autonomousPublishAllowed:base.publish&&finalScore>=78&&repetition.repetitionRisk==='low'};
+  return {...base,...repetition,thesisIds,authorityScore,finalScore,reasons,publish:base.publish&&finalScore>=70&&repetition.semanticRepetitionRisk!=='high',autonomousPublishAllowed:base.publish&&finalScore>=78&&repetition.semanticRepetitionRisk==='low'};
 }
 
 export function rankLinkedInBrandSuggestions(suggestions:ContentSuggestion[],posts:LinkedInPost[],evidenceBySuggestion:Record<string,boolean>={}):BrandRankedSuggestion[]{
