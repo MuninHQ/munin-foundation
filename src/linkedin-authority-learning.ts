@@ -60,7 +60,9 @@ function performanceFor(post:LinkedInPost,observation:PerformanceObservation):Le
 
 export async function recordLinkedInPerformance(input:Omit<PerformanceObservation,'observedAt'>&{observedAt?:string}){
   const content=await loadLinkedInContent();
-  if(!content.posts.some(post=>post.id===input.postId))throw new Error('LinkedIn post not found');
+  const post=content.posts.find(item=>item.id===input.postId);
+  if(!post)throw new Error('LinkedIn post not found');
+  if(post.status!=='published')throw new Error('Performance can only be recorded for a published LinkedIn post');
   const observation:PerformanceObservation={postId:input.postId,impressions:bounded(input.impressions,'impressions'),reactions:bounded(input.reactions,'reactions'),comments:bounded(input.comments,'comments'),reposts:bounded(input.reposts,'reposts'),relevantConversations:bounded(input.relevantConversations,'relevantConversations'),inboundOpportunities:bounded(input.inboundOpportunities,'inboundOpportunities'),profileViews:bounded(input.profileViews,'profileViews'),followersGained:bounded(input.followersGained,'followersGained'),note:input.note?.trim()||undefined,observedAt:input.observedAt??new Date().toISOString()};
   const state=await loadState();
   const index=state.observations.findIndex(item=>item.postId===observation.postId);
@@ -73,6 +75,8 @@ export async function linkedinAuthorityLearning(){
   const [content,state]=await Promise.all([loadLinkedInContent(),loadState()]);
   const postById=new Map(content.posts.map(post=>[post.id,post]));
   const posts=state.observations.map(observation=>{const post=postById.get(observation.postId);return post?performanceFor(post,observation):undefined;}).filter((value):value is LearnedPostPerformance=>Boolean(value)).sort((a,b)=>b.observation.observedAt.localeCompare(a.observation.observedAt));
+  const observedIds=new Set(state.observations.map(item=>item.postId));
+  const availablePosts=content.posts.filter(post=>post.status==='published').map(post=>({postId:post.id,title:post.title,publishedAt:post.publishedAt,observed:observedIds.has(post.id)})).sort((a,b)=>(b.publishedAt??'').localeCompare(a.publishedAt??''));
   const theses:ThesisLearning[]=andreBrandProfile.theses.filter(x=>x.status==='active').map(thesis=>{
     const relevant=posts.filter(post=>post.thesisIds.includes(thesis.id));
     const averageAuthorityScore=relevant.length?Math.round(relevant.reduce((sum,item)=>sum+item.authorityScore,0)/relevant.length):0;
@@ -87,6 +91,7 @@ export async function linkedinAuthorityLearning(){
   const authorityScore=observedPosts?Math.round(posts.reduce((sum,item)=>sum+item.authorityScore,0)/observedPosts):0;
   return {
     observedPosts,
+    availablePosts,
     authorityScore,
     relevantConversations:posts.reduce((sum,item)=>sum+(item.observation.relevantConversations??0),0),
     inboundOpportunities:posts.reduce((sum,item)=>sum+(item.observation.inboundOpportunities??0),0),
