@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { ContextStore } from './store.js';
 import { generateSitrep } from './sitrep.js';
+import { appendControlPlaneSitrep } from './control-plane-sitrep.js';
+import { buildLiveControlPlaneProjection } from './control-plane-live.js';
 import { AdaptiveExecutionEngine, JsonOutcomeStore, type ValidationResult } from './adaptive-execution.js';
 import type { Action, CareerQueueItem, ContextRelation, Decision, EntityType, Goal, GoalEvidence, JobOpportunity, JobStatus, Priority, Project, RelatedContext, RelationType, ResearchEvidence, ResearchRecord, ResearchSynthesis, Status } from './types.js';
 
@@ -11,7 +13,11 @@ function careerPriority(job: JobOpportunity, now = new Date()): CareerQueueItem 
 
 export class MuninService {
   constructor(private readonly store = new ContextStore()) {}
-  async sitrep(since?: Date): Promise<string> { return generateSitrep(await this.store.load(), await this.store.events(), since); }
+  async sitrep(since?: Date): Promise<string> {
+    const base = generateSitrep(await this.store.load(), await this.store.events(), since);
+    try { return appendControlPlaneSitrep(base, await buildLiveControlPlaneProjection()); }
+    catch { return base; }
+  }
   async inspect(): Promise<string> { return JSON.stringify(await this.store.load(), null, 2); }
   async exportContext(): Promise<string> { return JSON.stringify({ exportedAt: new Date().toISOString(), state: await this.store.load(), events: await this.store.events() }, null, 2); }
   async listProjects(): Promise<Project[]> { return (await this.store.load()).projects; }

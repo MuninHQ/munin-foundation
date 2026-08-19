@@ -86,7 +86,7 @@ test('enabled adapter exposes zero-cost external intelligence fallback and revie
  const review=await adapter.independentReview({objective:'review feature',implementationSummary:'implemented'});
  assert.equal(review.capability,'engineering.independent-review');
  assert.equal(review.output.independent,true);
- assert.deepEqual(review.trace.map(event=>event.phase),['execute']);
+ assert.deepEqual(review.trace.map(event=>event.phase),['before','execute']);
 });
 
 test('local video stays opt-in and never auto-downloads models',async()=>{
