@@ -83,7 +83,7 @@ function titleSimilarity(a: string, b: string) {
   if (!left.size || !right.size) return 0;
   let overlap = 0;
   for (const token of left) if (right.has(token)) overlap++;
-  return overlap / Math.max(left.size, right.size);
+  return overlap / Math.max(1, Math.min(left.size, right.size));
 }
 
 export function evaluateBrandCandidate(candidate: ContentCandidate, profile: BrandProfile = andreBrandProfile): BrandEvaluation {
