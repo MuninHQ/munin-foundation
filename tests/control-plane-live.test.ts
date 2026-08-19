@@ -5,6 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { buildLiveControlPlaneProjection } from '../src/control-plane-live.js';
+import { ControlPlaneRuntimeStore } from '../src/control-plane-runtime-store.js';
+import { createControlPlaneTask, transitionControlPlaneTask } from '../src/control-plane-state.js';
 import { ProjectMemoryStore } from '../src/project-memory.js';
 
 async function rootFixture() {
@@ -42,4 +44,24 @@ test('builds live projection from canonical backlog and current project decision
   assert.equal(projection.decisions.length, 1);
   assert.match(projection.text, /Control Plane v1/);
   assert.match(projection.text, /Active decisions: 1/);
+});
+
+test('live projection overlays feature-flagged runtime execution tasks without replacing backlog truth', async () => {
+  const root = await rootFixture();
+  let runtimeTask = createControlPlaneTask({
+    id: 'run-live-1',
+    title: 'Runtime execution',
+    priority: 'P1',
+    owner: 'munin-orchestrator',
+    source: 'orchestrator:live-1',
+    dependencies: [],
+    acceptanceCriteria: ['Complete runtime execution.'],
+  });
+  runtimeTask = transitionControlPlaneTask(runtimeTask, 'planning');
+  runtimeTask = transitionControlPlaneTask(runtimeTask, 'building');
+  await new ControlPlaneRuntimeStore(root).upsert(runtimeTask);
+
+  const projection = await buildLiveControlPlaneProjection(root);
+  assert.equal(projection.active.some((task) => task.id === 'run-live-1' && task.status === 'building'), true);
+  assert.equal(projection.active.some((task) => task.title === 'Control Plane v1'), true);
 });
