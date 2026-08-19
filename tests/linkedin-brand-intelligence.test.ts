@@ -44,7 +44,7 @@ test('evidence-backed owned-thesis suggestion clears brand gate',()=>{
 test('near duplicate receives high repetition risk and cannot autonomously publish',()=>{
   const history=[post('Stablecoins e infraestrutura financeira','O impacto sobre liquidação, interoperabilidade, governança e execução em produção')];
   const result=evaluateLinkedInBrandSuggestion(suggestion(),history,true);
-  assert.equal(result.repetitionRisk,'high');
+  assert.equal(result.semanticRepetitionRisk,'high');
   assert.equal(result.publish,false);
   assert.equal(result.autonomousPublishAllowed,false);
 });
@@ -57,5 +57,5 @@ test('ranking prefers brand-aligned differentiated content',()=>{
 
 test('repetition detector stays low for a materially different territory',()=>{
   const result=repetitionAgainstHistory({title:'IA e operating model',angle:'Como execução e integração criam vantagem'},[post('Stablecoins e infraestrutura financeira')]);
-  assert.equal(result.repetitionRisk,'low');
+  assert.equal(result.semanticRepetitionRisk,'low');
 });
