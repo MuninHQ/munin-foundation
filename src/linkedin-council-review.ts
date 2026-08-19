@@ -1,6 +1,7 @@
 import type { ExecutionProvider } from './providers.js';
 import { CouncilOrchestrator, type CouncilResult, type CouncilSeat } from './council.js';
 import { OllamaProvider } from './ollama-provider.js';
+import { loadLinkedInContent } from './linkedin-content.js';
 import { andreBrandProfile, brandPromptContext, evaluateBrandCandidate } from './personal-brand-intelligence.js';
 
 export interface LinkedInCouncilReviewInput {
@@ -30,7 +31,11 @@ export async function reviewLinkedInDraft(
   provider: ExecutionProvider = new OllamaProvider(),
 ): Promise<LinkedInCouncilReview> {
   if (!input.title.trim() || !input.body.trim()) return { ready: false, error: 'title and body are required' };
-  const brandEvaluation=evaluateBrandCandidate({topic:input.title,angle:input.body,source:input.sources?.length?input.sources.join(', '):undefined,recentTitles:input.recentTitles},andreBrandProfile);
+  let recentTitles=input.recentTitles;
+  if(!recentTitles){
+    try{const content=await loadLinkedInContent();recentTitles=content.posts.filter(post=>post.status==='published'&&post.title.trim()!==input.title.trim()).map(post=>post.title).slice(0,16);}catch{recentTitles=[];}
+  }
+  const brandEvaluation=evaluateBrandCandidate({topic:input.title,angle:input.body,source:input.sources?.length?input.sources.join(', '):undefined,recentTitles},andreBrandProfile);
   try {
     const review = await new CouncilOrchestrator(provider).deliberate({
       objective: 'Review this LinkedIn draft before publication and decide whether it is ready, needs revision, or should be rejected.',
@@ -40,6 +45,7 @@ export async function reviewLinkedInDraft(
         body: input.body.trim(),
         themes: input.themes ?? [],
         sources: input.sources ?? [],
+        recentTitles,
         brandStrategy: brandPromptContext(),
         brandEvaluation,
         constraints: [
