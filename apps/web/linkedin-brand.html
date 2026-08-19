@@ -26,14 +26,14 @@
   const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'})[c]);
   function toast(t){const n=document.createElement('div');n.className='notice';n.textContent=t;document.body.appendChild(n);setTimeout(()=>n.remove(),3500)}
   async function req(path){const r=await fetch(path);const d=await r.json();if(!r.ok)throw new Error(d.error||'Falha');return d}
-  async function load(refresh=false){try{[brand,suggestions]=await Promise.all([req('/api/linkedin-composer/brand'),req(`/api/linkedin-composer/suggestions${refresh?'?refresh=1':''}`)]);render()}catch(e){toast(e.message)}}
-  function render(){
+  async function load(refresh=false){try{[brand,suggestions]=await Promise.all([req('/api/linkedin-composer/brand'),req(`/api/linkedin-composer/suggestions${refresh?'?refresh=1':''}`)]);render(refresh)}catch(e){toast(e.message)}}
+  function render(refreshed=false){
     tribe.textContent=brand.profile.tribe;manifesto.textContent=brand.profile.manifesto;positioning.textContent=brand.profile.positioning;permission.textContent=brand.profile.permissionGoal;
     thesisCount.textContent=`${brand.profile.theses.length} teses ativas`;
     theses.innerHTML=brand.profile.theses.map(t=>`<div class="thesis"><div class="id">${esc(t.id)} · ${esc(t.status.toUpperCase())}</div><strong>${esc(t.statement)}</strong><div>${t.domains.map(d=>`<span class="tag">${esc(d)}</span>`).join('')}</div></div>`).join('');
     flywheel.innerHTML=brand.authorityFlywheel.map((x,i)=>`${i?'<span class="arrow">→</span>':''}<span class="node">${esc(x)}</span>`).join('');
     candidates.innerHTML=(suggestions.suggestions||[]).slice(0,8).map(s=>{const b=s.brandEvaluation;const cls=b.publish?'pass':'review';return `<div class="candidate"><div class="row"><div class="score ${cls}">${b.publish?'PASS':'REVIEW'} · BRAND ${b.score}% · EDITORIAL ${s.editorialScore}% · REPETITION ${b.repetitionRisk}%</div><a class="btn" href="/linkedin-compose.html">Compor</a></div><h3>${esc(s.title)}</h3><p>${esc(s.angle)}</p><div>${b.matchedTheses.map(t=>`<span class="tag">${esc(t.id)}</span>`).join('')}<span class="tag">${esc(b.distinctiveness)}</span></div><div class="meter"><span style="width:${Math.max(0,Math.min(100,s.editorialScore))}%"></span></div><p class="reason">${b.reasons.map(esc).join(' · ')}</p></div>`}).join('')||'<p class="muted">Sem candidatos.</p>';
-    if(refresh) toast('Fontes e scores atualizados');
+    if(refreshed) toast('Fontes e scores atualizados');
   }
   load();
 </script>
