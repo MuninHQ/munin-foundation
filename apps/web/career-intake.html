@@ -12,7 +12,7 @@
 <article id="result" class="panel result"><div class="eyebrow">MATCH ENGINE</div><h2>Aguardando vaga</h2><p class="muted">A análise compara a oportunidade com o contexto profissional governado do Career OS.</p></article></section>
 </main><script>
 const $=id=>document.getElementById(id);let imagePayload=null,lastAnalysis=null;const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function api(path,body){const r=await fetch(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const raw=await r.text();let data={};try{data=raw?JSON.parse(raw):{}}catch{}if(!r.ok)throw new Error(data.error||`Falha (${r.status})`);return data}
+async function api(path,body){try{const r=await fetch(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(30000)});const raw=await r.text();let data={};try{data=raw?JSON.parse(raw):{}}catch{}if(!r.ok)throw new Error(data.error||`Falha (${r.status})`);return data}catch(error){if(error?.name==='TimeoutError'||error?.name==='AbortError')throw new Error('A análise excedeu 30 segundos. Verifique o backend/provedor e tente novamente.');throw error}}
 function source(){return imagePayload?'screenshot':$('url').value.trim()?'url':'manual'}
 function payload(includeImage=true){return{source:source(),url:$('url').value.trim()||undefined,text:$('text').value.trim()||undefined,image:includeImage&&imagePayload?imagePayload:undefined}}
 function recommendationClass(rec){return rec==='CANDIDATAR'?'ok':rec==='NAO_PRIORIZAR'?'no':'warn'}
