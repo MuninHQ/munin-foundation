@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { summarizeEmailIntelligence } from '../src/email-intelligence.js';
+import { scoreEmailInterest } from '../src/email-interest.js';
 import type { CareerEmail } from '../src/career-inbox.js';
 
 function msg(overrides: Partial<CareerEmail>): CareerEmail {
@@ -26,8 +27,26 @@ test('email intelligence prioritizes career and general actions', () => {
   assert.deepEqual(snapshot.topActions.map(x=>x.id),['career','general']);
 });
 
-test('handled messages never surface as open actions', () => {
-  const snapshot=summarizeEmailIntelligence([msg({handled:true,attention:'general_action',needsAction:true})]);
+test('reference emails are ranked only when professional relevance clears threshold', () => {
+  const snapshot=summarizeEmailIntelligence([
+    msg({id:'relevant',providerMessageId:'r1',subject:'Banco Central update on stablecoins and digital assets'}),
+    msg({id:'generic',providerMessageId:'r2',subject:'Weekly office update'}),
+    msg({id:'promo',providerMessageId:'r3',subject:'Promotion coupon',snippet:'unsubscribe'}),
+  ]);
+  assert.equal(snapshot.interestingReads,1);
+  assert.equal(snapshot.topReads[0].id,'relevant');
+  assert.ok(snapshot.topReads[0].score>=3);
+  assert.match(snapshot.topReads[0].reasons.join(' '),/digital assets|regulation/i);
+});
+
+test('interest scorer is deterministic and suppresses promotional signals', () => {
+  assert.ok(scoreEmailInterest({subject:'Open Finance regulation report',snippet:''}).score>=3);
+  assert.equal(scoreEmailInterest({subject:'Promotion',snippet:'unsubscribe now'}).score,0);
+});
+
+test('handled messages never surface as open actions or reads', () => {
+  const snapshot=summarizeEmailIntelligence([msg({handled:true,attention:'reference',subject:'Stablecoin report'})]);
   assert.equal(snapshot.unreadActionable,0);
   assert.equal(snapshot.topActions.length,0);
+  assert.equal(snapshot.topReads.length,0);
 });

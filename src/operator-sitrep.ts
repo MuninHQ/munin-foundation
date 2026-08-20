@@ -17,7 +17,7 @@ export type OperatorSitrep={
  controlRoom:{ready:boolean;missing:string[];currentStateBytes:number;backlogBytes:number;sessionLogBytes:number};
  engineering:{total:number;byStatus:Record<EngineeringJobStatus,number>;active:number;needsUser:number;failed:number};
  chiefDeveloper:{openBlockers:number;deviceBlockers:number;humanBlockers:number;recoverableBlockers:number;scorecard?:PersistedAgentScorecard;blockers:Array<Pick<BlockerRecord,'id'|'laneId'|'category'|'disposition'|'reason'|'createdAt'>>};
- email:{available:boolean;actionable:number;careerActionable:number;generalActionable:number;reviewRequired:number;lastSync?:string;topActions:EmailIntelligenceSnapshot['topActions']};
+ email:{available:boolean;actionable:number;careerActionable:number;generalActionable:number;reviewRequired:number;interestingReads:number;lastSync?:string;topActions:EmailIntelligenceSnapshot['topActions'];topReads:EmailIntelligenceSnapshot['topReads']};
  browser:{available:boolean;backend:string;readOnly:boolean;detail?:string};
  memory:{ledgerEntries:number};
  connectors:Array<{provider:OAuthProvider;connected:boolean;configured:boolean;readOnly:boolean;externalMutationAllowed:boolean;writeScopes:string[]}>;
@@ -64,6 +64,7 @@ export async function buildOperatorSitrep(root=process.cwd(),dependencies:Operat
  if(recoverableBlockers)attention.push(`${recoverableBlockers} Chief Developer blocker(s) should be rerouted or retried autonomously.`);
  if(scorecard&&scorecard.samples>=2&&scorecard.score<0.65)attention.push(`Chief Developer scorecard is degraded (${scorecard.score}); prefer evidence review before widening autonomy.`);
  if((email?.unreadActionable??0)>0)attention.push(`${email?.unreadActionable} actionable email(s): ${email?.careerActionable??0} career · ${email?.generalActionable??0} general · ${email?.reviewRequired??0} review.`);
+ if((email?.interestingReads??0)>0)attention.push(`${email?.interestingReads} non-actionable email(s) are ranked as worth reading.`);
  if(!browser.available)attention.push('Playwright browser verification backend is unavailable.');
  for(const connector of connectorRows){if(!connector.readOnly||connector.externalMutationAllowed||connector.writeScopes.length)attention.push(`${connector.provider} connector violates the read-only contract.`)}
  const severity:OperatorSeverity=!controlRoom.ready?'blocked':(humanBlockers>0?'blocked':(byStatus.needs_user>0||byStatus.failed>0||deviceBlockers>0||recoverableBlockers>0||(scorecard?.samples??0)>=2&&(scorecard?.score??1)<0.65||(email?.unreadActionable??0)>0||!browser.available||attention.length>0?'attention':'ok'));
@@ -72,7 +73,7 @@ export async function buildOperatorSitrep(root=process.cwd(),dependencies:Operat
   controlRoom,
   engineering:{total:jobs.length,byStatus,active:byStatus.queued+byStatus.running,needsUser:byStatus.needs_user,failed:byStatus.failed},
   chiefDeveloper:{openBlockers:blockers.length,deviceBlockers,humanBlockers,recoverableBlockers,scorecard,blockers:blockerRows},
-  email:{available:Boolean(email),actionable:email?.unreadActionable??0,careerActionable:email?.careerActionable??0,generalActionable:email?.generalActionable??0,reviewRequired:email?.reviewRequired??0,lastSync:email?.syncedAt,topActions:email?.topActions??[]},
+  email:{available:Boolean(email),actionable:email?.unreadActionable??0,careerActionable:email?.careerActionable??0,generalActionable:email?.generalActionable??0,reviewRequired:email?.reviewRequired??0,interestingReads:email?.interestingReads??0,lastSync:email?.syncedAt,topActions:email?.topActions??[],topReads:email?.topReads??[]},
   browser:{available:browser.available,backend:browser.backend,readOnly:browserOperatorPolicy().inspectMode==='read-only-navigation-and-snapshot',detail:browser.detail},
   memory:{ledgerEntries:ledgerCount},connectors:connectorRows,attention,
  };
