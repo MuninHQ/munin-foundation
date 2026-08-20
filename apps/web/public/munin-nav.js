@@ -11,6 +11,7 @@
     { label: 'LinkedIn', href: '/linkedin.html' },
   ];
   const tools = [
+    ['/email-intelligence.html', 'Email Intelligence'],
     ['/career-inbox.html', 'Career Inbox'],
     ['/linkedin-compose.html', 'Composer'],
     ['/linkedin-history.html', 'Editorial History'],
