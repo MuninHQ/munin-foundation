@@ -3,6 +3,9 @@ import { runWorkGraph, type WorkLane, type WorkLaneExecutor, type SchedulerResul
 import type { BlockerCategory, BlockerDisposition } from './blocker-ledger.js';
 import { JsonBlockerLedger } from './json-blocker-ledger.js';
 import { buildAgentScorecard, type AgentOutcomeSample, type AgentScorecard } from './agent-scorecards.js';
+import { JsonAgentScorecardStore } from './json-agent-scorecard-store.js';
+import { ChiefDeveloperDecisionPromoter, type ChiefDecisionPromotionResult } from './chief-developer-decision-promoter.js';
+import { ProjectMemoryStore } from './project-memory.js';
 import { runtimePath } from './config.js';
 
 export type ChiefDeveloperStatus = 'completed' | 'partial' | 'blocked' | 'failed' | 'needs_revision';
@@ -21,6 +24,7 @@ export interface ChiefDeveloperRunResult {
   committee: CommitteeDecision;
   scheduler?: SchedulerResult;
   scorecard?: AgentScorecard;
+  promotion?: ChiefDecisionPromotionResult;
   blockerIds: string[];
 }
 
@@ -38,6 +42,8 @@ export class ChiefDeveloperRuntime {
   constructor(
     private readonly executor: WorkLaneExecutor,
     private readonly blockers: JsonBlockerLedger = new JsonBlockerLedger(runtimePath('chief-developer-blockers.json')),
+    private readonly scorecards: JsonAgentScorecardStore = new JsonAgentScorecardStore(runtimePath('agent-scorecards.json')),
+    private readonly promoter: ChiefDeveloperDecisionPromoter = new ChiefDeveloperDecisionPromoter(new ProjectMemoryStore(runtimePath('project-memory.json'))),
   ) {}
 
   async run(input: ChiefDeveloperRunInput): Promise<ChiefDeveloperRunResult> {
@@ -72,8 +78,11 @@ export class ChiefDeveloperRuntime {
       ...scheduler.failed.map(result => ({ agentId: 'chief-developer', completed: false, evidenceCount: result.evidence?.length ?? 0, retries: 1, defectEscaped: false })),
     ];
     const scorecard = buildAgentScorecard('chief-developer', samples);
+    await this.scorecards.upsert(scorecard);
 
     const status: ChiefDeveloperStatus = scheduler.status === 'done' ? 'completed' : scheduler.status === 'partial' ? 'partial' : 'failed';
-    return { objective: input.objective, status, committee, scheduler, scorecard, blockerIds };
+    const evidence=scheduler.completed.flatMap(result=>result.evidence??[]).slice(0,50);
+    const promotion=await this.promoter.promote({objective:input.objective,status,committee,scorecard,evidence});
+    return { objective: input.objective, status, committee, scheduler, scorecard, promotion, blockerIds };
   }
 }
