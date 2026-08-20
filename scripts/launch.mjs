@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { platform } from 'node:os';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, unlinkSync } from 'node:fs';
 import { resolve } from 'node:path';
 import net from 'node:net';
 
@@ -27,9 +27,15 @@ const API_PORT = Number(process.env.MUNIN_API_PORT ?? 4310);
 const WEB_PORT = Number(process.env.MUNIN_WEB_PORT ?? 5173);
 const START_PAGE = process.env.MUNIN_START_PAGE ?? '';
 const BROWSER_MODE = process.env.MUNIN_BROWSER_MODE ?? 'browser';
+const SUPERVISED = process.env.MUNIN_SUPERVISED === '1';
+const SKIP_AUTO_OPEN = process.env.MUNIN_SKIP_AUTO_OPEN === '1';
+const DATA_DIR = resolve(process.env.MUNIN_DATA_DIR ?? 'data/runtime');
+const RESTART_REQUEST = resolve(DATA_DIR, 'workspace-restart-request.json');
+const SUPERVISOR_RESTART_EXIT = 75;
 
 const children = [];
 let shuttingDown = false;
+let restartWatcher;
 
 function run(command, args, label) {
   const child = spawn(command, args, { stdio: 'inherit', shell: platform() === 'win32', env: process.env });
@@ -68,7 +74,7 @@ async function apiHealthy() {
 
 async function waitFor(check, timeoutMs = 20000) {
   const started = Date.now();
-  while (Date.now() - started < timeoutMs) { if (await check()) return true; await new Promise(resolve => setTimeout(resolve, 250)); }
+  while (Date.now() - started < timeoutMs) { if (await check()) return true; await new Promise(resolveDelay => setTimeout(resolveDelay, 250)); }
   return false;
 }
 
@@ -80,14 +86,13 @@ function openDefaultBrowser(url) {
 }
 
 function openUi(url) {
+  if (SKIP_AUTO_OPEN) return;
   if (platform() !== 'win32' || (BROWSER_MODE !== 'app' && BROWSER_MODE !== 'kiosk')) {
     openDefaultBrowser(url);
     return;
   }
 
-  const args = BROWSER_MODE === 'kiosk'
-    ? [`--kiosk`, url, '--edge-kiosk-type=fullscreen']
-    : [`--app=${url}`];
+  const args = BROWSER_MODE === 'kiosk' ? ['--kiosk', url, '--edge-kiosk-type=fullscreen'] : [`--app=${url}`];
   const escapedArgs = args.map(arg => `'${arg.replace(/'/g, "''")}'`).join(',');
   const escapedUrl = url.replace(/'/g, "''");
   const script = [
@@ -108,8 +113,28 @@ function openUi(url) {
   child.unref();
 }
 
-function shutdown(code = 0) { shuttingDown = true; for (const child of children) if (!child.killed) child.kill('SIGTERM'); process.exit(code); }
+function shutdown(code = 0) {
+  shuttingDown = true;
+  clearInterval(restartWatcher);
+  for (const child of children) if (!child.killed) child.kill('SIGTERM');
+  process.exit(code);
+}
 process.on('SIGINT', () => shutdown(0)); process.on('SIGTERM', () => shutdown(0));
+
+if (SUPERVISED) {
+  restartWatcher = setInterval(() => {
+    if (!existsSync(RESTART_REQUEST) || shuttingDown) return;
+    try {
+      const request = JSON.parse(readFileSync(RESTART_REQUEST, 'utf8'));
+      if (request?.kind !== 'restart-munin' || typeof request?.id !== 'string') return;
+      unlinkSync(RESTART_REQUEST);
+      console.log(`[Munin] Controlled restart requested (${request.id}).`);
+      shutdown(SUPERVISOR_RESTART_EXIT);
+    } catch (error) {
+      console.error(`[Munin] Ignoring invalid restart request: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, 500);
+}
 
 console.log('Starting Munin Workspace...');
 if (await apiHealthy()) {
