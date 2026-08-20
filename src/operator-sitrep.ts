@@ -8,6 +8,7 @@ import type { EngineeringJob, EngineeringJobStatus } from './engineering-jobs.js
 import { JsonBlockerLedger } from './json-blocker-ledger.js';
 import type { BlockerRecord } from './blocker-ledger.js';
 import { JsonAgentScorecardStore, type PersistedAgentScorecard } from './json-agent-scorecard-store.js';
+import { EmailIntelligenceStore, type EmailIntelligenceSnapshot } from './email-intelligence.js';
 
 export type OperatorSeverity='ok'|'attention'|'blocked';
 export type OperatorSitrep={
@@ -16,6 +17,7 @@ export type OperatorSitrep={
  controlRoom:{ready:boolean;missing:string[];currentStateBytes:number;backlogBytes:number;sessionLogBytes:number};
  engineering:{total:number;byStatus:Record<EngineeringJobStatus,number>;active:number;needsUser:number;failed:number};
  chiefDeveloper:{openBlockers:number;deviceBlockers:number;humanBlockers:number;recoverableBlockers:number;scorecard?:PersistedAgentScorecard;blockers:Array<Pick<BlockerRecord,'id'|'laneId'|'category'|'disposition'|'reason'|'createdAt'>>};
+ email:{available:boolean;actionable:number;careerActionable:number;generalActionable:number;reviewRequired:number;lastSync?:string;topActions:EmailIntelligenceSnapshot['topActions']};
  browser:{available:boolean;backend:string;readOnly:boolean;detail?:string};
  memory:{ledgerEntries:number};
  connectors:Array<{provider:OAuthProvider;connected:boolean;configured:boolean;readOnly:boolean;externalMutationAllowed:boolean;writeScopes:string[]}>;
@@ -29,13 +31,14 @@ export interface OperatorSitrepDependencies{
  connectors?:()=>Promise<Awaited<ReturnType<typeof connectionStatus>>>;
  blockers?:()=>Promise<BlockerRecord[]>;
  scorecard?:()=>Promise<PersistedAgentScorecard|undefined>;
+ email?:()=>Promise<EmailIntelligenceSnapshot|undefined>;
 }
 
 async function loadJobs():Promise<EngineeringJob[]>{try{return JSON.parse(await readFile(runtimePath('engineering-jobs.json'),'utf8')) as EngineeringJob[]}catch{return []}}
 function emptyJobCounts():Record<EngineeringJobStatus,number>{return{queued:0,running:0,completed:0,needs_user:0,failed:0}}
 
 export async function buildOperatorSitrep(root=process.cwd(),dependencies:OperatorSitrepDependencies={}):Promise<OperatorSitrep>{
- const [state,jobs,browser,ledgerCount,connectors,blockers,scorecard]=await Promise.all([
+ const [state,jobs,browser,ledgerCount,connectors,blockers,scorecard,email]=await Promise.all([
   hydrateControlRoomState(root),
   dependencies.jobs?.()??loadJobs(),
   dependencies.browser?.()??browserHealth('playwright-cli'),
@@ -43,6 +46,7 @@ export async function buildOperatorSitrep(root=process.cwd(),dependencies:Operat
   dependencies.connectors?.()??connectionStatus(),
   dependencies.blockers?.()??new JsonBlockerLedger(runtimePath('chief-developer-blockers.json')).listOpen(),
   dependencies.scorecard?.()??new JsonAgentScorecardStore(runtimePath('agent-scorecards.json')).get('chief-developer'),
+  dependencies.email?.()??new EmailIntelligenceStore().read(),
  ]);
  const controlRoom=summarizeHydratedState(state);
  const byStatus=emptyJobCounts();for(const job of jobs)byStatus[job.status]=(byStatus[job.status]??0)+1;
@@ -59,14 +63,16 @@ export async function buildOperatorSitrep(root=process.cwd(),dependencies:Operat
  if(humanBlockers)attention.push(`${humanBlockers} Chief Developer blocker(s) require genuine human action.`);
  if(recoverableBlockers)attention.push(`${recoverableBlockers} Chief Developer blocker(s) should be rerouted or retried autonomously.`);
  if(scorecard&&scorecard.samples>=2&&scorecard.score<0.65)attention.push(`Chief Developer scorecard is degraded (${scorecard.score}); prefer evidence review before widening autonomy.`);
+ if((email?.unreadActionable??0)>0)attention.push(`${email?.unreadActionable} actionable email(s): ${email?.careerActionable??0} career · ${email?.generalActionable??0} general · ${email?.reviewRequired??0} review.`);
  if(!browser.available)attention.push('Playwright browser verification backend is unavailable.');
  for(const connector of connectorRows){if(!connector.readOnly||connector.externalMutationAllowed||connector.writeScopes.length)attention.push(`${connector.provider} connector violates the read-only contract.`)}
- const severity:OperatorSeverity=!controlRoom.ready?'blocked':(humanBlockers>0?'blocked':(byStatus.needs_user>0||byStatus.failed>0||deviceBlockers>0||recoverableBlockers>0||(scorecard?.samples??0)>=2&&(scorecard?.score??1)<0.65||!browser.available||attention.length>0?'attention':'ok'));
+ const severity:OperatorSeverity=!controlRoom.ready?'blocked':(humanBlockers>0?'blocked':(byStatus.needs_user>0||byStatus.failed>0||deviceBlockers>0||recoverableBlockers>0||(scorecard?.samples??0)>=2&&(scorecard?.score??1)<0.65||(email?.unreadActionable??0)>0||!browser.available||attention.length>0?'attention':'ok'));
  return{
   generatedAt:new Date().toISOString(),severity,
   controlRoom,
   engineering:{total:jobs.length,byStatus,active:byStatus.queued+byStatus.running,needsUser:byStatus.needs_user,failed:byStatus.failed},
   chiefDeveloper:{openBlockers:blockers.length,deviceBlockers,humanBlockers,recoverableBlockers,scorecard,blockers:blockerRows},
+  email:{available:Boolean(email),actionable:email?.unreadActionable??0,careerActionable:email?.careerActionable??0,generalActionable:email?.generalActionable??0,reviewRequired:email?.reviewRequired??0,lastSync:email?.syncedAt,topActions:email?.topActions??[]},
   browser:{available:browser.available,backend:browser.backend,readOnly:browserOperatorPolicy().inspectMode==='read-only-navigation-and-snapshot',detail:browser.detail},
   memory:{ledgerEntries:ledgerCount},connectors:connectorRows,attention,
  };
