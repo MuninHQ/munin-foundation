@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const scriptUrl = new URL('../scripts/bootstrap-chatgpt-first-host.ps1', import.meta.url);
+const scriptUrl = new URL('../../scripts/bootstrap-chatgpt-first-host.ps1', import.meta.url);
 
 test('host bootstrap stays fail-closed and fast-forward only', async () => {
   const source = await readFile(scriptUrl, 'utf8');
