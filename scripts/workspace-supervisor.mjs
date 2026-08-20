@@ -10,33 +10,47 @@ const launcher = resolve(root, 'scripts', 'launch.mjs');
 const restartExitCode = 75;
 
 await mkdir(dataDir, { recursive: true });
-let lock;
-try {
-  lock = await open(lockPath, 'wx');
-} catch (error) {
-  if (error?.code === 'EEXIST') {
-    console.error('[Munin] Workspace supervisor already appears to be running.');
-    process.exit(2);
-  }
-  throw error;
+
+async function stateIsFresh() {
+  try {
+    const state = JSON.parse(await readFile(statePath, 'utf8'));
+    const heartbeat = Date.parse(state?.heartbeatAt ?? '');
+    return state?.status === 'running' && Number.isFinite(heartbeat) && Date.now() - heartbeat <= 15000;
+  } catch { return false; }
 }
 
+async function acquireLock() {
+  try { return await open(lockPath, 'wx'); }
+  catch (error) {
+    if (error?.code !== 'EEXIST') throw error;
+    if (await stateIsFresh()) {
+      console.error('[Munin] Workspace supervisor is already healthy; refusing duplicate owner.');
+      process.exit(2);
+    }
+    console.log('[Munin] Removing stale workspace supervisor lock.');
+    await rm(lockPath, { force: true });
+    return open(lockPath, 'wx');
+  }
+}
+
+const lock = await acquireLock();
 let child;
 let stopping = false;
 let heartbeat;
-
-async function persistState(extra = {}) {
-  await writeFile(statePath, JSON.stringify({ pid: process.pid, childPid: child?.pid, startedAt, heartbeatAt: new Date().toISOString(), ...extra }, null, 2) + '\n', 'utf8');
-}
-
+let generation = 0;
 const startedAt = new Date().toISOString();
 
+async function persistState(extra = {}) {
+  await writeFile(statePath, JSON.stringify({ pid: process.pid, childPid: child?.pid, startedAt, heartbeatAt: new Date().toISOString(), generation, ...extra }, null, 2) + '\n', 'utf8');
+}
+
 function startWorkspace() {
+  const currentGeneration = generation++;
   child = spawn(process.execPath, [launcher], {
     cwd: root,
     stdio: 'inherit',
     shell: false,
-    env: { ...process.env, MUNIN_SUPERVISED: '1' },
+    env: { ...process.env, MUNIN_SUPERVISED: '1', ...(currentGeneration > 0 ? { MUNIN_SKIP_AUTO_OPEN: '1' } : {}) },
   });
   void persistState({ status: 'running' });
   child.once('exit', async code => {
@@ -57,7 +71,7 @@ function startWorkspace() {
 
 async function cleanup() {
   clearInterval(heartbeat);
-  try { await lock?.close(); } catch {}
+  try { await lock.close(); } catch {}
   try { await rm(lockPath, { force: true }); } catch {}
 }
 
@@ -72,11 +86,6 @@ async function shutdown() {
 
 process.once('SIGINT', () => void shutdown().finally(() => process.exit(0)));
 process.once('SIGTERM', () => void shutdown().finally(() => process.exit(0)));
-
-try {
-  const stale = JSON.parse(await readFile(statePath, 'utf8'));
-  if (stale?.pid && stale.pid !== process.pid) console.log(`[Munin] Replacing stale supervisor state from PID ${stale.pid}.`);
-} catch {}
 
 startWorkspace();
 heartbeat = setInterval(() => { void persistState({ status: 'running' }); }, 5000);
