@@ -57,7 +57,7 @@ export async function buildOperatorSitrep(root=process.cwd(),dependencies:Operat
  if(recoverableBlockers)attention.push(`${recoverableBlockers} Chief Developer blocker(s) should be rerouted or retried autonomously.`);
  if(!browser.available)attention.push('Playwright browser verification backend is unavailable.');
  for(const connector of connectorRows){if(!connector.readOnly||connector.externalMutationAllowed||connector.writeScopes.length)attention.push(`${connector.provider} connector violates the read-only contract.`)}
- const severity:OperatorSeverity=!controlRoom.ready?'blocked':(byStatus.needs_user>0||byStatus.failed>0||humanBlockers>0?'blocked':(deviceBlockers>0||recoverableBlockers>0||!browser.available||attention.length>0?'attention':'ok'));
+ const severity:OperatorSeverity=!controlRoom.ready?'blocked':(humanBlockers>0?'blocked':(byStatus.needs_user>0||byStatus.failed>0||deviceBlockers>0||recoverableBlockers>0||!browser.available||attention.length>0?'attention':'ok'));
  return{
   generatedAt:new Date().toISOString(),severity,
   controlRoom,
