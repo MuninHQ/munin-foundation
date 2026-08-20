@@ -2,6 +2,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { runtimePath } from './config.js';
 import { CareerInboxStore, type CareerEmail } from './career-inbox.js';
+import { scoreEmailInterest } from './email-interest.js';
 
 export interface EmailIntelligenceSnapshot {
   generatedAt: string;
@@ -11,9 +12,11 @@ export interface EmailIntelligenceSnapshot {
   careerActionable: number;
   generalActionable: number;
   reviewRequired: number;
+  interestingReads: number;
   reference: number;
   noise: number;
   topActions: Array<{ id:string; subject:string; from?:string; receivedAt:string; attention:string; reason?:string; linkedJobId?:string; linkedActionId?:string }>;
+  topReads: Array<{ id:string; subject:string; from?:string; receivedAt:string; score:number; reasons:string[] }>;
 }
 
 function actionable(message: CareerEmail): boolean {
@@ -36,15 +39,24 @@ export function summarizeEmailIntelligence(messages: CareerEmail[], syncedAt?: s
       linkedJobId: message.linkedJobId,
       linkedActionId: message.linkedActionId,
     }));
+  const topReads=open
+    .filter(message=>message.attention==='reference'&&!message.needsAction)
+    .map(message=>({message,interest:scoreEmailInterest(message)}))
+    .filter(item=>item.interest.score>=3)
+    .sort((a,b)=>b.interest.score-a.interest.score||Date.parse(b.message.receivedAt)-Date.parse(a.message.receivedAt))
+    .slice(0,12)
+    .map(({message,interest})=>({id:message.id,subject:message.subject,from:message.fromName||message.fromEmail,receivedAt:message.receivedAt,score:interest.score,reasons:interest.reasons}));
   return {
     generatedAt: now.toISOString(), syncedAt, total: messages.length,
     unreadActionable: open.filter(actionable).length,
     careerActionable: open.filter(m => m.attention === 'career' && m.needsAction).length,
     generalActionable: open.filter(m => m.attention === 'general_action' && m.needsAction).length,
     reviewRequired: open.filter(m => m.needsAction && !m.linkedActionId && m.attention === 'general_action').length,
+    interestingReads: topReads.length,
     reference: open.filter(m => m.attention === 'reference').length,
     noise: messages.filter(m => m.attention === 'noise').length,
     topActions,
+    topReads,
   };
 }
 
