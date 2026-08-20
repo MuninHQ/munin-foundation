@@ -59,30 +59,27 @@ export async function discoverGitHubCapabilities(options: GitHubDiscoveryOptions
     const maintenance = maintenanceScore(repository);
     const security = securityScore(repository);
     const license = repository.license?.spdx_id?.trim();
+    const evidence = [
+      `GitHub repository: ${repository.full_name}`,
+      `License: ${license || 'unknown'}`,
+      `Archived: ${repository.archived}`,
+      `Stars: ${repository.stargazers_count}`,
+      `Open issues: ${repository.open_issues_count}`,
+      `Updated: ${repository.updated_at}`,
+    ];
     const candidate: CapabilityCandidate = {
       id: `github:${repository.full_name.toLowerCase()}`,
       name: repository.full_name,
       source: repository.html_url,
+      license: license && license !== 'NOASSERTION' ? license : undefined,
       recurringCost: 0,
-      meteredService: false,
+      metered: false,
       paidApiRequired: false,
-      licenseEvidence: Boolean(license && license !== 'NOASSERTION'),
       maintenanceScore: maintenance,
       securityScore: security,
       duplicationScore: 0,
-      rollbackAvailable: true,
+      evidence,
     };
-    return {
-      candidate,
-      repository,
-      evidence: [
-        `GitHub repository: ${repository.full_name}`,
-        `License: ${license || 'unknown'}`,
-        `Archived: ${repository.archived}`,
-        `Stars: ${repository.stargazers_count}`,
-        `Open issues: ${repository.open_issues_count}`,
-        `Updated: ${repository.updated_at}`,
-      ],
-    };
+    return { candidate, repository, evidence };
   });
 }
