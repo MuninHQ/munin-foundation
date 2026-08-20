@@ -6,12 +6,14 @@ import type { JobOpportunity, JobStatus } from './types.js';
 
 export type EmailProvider = 'gmail' | 'outlook' | 'capture';
 export type CareerEmailCategory = 'application_confirmation' | 'interview_invite' | 'recruiter_reply' | 'information_request' | 'rejection' | 'offer' | 'assessment' | 'job_alert' | 'other';
+export type EmailAttention = 'career' | 'general_action' | 'reference' | 'noise';
 
 export interface CareerEmail {
   id: string; provider: EmailProvider; providerMessageId: string; threadId?: string;
   fromName?: string; fromEmail?: string; subject: string; snippet: string; receivedAt: string;
   category: CareerEmailCategory; confidence: number; detectedCompany?: string; detectedRole?: string;
   suggestedStatus?: JobStatus; suggestedAction?: string; linkedJobId?: string; handled: boolean;
+  attention?: EmailAttention; needsAction?: boolean; actionReason?: string;
 }
 export interface InboxState { messages: CareerEmail[]; syncedAt?: string; }
 
@@ -26,8 +28,23 @@ const patterns: Array<[CareerEmailCategory, RegExp, JobStatus | undefined, strin
   ['job_alert', /\b(job alert|vagas para você|new jobs|oportunidades recomendadas|jobs you may be interested in)\b/i, undefined, 'Review job alert'],
 ];
 const noise = /github|workflow|pull request|verification code|security alert|identity check|wemade|night crows|password|sign[- ]?in|newsletter|promotion/i;
+const generalActionPatterns: Array<[RegExp,string]> = [
+  [/\b(action required|action needed|requires? your action|please respond|please reply|response required|reply requested)\b/i,'Explicit response requested'],
+  [/\b(approval required|please approve|approve by|signature required|please sign|sign by)\b/i,'Approval or signature requested'],
+  [/\b(payment due|invoice due|overdue|vencimento|vencido|pagamento pendente|fatura em aberto)\b/i,'Payment or billing action may be due'],
+  [/\b(deadline|due date|by end of day|by eod|até hoje|prazo|data limite)\b/i,'Deadline detected'],
+  [/\b(confirm(?:ation)? required|please confirm|confirme|confirmação necessária|rsvp)\b/i,'Confirmation requested'],
+  [/\b(send us|send me|envie|encaminhe|provide the|forneça|precisamos de você|necessário enviar)\b/i,'Information or document requested'],
+];
 function normalize(value:string):string{return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function tokens(value:string):string[]{return normalize(value).split(/[^a-z0-9]+/).filter(t=>t.length>3&&!['para','with','from','your','vaga','position','application','entrevista','interview','analista','senior'].includes(t));}
+function generalAction(text:string,category:CareerEmailCategory):{needsAction:boolean;actionReason?:string;attention:EmailAttention}{
+  if(category!=='other')return{needsAction:!['rejection','application_confirmation','job_alert'].includes(category),attention:category==='job_alert'?'noise':'career'};
+  if(noise.test(text))return{needsAction:false,attention:'noise'};
+  const match=generalActionPatterns.find(([pattern])=>pattern.test(text));
+  if(match)return{needsAction:true,actionReason:match[1],attention:'general_action'};
+  return{needsAction:false,attention:'reference'};
+}
 
 export function classifyCareerEmail(input: Pick<CareerEmail,'subject'|'snippet'|'fromEmail'>, jobs:JobOpportunity[]): Omit<CareerEmail,'id'|'provider'|'providerMessageId'|'threadId'|'fromName'|'receivedAt'|'handled'> {
   const text=`${input.subject}\n${input.snippet}\n${input.fromEmail??''}`;
@@ -38,7 +55,8 @@ export function classifyCareerEmail(input: Pick<CareerEmail,'subject'|'snippet'|
   const ranked=jobs.map(job=>{const company=normalize(job.company);const roleTokens=tokens(job.role);let score=0;if(company&&normalized.includes(company))score+=6;const hits=roleTokens.filter(t=>subjectTokens.includes(t)||normalized.includes(t)).length;score+=hits*1.5;if(roleTokens.length>=2&&hits>=Math.min(2,roleTokens.length))score+=2;return{job,score,hits};}).sort((a,b)=>b.score-a.score);
   const best=ranked[0]; const linked=best&&(best.score>=5||(best.hits>=2&&best.score>=4))?best.job:undefined;
   const confidence=match?0.86:0.20;
-  return {subject:input.subject,snippet:input.snippet,fromEmail:input.fromEmail,category,confidence:linked?Math.min(.99,confidence+.08):confidence,detectedCompany:linked?.company,detectedRole:linked?.role,suggestedStatus:match?.[2],suggestedAction:match?.[3],linkedJobId:linked?.id};
+  const attention=generalAction(text,category);
+  return {subject:input.subject,snippet:input.snippet,fromEmail:input.fromEmail,category,confidence:linked?Math.min(.99,confidence+.08):confidence,detectedCompany:linked?.company,detectedRole:linked?.role,suggestedStatus:match?.[2],suggestedAction:match?.[3],linkedJobId:linked?.id,...attention};
 }
 
 export class CareerInboxStore {
@@ -48,10 +66,10 @@ export class CareerInboxStore {
   async save(state:InboxState):Promise<void>{await writeJsonAtomic(this.file(),state);}
   async upsert(messages:CareerEmail[]):Promise<{added:number;duplicates:number}>{
     const state=await this.load(); const byKey=new Map(state.messages.map((m,i)=>[`${m.provider}:${m.providerMessageId}`,i])); let added=0,duplicates=0;
-    for(const message of messages){const key=`${message.provider}:${message.providerMessageId}`;const idx=byKey.get(key);const isNoise=message.category==='other'||message.category==='job_alert';if(idx!==undefined){const existing=state.messages[idx];state.messages[idx]={...message,id:existing.id,handled:existing.handled||isNoise};duplicates++;continue;}state.messages.push({...message,handled:message.handled||isNoise});byKey.set(key,state.messages.length-1);added++;}
+    for(const message of messages){const key=`${message.provider}:${message.providerMessageId}`;const isNoise=(message.category==='other'||message.category==='job_alert')&&!message.needsAction;if(idx!==undefined){const existing=state.messages[idx];state.messages[idx]={...message,id:existing.id,handled:existing.handled||isNoise};duplicates++;continue;}state.messages.push({...message,handled:message.handled||isNoise});byKey.set(key,state.messages.length-1);added++;}
     // Collapse repeated actionable messages from the same thread/process: newest remains actionable.
     const seen=new Set<string>();
-    for(const m of [...state.messages].sort((a,b)=>new Date(b.receivedAt).getTime()-new Date(a.receivedAt).getTime())){if(m.handled)continue;const process=m.linkedJobId||m.threadId; if(!process)continue;const key=`${process}:${m.category}`;if(seen.has(key))m.handled=true;else seen.add(key);}
+    for(const m of [...state.messages].sort((a,b)=>new Date(b.receivedAt).getTime()-new Date(a.receivedAt).getTime())){if(m.handled)continue;const process=m.linkedJobId||m.threadId; if(!process)continue;const key=`${process}:${m.category}:${m.attention??''}`;if(seen.has(key))m.handled=true;else seen.add(key);}
     state.messages.sort((a,b)=>new Date(b.receivedAt).getTime()-new Date(a.receivedAt).getTime());state.syncedAt=new Date().toISOString();await this.save(state);return{added,duplicates};
   }
 }
