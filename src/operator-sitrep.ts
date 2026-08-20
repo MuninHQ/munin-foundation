@@ -9,6 +9,7 @@ import { JsonBlockerLedger } from './json-blocker-ledger.js';
 import type { BlockerRecord } from './blocker-ledger.js';
 import { JsonAgentScorecardStore, type PersistedAgentScorecard } from './json-agent-scorecard-store.js';
 import { EmailIntelligenceStore, type EmailIntelligenceSnapshot } from './email-intelligence.js';
+import { EmailWorkerHealthStore, emailWorkerHealthStatus, type EmailWorkerHealth } from './email-worker-health.js';
 
 export type OperatorSeverity='ok'|'attention'|'blocked';
 export type OperatorSitrep={
@@ -17,7 +18,7 @@ export type OperatorSitrep={
  controlRoom:{ready:boolean;missing:string[];currentStateBytes:number;backlogBytes:number;sessionLogBytes:number};
  engineering:{total:number;byStatus:Record<EngineeringJobStatus,number>;active:number;needsUser:number;failed:number};
  chiefDeveloper:{openBlockers:number;deviceBlockers:number;humanBlockers:number;recoverableBlockers:number;scorecard?:PersistedAgentScorecard;blockers:Array<Pick<BlockerRecord,'id'|'laneId'|'category'|'disposition'|'reason'|'createdAt'>>};
- email:{available:boolean;actionable:number;careerActionable:number;generalActionable:number;reviewRequired:number;interestingReads:number;lastSync?:string;topActions:EmailIntelligenceSnapshot['topActions'];topReads:EmailIntelligenceSnapshot['topReads']};
+ email:{available:boolean;actionable:number;careerActionable:number;generalActionable:number;reviewRequired:number;interestingReads:number;lastSync?:string;workerStatus:'unknown'|'healthy'|'stale'|'degraded'|'needs_connection';consecutiveFailures:number;topActions:EmailIntelligenceSnapshot['topActions'];topReads:EmailIntelligenceSnapshot['topReads']};
  browser:{available:boolean;backend:string;readOnly:boolean;detail?:string};
  memory:{ledgerEntries:number};
  connectors:Array<{provider:OAuthProvider;connected:boolean;configured:boolean;readOnly:boolean;externalMutationAllowed:boolean;writeScopes:string[]}>;
@@ -32,13 +33,14 @@ export interface OperatorSitrepDependencies{
  blockers?:()=>Promise<BlockerRecord[]>;
  scorecard?:()=>Promise<PersistedAgentScorecard|undefined>;
  email?:()=>Promise<EmailIntelligenceSnapshot|undefined>;
+ emailHealth?:()=>Promise<EmailWorkerHealth|undefined>;
 }
 
 async function loadJobs():Promise<EngineeringJob[]>{try{return JSON.parse(await readFile(runtimePath('engineering-jobs.json'),'utf8')) as EngineeringJob[]}catch{return []}}
 function emptyJobCounts():Record<EngineeringJobStatus,number>{return{queued:0,running:0,completed:0,needs_user:0,failed:0}}
 
 export async function buildOperatorSitrep(root=process.cwd(),dependencies:OperatorSitrepDependencies={}):Promise<OperatorSitrep>{
- const [state,jobs,browser,ledgerCount,connectors,blockers,scorecard,email]=await Promise.all([
+ const [state,jobs,browser,ledgerCount,connectors,blockers,scorecard,email,emailHealth]=await Promise.all([
   hydrateControlRoomState(root),
   dependencies.jobs?.()??loadJobs(),
   dependencies.browser?.()??browserHealth('playwright-cli'),
@@ -47,6 +49,7 @@ export async function buildOperatorSitrep(root=process.cwd(),dependencies:Operat
   dependencies.blockers?.()??new JsonBlockerLedger(runtimePath('chief-developer-blockers.json')).listOpen(),
   dependencies.scorecard?.()??new JsonAgentScorecardStore(runtimePath('agent-scorecards.json')).get('chief-developer'),
   dependencies.email?.()??new EmailIntelligenceStore().read(),
+  dependencies.emailHealth?.()??new EmailWorkerHealthStore().read(),
  ]);
  const controlRoom=summarizeHydratedState(state);
  const byStatus=emptyJobCounts();for(const job of jobs)byStatus[job.status]=(byStatus[job.status]??0)+1;
@@ -55,6 +58,7 @@ export async function buildOperatorSitrep(root=process.cwd(),dependencies:Operat
  const deviceBlockers=blockers.filter(item=>item.category==='device').length;
  const humanBlockers=blockers.filter(item=>item.disposition==='human'||['credential','2fa','financial','irreversible','permission'].includes(item.category)).length;
  const recoverableBlockers=blockers.length-humanBlockers-deviceBlockers;
+ const workerStatus=emailWorkerHealthStatus(emailHealth);
  const attention:string[]=[];
  if(!controlRoom.ready)attention.push(`Control Room state missing: ${controlRoom.missing.join(', ')}`);
  if(byStatus.needs_user)attention.push(`${byStatus.needs_user} engineering job(s) require user action.`);
@@ -65,15 +69,18 @@ export async function buildOperatorSitrep(root=process.cwd(),dependencies:Operat
  if(scorecard&&scorecard.samples>=2&&scorecard.score<0.65)attention.push(`Chief Developer scorecard is degraded (${scorecard.score}); prefer evidence review before widening autonomy.`);
  if((email?.unreadActionable??0)>0)attention.push(`${email?.unreadActionable} actionable email(s): ${email?.careerActionable??0} career · ${email?.generalActionable??0} general · ${email?.reviewRequired??0} review.`);
  if((email?.interestingReads??0)>0)attention.push(`${email?.interestingReads} non-actionable email(s) are ranked as worth reading.`);
+ if(workerStatus==='needs_connection')attention.push('Email Intelligence needs a mailbox connection before automatic sync can run.');
+ if(workerStatus==='stale')attention.push('Email Intelligence sync is stale (>60 minutes since last success).');
+ if(workerStatus==='degraded')attention.push(`Email Intelligence worker is degraded (${emailHealth?.consecutiveFailures??0} consecutive failures).`);
  if(!browser.available)attention.push('Playwright browser verification backend is unavailable.');
  for(const connector of connectorRows){if(!connector.readOnly||connector.externalMutationAllowed||connector.writeScopes.length)attention.push(`${connector.provider} connector violates the read-only contract.`)}
- const severity:OperatorSeverity=!controlRoom.ready?'blocked':(humanBlockers>0?'blocked':(byStatus.needs_user>0||byStatus.failed>0||deviceBlockers>0||recoverableBlockers>0||(scorecard?.samples??0)>=2&&(scorecard?.score??1)<0.65||(email?.unreadActionable??0)>0||!browser.available||attention.length>0?'attention':'ok'));
+ const severity:OperatorSeverity=!controlRoom.ready?'blocked':(humanBlockers>0?'blocked':(byStatus.needs_user>0||byStatus.failed>0||deviceBlockers>0||recoverableBlockers>0||(scorecard?.samples??0)>=2&&(scorecard?.score??1)<0.65||(email?.unreadActionable??0)>0||['stale','degraded','needs_connection'].includes(workerStatus)||!browser.available||attention.length>0?'attention':'ok'));
  return{
   generatedAt:new Date().toISOString(),severity,
   controlRoom,
   engineering:{total:jobs.length,byStatus,active:byStatus.queued+byStatus.running,needsUser:byStatus.needs_user,failed:byStatus.failed},
   chiefDeveloper:{openBlockers:blockers.length,deviceBlockers,humanBlockers,recoverableBlockers,scorecard,blockers:blockerRows},
-  email:{available:Boolean(email),actionable:email?.unreadActionable??0,careerActionable:email?.careerActionable??0,generalActionable:email?.generalActionable??0,reviewRequired:email?.reviewRequired??0,interestingReads:email?.interestingReads??0,lastSync:email?.syncedAt,topActions:email?.topActions??[],topReads:email?.topReads??[]},
+  email:{available:Boolean(email),actionable:email?.unreadActionable??0,careerActionable:email?.careerActionable??0,generalActionable:email?.generalActionable??0,reviewRequired:email?.reviewRequired??0,interestingReads:email?.interestingReads??0,lastSync:email?.syncedAt,workerStatus,consecutiveFailures:emailHealth?.consecutiveFailures??0,topActions:email?.topActions??[],topReads:email?.topReads??[]},
   browser:{available:browser.available,backend:browser.backend,readOnly:browserOperatorPolicy().inspectMode==='read-only-navigation-and-snapshot',detail:browser.detail},
   memory:{ledgerEntries:ledgerCount},connectors:connectorRows,attention,
  };
