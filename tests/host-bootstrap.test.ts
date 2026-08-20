@@ -10,9 +10,13 @@ test('host bootstrap stays fail-closed and fast-forward only', async () => {
   assert.match(source, /status','--porcelain/);
   assert.match(source, /merge','--ff-only','origin\/main/);
   assert.match(source, /install-host-worker-startup\.ps1/);
+  assert.match(source, /install-workspace-supervisor-startup\.ps1/);
+  assert.match(source, /npm run workspace:supervisor/);
+  assert.match(source, /no unsafe process takeover attempted/i);
   assert.match(source, /127\.0\.0\.1:4310\/api\/health/);
   assert.match(source, /acceptance-chatgpt-first\.ps1/);
   assert.doesNotMatch(source, /reset\s+--hard/i);
   assert.doesNotMatch(source, /clean\s+-fd/i);
+  assert.doesNotMatch(source, /taskkill|Stop-Process/i);
   assert.doesNotMatch(source, /ExecutionPolicy\s+Unrestricted/i);
 });
