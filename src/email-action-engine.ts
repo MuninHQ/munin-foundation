@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { CareerInboxStore, type CareerEmail } from './career-inbox.js';
 import { ContextStore } from './store.js';
 import type { Action } from './types.js';
+import { classifyEmailUrgency } from './email-urgency.js';
 
 const autoReasons = new Set([
   'Explicit response requested',
@@ -12,6 +13,7 @@ const autoReasons = new Set([
 
 export interface EmailActionPromotionResult {
   created: number;
+  urgent: number;
   review: number;
   actionIds: string[];
   reviewMessageIds: string[];
@@ -27,6 +29,7 @@ export async function promoteEmailActions(root?: string): Promise<EmailActionPro
   const [state, inbox] = await Promise.all([context.load(), inboxStore.load()]);
   const actionIds: string[] = [];
   const reviewMessageIds: string[] = [];
+  let urgent = 0;
 
   for (const message of inbox.messages) {
     if (message.handled || message.linkedActionId || message.attention !== 'general_action' || !message.needsAction) continue;
@@ -35,15 +38,17 @@ export async function promoteEmailActions(root?: string): Promise<EmailActionPro
       continue;
     }
 
+    const urgency = classifyEmailUrgency(message);
     const now = new Date().toISOString();
     const action: Action = {
       id: `act-${randomUUID().slice(0, 8)}`,
       title: actionTitle(message),
-      priority: 'P1',
+      priority: urgency === 'urgent' ? 'P0' : 'P1',
       status: 'planned',
       createdAt: now,
       updatedAt: now,
     };
+    if (urgency === 'urgent') urgent += 1;
     state.actions.push(action);
     message.linkedActionId = action.id;
     message.handled = true;
@@ -56,6 +61,7 @@ export async function promoteEmailActions(root?: string): Promise<EmailActionPro
       providerMessageId: message.providerMessageId,
       emailId: message.id,
       actionReason: message.actionReason,
+      urgency,
     });
   }
 
@@ -64,5 +70,5 @@ export async function promoteEmailActions(root?: string): Promise<EmailActionPro
     await inboxStore.save(inbox);
   }
 
-  return { created: actionIds.length, review: reviewMessageIds.length, actionIds, reviewMessageIds };
+  return { created: actionIds.length, urgent, review: reviewMessageIds.length, actionIds, reviewMessageIds };
 }
