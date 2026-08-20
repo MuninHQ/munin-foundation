@@ -1,8 +1,9 @@
 import { decideByConsensus, zeroCostGate, type CommitteeOpinion, type CostGateInput, type CommitteeDecision } from './consensus-committee.js';
 import { runWorkGraph, type WorkLane, type WorkLaneExecutor, type SchedulerResult } from './chief-developer-scheduler.js';
 import type { BlockerCategory, BlockerDisposition } from './blocker-ledger.js';
-import type { JsonBlockerLedger } from './json-blocker-ledger.js';
+import { JsonBlockerLedger } from './json-blocker-ledger.js';
 import { buildAgentScorecard, type AgentOutcomeSample, type AgentScorecard } from './agent-scorecards.js';
+import { runtimePath } from './config.js';
 
 export type ChiefDeveloperStatus = 'completed' | 'partial' | 'blocked' | 'failed' | 'needs_revision';
 
@@ -36,7 +37,7 @@ function blockerDisposition(lane: WorkLane): BlockerDisposition {
 export class ChiefDeveloperRuntime {
   constructor(
     private readonly executor: WorkLaneExecutor,
-    private readonly blockers?: JsonBlockerLedger,
+    private readonly blockers: JsonBlockerLedger = new JsonBlockerLedger(runtimePath('chief-developer-blockers.json')),
   ) {}
 
   async run(input: ChiefDeveloperRunInput): Promise<ChiefDeveloperRunResult> {
@@ -51,20 +52,18 @@ export class ChiefDeveloperRuntime {
     const scheduler = await runWorkGraph(input.lanes, this.executor, { maxParallel: input.maxParallel });
     const blockerIds: string[] = [];
 
-    if (this.blockers) {
-      for (const result of scheduler.deferred) {
-        const lane = input.lanes.find(item => item.id === result.laneId)!;
-        const id = `chief:${result.laneId}:${blockerCategory(lane)}`;
-        await this.blockers.add({
-          id,
-          laneId: lane.id,
-          category: blockerCategory(lane),
-          disposition: blockerDisposition(lane),
-          reason: result.blocker ?? result.summary,
-          evidence: result.evidence,
-        });
-        blockerIds.push(id);
-      }
+    for (const result of scheduler.deferred) {
+      const lane = input.lanes.find(item => item.id === result.laneId)!;
+      const id = `chief:${result.laneId}:${blockerCategory(lane)}`;
+      await this.blockers.add({
+        id,
+        laneId: lane.id,
+        category: blockerCategory(lane),
+        disposition: blockerDisposition(lane),
+        reason: result.blocker ?? result.summary,
+        evidence: result.evidence,
+      });
+      blockerIds.push(id);
     }
 
     const samples: AgentOutcomeSample[] = [
