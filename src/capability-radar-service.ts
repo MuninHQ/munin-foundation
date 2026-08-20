@@ -1,6 +1,7 @@
 import { runtimePath } from './config.js';
 import { assessCapability, type CapabilityAssessment } from './capability-radar.js';
 import { discoverGitHubCapabilities, type DiscoveredCapability } from './capability-radar-github.js';
+import { collectDuplicationEvidence } from './capability-duplication.js';
 import { JsonCapabilityDecisionLog, type PersistedCapabilityDecision } from './json-capability-decision-log.js';
 
 export interface CapabilityRadarRunOptions {
@@ -9,6 +10,8 @@ export interface CapabilityRadarRunOptions {
   revisit?: boolean;
   fetcher?: typeof fetch;
   log?: JsonCapabilityDecisionLog;
+  root?: string;
+  duplicationCollector?: typeof collectDuplicationEvidence;
 }
 
 export interface CapabilityRadarRunResult {
@@ -28,13 +31,16 @@ export async function runCapabilityRadar(options: CapabilityRadarRunOptions): Pr
   const log = options.log ?? new JsonCapabilityDecisionLog(runtimePath('capability-radar-decisions.json'));
   const decisions: PersistedCapabilityDecision[] = [];
   const skippedIds: string[] = [];
+  const duplicationCollector=options.duplicationCollector??collectDuplicationEvidence;
 
   for (const item of discovered) {
     if (!options.revisit && !(await log.shouldReassess(item.candidate.id))) {
       skippedIds.push(item.candidate.id);
       continue;
     }
-    const assessment: CapabilityAssessment = assessCapability(item.candidate);
+    const duplication=await duplicationCollector(item.candidate,options.root??process.cwd());
+    const enriched={...item.candidate,duplicationScore:duplication.score,evidence:[...(item.candidate.evidence??[]),...duplication.matches.map(match=>`Munin duplication match: ${match}`)]};
+    const assessment: CapabilityAssessment = assessCapability(enriched);
     decisions.push(await log.record(assessment));
   }
 
