@@ -10,7 +10,17 @@ const job: JobOpportunity = { id:'job-b3',company:'B3',role:'Analista de Produto
 
 test('classifies interview invitation and links known job', () => {
   const result=classifyCareerEmail({subject:'B3 - convite para entrevista',snippet:'Gostaríamos de agendar uma conversa sobre Digital Assets',fromEmail:'recrutamento@b3.com.br'},[job]);
-  assert.equal(result.category,'interview_invite'); assert.equal(result.suggestedStatus,'interview'); assert.equal(result.linkedJobId,'job-b3'); assert.ok(result.confidence>0.9);
+  assert.equal(result.category,'interview_invite'); assert.equal(result.suggestedStatus,'interview'); assert.equal(result.linkedJobId,'job-b3'); assert.ok(result.confidence>0.9); assert.equal(result.attention,'career');
+});
+
+test('detects explicit action outside career flow', () => {
+  const result=classifyCareerEmail({subject:'Action required: please sign document',snippet:'Please sign by end of day.',fromEmail:'operations@example.com'},[]);
+  assert.equal(result.category,'other'); assert.equal(result.needsAction,true); assert.equal(result.attention,'general_action'); assert.ok(result.actionReason);
+});
+
+test('keeps known noise out of the action queue', () => {
+  const result=classifyCareerEmail({subject:'GitHub security alert',snippet:'Sign-in notification',fromEmail:'noreply@github.com'},[]);
+  assert.equal(result.category,'other'); assert.equal(result.needsAction,false); assert.equal(result.attention,'noise');
 });
 
 test('deduplicates provider message ids', async () => {
@@ -18,4 +28,11 @@ test('deduplicates provider message ids', async () => {
   const message:CareerEmail={id:'1',provider:'gmail',providerMessageId:'m1',subject:'Application received',snippet:'Thank you for applying',receivedAt:new Date().toISOString(),category:'application_confirmation',confidence:.86,handled:false};
   const first=await store.upsert([message]); const second=await store.upsert([{...message,id:'2'}]);
   assert.equal(first.added,1); assert.equal(second.duplicates,1); assert.equal((await store.load()).messages.length,1);
+});
+
+test('does not auto-handle general action messages classified as other', async () => {
+  const root=await mkdtemp(path.join(os.tmpdir(),'munin-inbox-action-')); const store=new CareerInboxStore(root);
+  const message:CareerEmail={id:'1',provider:'gmail',providerMessageId:'m2',subject:'Please confirm',snippet:'Confirmation required by EOD',receivedAt:new Date().toISOString(),category:'other',confidence:.2,handled:false,attention:'general_action',needsAction:true,actionReason:'Confirmation requested'};
+  await store.upsert([message]);
+  assert.equal((await store.load()).messages[0].handled,false);
 });
