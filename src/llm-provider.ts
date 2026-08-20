@@ -3,7 +3,7 @@ import { ContextStore } from './store.js';
 import { isLocalProviderUrl, loadLlmSettings, type LlmProviderType } from './llm-settings.js';
 import { RepoIntelligenceProvider, type RepoImpact } from './repo-intelligence.js';
 
-export type LlmProviderStatus={enabled:boolean;provider:LlmProviderType|'ollama-local'|'disabled';model?:string;baseUrl?:string;source?:'settings'|'environment'|'autodetect'};
+export type LlmProviderStatus={enabled:boolean;provider:LlmProviderType|'ollama-local'|'disabled';model?:string;baseUrl?:string;source?:'settings'|'environment'|'explicit-opt-in'};
 type Normalized={command?:string;reply?:string;confidence?:number};
 type ProviderConfig={provider:LlmProviderType;baseUrl:string;apiKey:string;model:string;source:'settings'|'environment'};
 type ProviderResult={payload:unknown;content?:string;provider:string;model:string;source:string};
@@ -19,12 +19,15 @@ async function providerConfig():Promise<ProviderConfig|undefined>{
   return undefined;
 }
 function ollamaDefaults(){return {baseUrl:(process.env.OLLAMA_BASE_URL?.trim()||'http://127.0.0.1:11434').replace(/\/$/,''),model:process.env.OLLAMA_MODEL?.trim()||'qwen3:8b'}}
+function ollamaOptedIn(){return process.env.MUNIN_OLLAMA_ENABLED==='1'}
+function externalIntelligenceRequired(){return new Error('External intelligence required: nenhum provider in-process está configurado. No modo ChatGPT-first, Munin não sonda nem inicia IA local automaticamente. Use o cockpit ChatGPT ou habilite explicitamente um provider opcional.');}
 
 export async function llmProviderStatus():Promise<LlmProviderStatus>{
   const config=await providerConfig();
   if(config)return {enabled:true,provider:config.provider,model:config.model,baseUrl:config.baseUrl,source:config.source};
+  if(!ollamaOptedIn())return {enabled:false,provider:'disabled'};
   const ollama=ollamaDefaults();
-  try{const response=await fetch(`${ollama.baseUrl}/api/tags`,{signal:AbortSignal.timeout(1500)});if(response.ok){const payload=await response.json() as {models?:Array<{name?:string}>};const names=(payload.models??[]).map(item=>item.name).filter(Boolean) as string[];const model=names.includes(ollama.model)?ollama.model:names[0];if(model)return {enabled:true,provider:'ollama-local',model,baseUrl:ollama.baseUrl,source:'autodetect'}}}catch{/* local Ollama not available */}
+  try{const response=await fetch(`${ollama.baseUrl}/api/tags`,{signal:AbortSignal.timeout(1500)});if(response.ok){const payload=await response.json() as {models?:Array<{name?:string}>};const names=(payload.models??[]).map(item=>item.name).filter(Boolean) as string[];const model=names.includes(ollama.model)?ollama.model:names[0];if(model)return {enabled:true,provider:'ollama-local',model,baseUrl:ollama.baseUrl,source:'explicit-opt-in'}}}catch{/* explicitly enabled Ollama not available */}
   return {enabled:false,provider:'disabled'};
 }
 
@@ -56,19 +59,19 @@ async function callOllama(messages:{role:string;content:string}[],maxTokens=1200
  const prompt=messages.map(item=>`${item.role.toUpperCase()}:\n${item.content}`).join('\n\n')+'\n\nASSISTANT:\n';
  let response:Response;try{response=await fetch(`${defaults.baseUrl}/api/generate`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({model,prompt,stream:false,options:{temperature:0,num_predict:Math.max(256,maxTokens)}}),signal:AbortSignal.timeout(Number(process.env.OLLAMA_TIMEOUT_MS??180000))})}catch(error){throw new Error(`Ollama local indisponível em ${defaults.baseUrl}: ${error instanceof Error?error.message:String(error)}`)}
  if(!response.ok)throw new Error(`Ollama local respondeu ${response.status}. Verifique se existe um modelo instalado.`);
- const payload=await response.json() as {response?:string;model?:string};return {payload,content:payload.response?.trim(),provider:'ollama-local',model:payload.model??model,source:'autodetect'};
+ const payload=await response.json() as {response?:string;model?:string};return {payload,content:payload.response?.trim(),provider:'ollama-local',model:payload.model??model,source:'explicit-opt-in'};
 }
 
 async function callBestProvider(messages:{role:string;content:string}[],maxTokens:number){
  const config=await providerConfig();
- if(!config)return callOllama(messages,maxTokens);
+ if(!config){if(ollamaOptedIn())return callOllama(messages,maxTokens);throw externalIntelligenceRequired()}
  let primaryError:unknown;
  const retries=Math.max(0,Number(process.env.MUNIN_LLM_RETRIES??2));
  for(let attempt=0;attempt<=retries;attempt++){
   try{return await callProvider(config,messages,maxTokens)}catch(error){primaryError=error;if(attempt>=retries||!transient(error))break;await sleep(500*(2**attempt))}
  }
- if(process.env.MUNIN_LLM_OLLAMA_FALLBACK==='0')throw primaryError;
- try{return await callOllama(messages,maxTokens)}catch(localError){const primary=primaryError instanceof Error?primaryError.message:String(primaryError);const local=localError instanceof Error?localError.message:String(localError);throw new Error(`Provider principal indisponível após retries (${primary}); fallback Ollama também indisponível (${local}).`)}
+ if(!ollamaOptedIn())throw primaryError;
+ try{return await callOllama(messages,maxTokens)}catch(localError){const primary=primaryError instanceof Error?primaryError.message:String(primaryError);const local=localError instanceof Error?localError.message:String(localError);throw new Error(`Provider principal indisponível após retries (${primary}); fallback Ollama explicitamente habilitado também indisponível (${local}).`)}
 }
 
 function engineeringObjective(user:string){return user.match(/Objective:\s*\n([^\n]+)/i)?.[1]?.trim()??''}
