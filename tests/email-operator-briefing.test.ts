@@ -18,12 +18,23 @@ const deps:OperatorSitrepDependencies={
  blockers:async()=>[],
  scorecard:async()=>undefined,
  email:async()=>snapshot,
+ emailHealth:async()=>({updatedAt:new Date().toISOString(),lastSuccessAt:new Date().toISOString(),consecutiveFailures:0,providers:['gmail']}),
 };
 
 test('operator surfaces actionable and interesting email without human hard block',async()=>{
- const root=await fixture();try{const result=await buildOperatorSitrep(root,deps);assert.equal(result.severity,'attention');assert.equal(result.email.actionable,2);assert.equal(result.email.generalActionable,1);assert.equal(result.email.reviewRequired,1);assert.equal(result.email.interestingReads,1);assert.equal(result.email.topReads[0].id,'read-1');assert.match(result.attention.join('\n'),/worth reading/i);}finally{await rm(root,{recursive:true,force:true})}
+ const root=await fixture();try{const result=await buildOperatorSitrep(root,deps);assert.equal(result.severity,'attention');assert.equal(result.email.actionable,2);assert.equal(result.email.generalActionable,1);assert.equal(result.email.reviewRequired,1);assert.equal(result.email.interestingReads,1);assert.equal(result.email.workerStatus,'healthy');assert.equal(result.email.topReads[0].id,'read-1');assert.match(result.attention.join('\n'),/worth reading/i);}finally{await rm(root,{recursive:true,force:true})}
 });
 
-test('operator remains healthy when email intelligence has no open action or interesting read',async()=>{
- const root=await fixture();try{const result=await buildOperatorSitrep(root,{...deps,email:async()=>({...snapshot,unreadActionable:0,careerActionable:0,generalActionable:0,reviewRequired:0,interestingReads:0,topActions:[],topReads:[]})});assert.equal(result.severity,'ok');assert.equal(result.email.actionable,0);assert.equal(result.email.interestingReads,0);}finally{await rm(root,{recursive:true,force:true})}
+test('operator remains healthy when email sync is healthy and has no open signal',async()=>{
+ const root=await fixture();try{const result=await buildOperatorSitrep(root,{...deps,email:async()=>({...snapshot,unreadActionable:0,careerActionable:0,generalActionable:0,reviewRequired:0,interestingReads:0,topActions:[],topReads:[]})});assert.equal(result.severity,'ok');assert.equal(result.email.actionable,0);assert.equal(result.email.interestingReads,0);assert.equal(result.email.workerStatus,'healthy');}finally{await rm(root,{recursive:true,force:true})}
+});
+
+test('stale or connection-required email sync becomes attention, not a hard block',async()=>{
+ const root=await fixture();try{
+   const clean={...snapshot,unreadActionable:0,careerActionable:0,generalActionable:0,reviewRequired:0,interestingReads:0,topActions:[],topReads:[]};
+   const stale=await buildOperatorSitrep(root,{...deps,email:async()=>clean,emailHealth:async()=>({updatedAt:'2026-08-20T10:00:00Z',lastSuccessAt:'2026-08-20T10:00:00Z',consecutiveFailures:0})});
+   assert.equal(stale.severity,'attention');assert.equal(stale.email.workerStatus,'stale');assert.match(stale.attention.join('\n'),/sync is stale/i);
+   const needs=await buildOperatorSitrep(root,{...deps,email:async()=>clean,emailHealth:async()=>({updatedAt:new Date().toISOString(),consecutiveFailures:0,needsConnection:true})});
+   assert.equal(needs.severity,'attention');assert.equal(needs.email.workerStatus,'needs_connection');assert.match(needs.attention.join('\n'),/mailbox connection/i);
+ }finally{await rm(root,{recursive:true,force:true})}
 });
