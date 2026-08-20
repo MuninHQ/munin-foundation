@@ -9,9 +9,9 @@ Munin Foundation is the canonical product, architecture and execution repository
 
 ## Current phase
 
-**Munin v0.1 — Integration Hardening / End-to-End Continuity**
+**Munin v0.1 — ChatGPT-first Operator Mode / Integration Hardening**
 
-The repository now contains working Control Room orchestration, bounded autonomous engineering, durable context/memory, Career intelligence/mobile intake, provider-neutral runtime seams, browser verification and operator-facing APIs. Remaining work is primarily integration hardening, end-to-end acceptance, operator observability and real-world validation.
+The repository contains working Control Room orchestration, bounded autonomous engineering, durable context/memory, Career intelligence/mobile intake, provider-neutral runtime seams, browser verification and operator-facing APIs. ChatGPT is the primary interactive operator cockpit for the current phase; Munin's default runtime requires neither a local LLM nor a paid AI API. Ollama remains an explicit opt-in capability rather than a startup dependency.
 
 ## Repository map
 
@@ -42,7 +42,11 @@ The repository now contains working Control Room orchestration, bounded autonomo
 
 `objective → hydrate → plan/route → execute → test → verify → fix/retry → write back → handoff`
 
-See `docs/product/munin-v0.1-spec.md`, `docs/product/munin-v0.1-build.md` and `ops/CURRENT_STATE.md` for the current product and execution truth.
+Interactive operator path for the current phase:
+
+`User ↔ ChatGPT cockpit → Munin control surfaces/connectors/repository → deterministic services/state/actions`
+
+See `decisions/ADR-0006-CHATGPT-FIRST-OPERATOR-MODE.md`, `docs/product/munin-v0.1-spec.md`, `docs/product/munin-v0.1-build.md` and `ops/CURRENT_STATE.md` for the current product and execution truth.
 
 ## Status
 
