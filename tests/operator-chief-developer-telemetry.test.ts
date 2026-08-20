@@ -8,7 +8,7 @@ import type { BlockerRecord } from '../src/blocker-ledger.js';
 
 async function fixture(){const root=await mkdtemp(path.join(os.tmpdir(),'munin-chief-telemetry-'));await mkdir(path.join(root,'ops'),{recursive:true});await writeFile(path.join(root,'ops/CURRENT_STATE.md'),'# Current\n','utf8');await writeFile(path.join(root,'ops/BACKLOG.md'),'# Backlog\n','utf8');await writeFile(path.join(root,'ops/SESSION_LOG.md'),'# Sessions\n','utf8');return root}
 const connectors:NonNullable<OperatorSitrepDependencies['connectors']>=async()=>[];
-const healthy={jobs:async()=>[],browser:async()=>({backend:'playwright-cli',available:true,command:'playwright-cli'}),ledgerCount:async()=>0,connectors};
+const healthy:OperatorSitrepDependencies={jobs:async()=>[],browser:async()=>({backend:'playwright-cli',available:true,command:'playwright-cli'}),ledgerCount:async()=>0,connectors};
 
 test('device blocker stays attention and does not falsely stop unrelated work',async()=>{
  const root=await fixture();try{
