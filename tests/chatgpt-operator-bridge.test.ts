@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-async function text(path:string){return readFile(new URL(`../${path}`,import.meta.url),'utf8')}
+async function text(path:string){return readFile(new URL(`../../${path}`,import.meta.url),'utf8')}
 
 test('web and mobile expose the ChatGPT operator bridge',async()=>{
  const [web,mobile]=await Promise.all([text('apps/web/index.html'),text('apps/web/mobile.html')]);
