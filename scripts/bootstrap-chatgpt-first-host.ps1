@@ -25,6 +25,10 @@ Write-Host '[Munin] Installing Workspace Supervisor startup shortcut...'
 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repo 'scripts\install-workspace-supervisor-startup.ps1')
 if ($LASTEXITCODE -ne 0) { throw 'Workspace Supervisor startup installation failed.' }
 
+Write-Host '[Munin] Installing Email Intelligence startup shortcut...'
+& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repo 'scripts\install-email-intelligence-startup.ps1')
+if ($LASTEXITCODE -ne 0) { throw 'Email Intelligence startup installation failed.' }
+
 $apiHealth = 'http://127.0.0.1:4310/api/health'
 $workspaceReady = $false
 try { $workspaceReady = (Invoke-WebRequest -UseBasicParsing -Uri $apiHealth -TimeoutSec 2).StatusCode -eq 200 } catch {}
@@ -44,4 +48,4 @@ Write-Host '[Munin] Running ChatGPT-first host acceptance...'
 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repo 'scripts\acceptance-chatgpt-first.ps1')
 if ($LASTEXITCODE -ne 0) { throw 'ChatGPT-first acceptance failed.' }
 
-Write-Host '[Munin] Bootstrap complete. Host Worker and Workspace Supervisor are installed for Windows startup.'
+Write-Host '[Munin] Bootstrap complete. Host Worker, Workspace Supervisor and Email Intelligence are installed for Windows startup.'
