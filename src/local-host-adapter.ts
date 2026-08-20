@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import type { HostExecutionAdapter } from './host-bridge-executor.js';
 
 const execFileAsync = promisify(execFile);
@@ -10,6 +11,8 @@ export interface LocalHostAdapterOptions {
   apiUrl?: string;
   webUrl?: string;
   timeoutMs?: number;
+  supervisorStatePath?: string;
+  restartRequestPath?: string;
 }
 
 async function runFixed(command: string, args: string[], cwd: string, timeoutMs: number): Promise<string> {
@@ -28,12 +31,17 @@ export class LocalHostAdapter implements HostExecutionAdapter {
   private readonly apiUrl: string;
   private readonly webUrl: string;
   private readonly timeoutMs: number;
+  private readonly supervisorStatePath: string;
+  private readonly restartRequestPath: string;
 
   constructor(options: LocalHostAdapterOptions = {}) {
     this.cwd = resolve(options.cwd ?? process.cwd());
     this.apiUrl = options.apiUrl ?? 'http://127.0.0.1:4310';
     this.webUrl = options.webUrl ?? 'http://127.0.0.1:5173';
     this.timeoutMs = Math.max(1000, Math.min(60000, options.timeoutMs ?? 15000));
+    const dataDir = resolve(process.env.MUNIN_DATA_DIR ?? resolve(this.cwd, 'data/runtime'));
+    this.supervisorStatePath = resolve(options.supervisorStatePath ?? resolve(dataDir, 'workspace-supervisor.json'));
+    this.restartRequestPath = resolve(options.restartRequestPath ?? resolve(dataDir, 'workspace-restart-request.json'));
   }
 
   async runtimeHealth(): Promise<string> {
@@ -59,7 +67,18 @@ export class LocalHostAdapter implements HostExecutionAdapter {
   }
 
   async restartMunin(): Promise<string> {
-    throw new Error('restart-munin is intentionally unavailable until Munin has a stable supervised service boundary.');
+    let state: { status?: string; heartbeatAt?: string; pid?: number };
+    try { state = JSON.parse(await readFile(this.supervisorStatePath, 'utf8')); }
+    catch { throw new Error('Workspace supervisor is unavailable; refusing restart.'); }
+    const heartbeat = Date.parse(state.heartbeatAt ?? '');
+    if (state.status !== 'running' || !Number.isFinite(heartbeat) || Date.now() - heartbeat > 15000) throw new Error('Workspace supervisor heartbeat is stale; refusing restart.');
+    const id = `restart-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const request = { kind: 'restart-munin', id, requestedAt: new Date().toISOString(), supervisorPid: state.pid };
+    await mkdir(dirname(this.restartRequestPath), { recursive: true });
+    const tmp = `${this.restartRequestPath}.${process.pid}.tmp`;
+    await writeFile(tmp, JSON.stringify(request, null, 2) + '\n', 'utf8');
+    await rename(tmp, this.restartRequestPath);
+    return `Controlled Munin restart requested through workspace supervisor (${id}).`;
   }
 
   async runAcceptance(): Promise<string> {
