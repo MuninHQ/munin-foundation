@@ -23,7 +23,7 @@ const patterns: Array<[CareerEmailCategory, RegExp, JobStatus | undefined, strin
   ['interview_invite', /\b(interview|entrevista|schedule (?:a )?call|agendar.*conversa|availability|disponibilidade|meeting with.*recruit|conversation with.*recruit)\b/i, 'interview', 'Confirm interview details and prepare war room'],
   ['assessment', /\b(assessment|case study|take-home|technical challenge|teste técnico|desafio|coding challenge)\b/i, 'interview', 'Complete assessment before deadline'],
   ['application_confirmation', /\b(application (?:received|submitted|confirmed)|application to .+ confirmed|your application|candidatura recebida|candidatura confirmada|inscrição confirmada|thank you for applying|thanks for applying|recebemos sua candidatura)\b/i, 'applied', 'Confirm application in pipeline'],
-  ['information_request', /\b(additional information|salary expectation|pretensão salarial|documents required|documentação|send us|provide)\b/i, undefined, 'Prepare requested information'],
+  ['information_request', /\b(additional information|salary expectation|pretensão salarial|documents required|documentação para (?:a )?(?:vaga|processo)|dados adicionais.*(?:vaga|processo))\b/i, undefined, 'Prepare requested information'],
   ['recruiter_reply', /\b(recruiter|talent acquisition|recrutador|recrutamento|hiring team|talent partner|people team)\b/i, undefined, 'Review recruiter message'],
   ['job_alert', /\b(job alert|vagas para você|new jobs|oportunidades recomendadas|jobs you may be interested in)\b/i, undefined, 'Review job alert'],
 ];
