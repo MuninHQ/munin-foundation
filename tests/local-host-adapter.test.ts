@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { LocalHostAdapter } from '../src/local-host-adapter.js';
 
@@ -12,7 +15,12 @@ test('local adapter source forbids arbitrary shell execution and pins commands',
   assert.doesNotMatch(source, /exec\(|spawn\(|Invoke-Expression|cmd\.exe|powershell -Command/);
 });
 
-test('restart remains fail-closed without supervised service boundary', async () => {
-  const adapter = new LocalHostAdapter({ cwd: process.cwd() });
-  await assert.rejects(() => adapter.restartMunin(), /intentionally unavailable/i);
+test('restart remains fail-closed without a healthy workspace supervisor', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'munin-host-adapter-'));
+  try {
+    const adapter = new LocalHostAdapter({ cwd: process.cwd(), supervisorStatePath: join(dir, 'missing-supervisor.json'), restartRequestPath: join(dir, 'restart.json') });
+    await assert.rejects(() => adapter.restartMunin(), /supervisor is unavailable/i);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });
