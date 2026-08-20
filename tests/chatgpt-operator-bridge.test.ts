@@ -14,7 +14,7 @@ test('operator bridge never places Munin tokens or API keys in the handoff paylo
  const bridge=await text('apps/web/src/chatgpt-operator-bridge.ts');
  assert.match(bridge,/SNAPSHOT LOCAL SANITIZADO/);
  assert.match(bridge,/sem tokens\/credenciais/);
- assert.match(bridge,/MUNIN_OLLAMA_ENABLED/);
+ assert.match(bridge,/não deve iniciar Ollama/);
  assert.match(bridge,/MuninHQ\/munin-foundation/);
  assert.doesNotMatch(bridge,/JSON\.stringify\(localStorage/);
  assert.doesNotMatch(bridge,/apiKey\s*:/);
