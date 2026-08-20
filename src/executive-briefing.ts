@@ -17,7 +17,7 @@ const criticalCategories=new Set(['interview_invite','offer','assessment','infor
 export async function buildExecutiveBriefing():Promise<ExecutiveBriefing>{
   const store=new ContextStore(),service=new MuninService(store),inboxStore=new CareerInboxStore();
   const [state,queue,inbox,memory]=await Promise.all([store.load(),service.careerQueue(),inboxStore.load(),contextBriefForConsumer('sitrep')]);
-  const pending=inbox.messages.filter(x=>!x.handled),critical=pending.filter(x=>criticalCategories.has(x.category));
+  const pending=inbox.messages.filter(x=>!x.handled),critical=pending.filter(x=>criticalCategories.has(x.category)||x.needsAction===true);
   const activeProjects=state.projects.filter(x=>!['done','cancelled'].includes(x.status));
   const blockedProjects=activeProjects.filter(x=>x.blockers?.length);
   const openActions=state.actions.filter(x=>x.status!=='done');
@@ -25,11 +25,13 @@ export async function buildExecutiveBriefing():Promise<ExecutiveBriefing>{
   const priorities:{type:string;title:string;reason:string;score:number}[]=[];
   for(const item of queue.slice(0,7)){if(item.priorityScore<=0)continue;priorities.push({type:'career',title:`${item.job.company} — ${item.job.role}`,reason:item.rationale.join(', '),score:item.priorityScore});}
   for(const action of openActions.filter(x=>x.priority==='P0').slice(0,5))priorities.push({type:'action',title:action.title,reason:'P0 action open',score:95});
-  for(const msg of critical.slice(0,5))priorities.push({type:'inbox',title:msg.subject,reason:`${msg.category} · ${Math.round(msg.confidence*100)}% confidence`,score:90});
+  for(const msg of critical.slice(0,5))priorities.push({type:msg.attention==='general_action'?'email-action':'inbox',title:msg.subject,reason:msg.actionReason??`${msg.category} · ${Math.round(msg.confidence*100)}% confidence`,score:msg.attention==='general_action'?92:90});
   for(const project of blockedProjects.slice(0,4))priorities.push({type:'project',title:project.name,reason:`blocked: ${project.blockers.join(', ')}`,score:80});
   priorities.sort((a,b)=>b.score-a.score);
   const signals:{kind:string;message:string}[]=[];
-  if(critical.length)signals.push({kind:'career-inbox',message:`${critical.length} mensagens críticas aguardando revisão.`});
+  const generalActions=critical.filter(x=>x.attention==='general_action').length;
+  if(critical.length)signals.push({kind:'inbox',message:`${critical.length} mensagens críticas ou ações pendentes aguardando revisão.`});
+  if(generalActions)signals.push({kind:'email-action',message:`${generalActions} ações pendentes detectadas fora do fluxo de carreira.`});
   if(queue.filter(x=>x.followUpDue).length)signals.push({kind:'follow-up',message:`${queue.filter(x=>x.followUpDue).length} follow-ups de carreira vencidos.`});
   if(blockedProjects.length)signals.push({kind:'project-risk',message:`${blockedProjects.length} projetos ativos com bloqueadores.`});
   if(memory.governance.stale.length)signals.push({kind:'context-freshness',message:`Contexto temporal requer refresh: ${memory.governance.stale.join(', ')}.`});
