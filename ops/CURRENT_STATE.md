@@ -42,6 +42,7 @@ In-process AI is optional. The default runtime does not probe, start or wait for
 - Remote/local Windows + Tailscale operator runbook including deterministic stale-port/UI recovery.
 - August 2026 GitHub ecosystem scan completed; future scans are trigger-based instead of a permanently open queue item.
 - Web navigation hardening includes shared standalone navigation/styles, missing Intelligence page restoration, Career Quick Intake exposure and a navigation integrity test.
+- Unified operator workflow exposes `munin start`, `build`, `verify`, `ship`, `doctor` and `mobile-test`; the ship gate requires committed changes, passes the full test suite, pushes the mission branch and reuses one draft PR without automatic merge.
 
 ## Executable backlog state
 

@@ -2,6 +2,24 @@
 
 > Append concise, durable execution events. This is not a transcript archive.
 
+## 2026-08-21 — Unified operator workflow implemented
+
+### Decision
+
+Replace repeated PowerShell, Git and pull-request choreography with one bounded Munin operator command surface while preserving explicit human control over merge and consequential actions.
+
+### Changes
+
+- Added `munin start`, `build`, `verify`, `ship`, `doctor` and `mobile-test`.
+- Kept subprocess execution fixed and shell-free; no arbitrary command input is accepted.
+- Made `ship` refuse `main`, refuse uncommitted changes, run the full verification gate, push only the current mission branch and reuse an existing open PR before creating one draft PR.
+- Kept staging, commit content selection and merge outside the command so unrelated files cannot be silently included and final promotion remains human-controlled.
+- Added deterministic tests for diagnostics, build/verify routing and PR-consolidation guardrails.
+
+### Remaining empirical acceptance
+
+- Run the one-shot bootstrap on the target Windows host, then exercise `munin doctor` and `munin mobile-test` on the actual PC/iPhone path.
+
 ## 2026-08-17 — Control Room architecture initiated
 
 ### Decision
