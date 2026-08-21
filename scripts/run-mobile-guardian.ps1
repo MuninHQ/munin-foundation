@@ -1,7 +1,13 @@
+param(
+  [Parameter(Mandatory = $true)][string]$NodePath,
+  [Parameter(Mandatory = $true)][string]$NpmPath
+)
+
 $ErrorActionPreference = 'Continue'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $launcher = Join-Path $repo 'scripts\launch-mobile.mjs'
-$node = (Get-Command node.exe -ErrorAction Stop).Source
+$node = (Resolve-Path $NodePath).Path
+$env:MUNIN_NPM_COMMAND = (Resolve-Path $NpmPath).Path
 $logDir = Join-Path $repo 'data\runtime'
 $log = Join-Path $logDir 'mobile-guardian.log'
 New-Item -ItemType Directory -Path $logDir -Force | Out-Null

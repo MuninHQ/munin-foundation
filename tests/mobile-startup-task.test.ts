@@ -16,8 +16,13 @@ test('Windows mobile guardian starts immediately and restarts after failures',as
   assert.match(install,/Get-ScheduledTaskInfo/);
   assert.match(install,/run-mobile-guardian\.ps1/);
   assert.match(install,/-WindowStyle Hidden/);
+  assert.match(install,/Get-Command node\.exe/);
+  assert.match(install,/Get-Command npm\.cmd/);
+  assert.match(install,/-NodePath/);
+  assert.match(install,/-NpmPath/);
   assert.doesNotMatch(install,/cmd\.exe|npm run mobile/);
-  assert.match(runner,/Get-Command node\.exe/);
+  assert.match(runner,/Resolve-Path \$NodePath/);
+  assert.match(runner,/MUNIN_NPM_COMMAND/);
   assert.match(runner,/mobile-guardian\.log/);
   assert.match(runner,/while \(\$true\)/);
   assert.match(runner,/restarting in 5 seconds/);
