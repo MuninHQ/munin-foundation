@@ -35,8 +35,8 @@ try {
 }
 
 try {
-  $home = Invoke-WebWithRetry $WebUrl
-  $hasCockpit = $home.Content -match 'chatgpt-operator-bridge'
+  $webResponse = Invoke-WebWithRetry $WebUrl
+  $hasCockpit = $webResponse.Content -match 'chatgpt-operator-bridge'
   Add-Result 'web-chatgpt-cockpit' $hasCockpit ($(if ($hasCockpit) { 'Operator bridge present in Web entrypoint.' } else { 'Operator bridge marker not found.' }))
 } catch {
   Add-Result 'web-chatgpt-cockpit' $false 'Web entrypoint unavailable on the configured Web URL.'
