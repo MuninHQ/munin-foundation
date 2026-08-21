@@ -37,19 +37,25 @@ Write-Host '[Munin] Installing Email Intelligence startup shortcut...'
 if ($LASTEXITCODE -ne 0) { throw 'Email Intelligence startup installation failed.' }
 
 $apiHealth = 'http://127.0.0.1:4310/api/health'
-$workspaceReady = $false
-try { $workspaceReady = (Invoke-WebRequest -UseBasicParsing -Uri $apiHealth -TimeoutSec 2).StatusCode -eq 200 } catch {}
+$webUrl = 'http://127.0.0.1:5173'
+$apiReady = $false
+$webReady = $false
+try { $apiReady = (Invoke-WebRequest -UseBasicParsing -Uri $apiHealth -TimeoutSec 2).StatusCode -eq 200 } catch {}
+try { $webReady = (Invoke-WebRequest -UseBasicParsing -Uri $webUrl -TimeoutSec 2).StatusCode -eq 200 } catch {}
+$workspaceReady = $apiReady -and $webReady
 if (-not $workspaceReady) {
   Write-Host '[Munin] Starting governed Workspace Supervisor...'
   Start-Process -FilePath 'cmd.exe' -ArgumentList @('/c', "cd /d `"$repo`" && npm run workspace:supervisor") -WorkingDirectory $repo -WindowStyle Minimized
   for ($i=0; $i -lt 30 -and -not $workspaceReady; $i++) {
     Start-Sleep -Seconds 1
-    try { $workspaceReady = (Invoke-WebRequest -UseBasicParsing -Uri $apiHealth -TimeoutSec 2).StatusCode -eq 200 } catch {}
+    try { $apiReady = (Invoke-WebRequest -UseBasicParsing -Uri $apiHealth -TimeoutSec 2).StatusCode -eq 200 } catch { $apiReady = $false }
+    try { $webReady = (Invoke-WebRequest -UseBasicParsing -Uri $webUrl -TimeoutSec 2).StatusCode -eq 200 } catch { $webReady = $false }
+    $workspaceReady = $apiReady -and $webReady
   }
 } else {
   Write-Host '[Munin] Existing workspace is healthy. Supervisor is installed for the next clean Windows session; no unsafe process takeover attempted.'
 }
-if (-not $workspaceReady) { throw 'Munin API did not become healthy on 127.0.0.1:4310.' }
+if (-not $workspaceReady) { throw "Munin workspace did not become healthy (API ready: $apiReady; Web ready: $webReady)." }
 
 Write-Host '[Munin] Running ChatGPT-first host acceptance...'
 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repo 'scripts\acceptance-chatgpt-first.ps1')
