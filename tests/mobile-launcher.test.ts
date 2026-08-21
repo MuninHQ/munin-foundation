@@ -16,6 +16,7 @@ test('mobile launcher only reuses an API that accepts its bearer token', async (
   assert.match(source, /await new Promise\(\(\)=>\{\}\)/);
   assert.match(source, /process\.env\.MUNIN_NPM_COMMAND/);
   assert.match(source, /run\(process\.execPath,\['dist\/src\/server\.js'\]/);
+  assert.match(source, /spawn\(command,args,\{stdio:'inherit',shell:false,env\}\)/);
   assert.match(source, /async function webRouteHealthy/);
   assert.match(source, /async function ensureWeb/);
   assert.match(source, /mobile-web-server\.mjs/);
