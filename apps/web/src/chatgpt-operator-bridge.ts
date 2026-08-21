@@ -63,11 +63,11 @@ const css=`
 function mount(){
  if(document.querySelector('.munin-gpt-launch'))return;
  const style=document.createElement('style');style.textContent=css;document.head.appendChild(style);
- const launch=document.createElement('button');launch.className='munin-gpt-launch';launch.textContent='CHATGPT COCKPIT';launch.title='Continuar o Munin no ChatGPT sem API paga';
+ const launch=document.createElement('button');launch.className='munin-gpt-launch';launch.textContent='ChatGPT';launch.title='Continuar no ChatGPT sem API paga';launch.setAttribute('aria-label','Abrir ponte para o ChatGPT');
  const panel=document.createElement('section');panel.className='munin-gpt-panel';panel.innerHTML=`<h3>CHATGPT · OPERATOR BRIDGE</h3><p>O Munin prepara somente um snapshot sanitizado. Nenhum token, OAuth ou chave de API é colocado no handoff. O ChatGPT continua sendo o cockpit; o runtime local continua leve.</p><textarea placeholder="O que você quer que o ChatGPT faça com o Munin agora?"></textarea><div class="munin-gpt-actions"><button data-action="open">COPIAR + ABRIR CHATGPT</button><button class="secondary" data-action="copy">SÓ COPIAR CONTEXTO</button><button class="secondary" data-action="close">FECHAR</button></div><span class="munin-gpt-status"></span>`;
  document.body.append(panel,launch);
  const textarea=panel.querySelector('textarea') as HTMLTextAreaElement;const status=panel.querySelector('.munin-gpt-status') as HTMLSpanElement;
- launch.onclick=()=>{panel.classList.toggle('open');if(panel.classList.contains('open'))setTimeout(()=>textarea.focus(),0)};
+ launch.onclick=()=>{panel.classList.toggle('open');launch.setAttribute('aria-expanded',String(panel.classList.contains('open')));if(panel.classList.contains('open'))setTimeout(()=>textarea.focus(),0)};
  async function handoff(open:boolean){
   status.textContent='Montando contexto sanitizado…';
   try{const context=await buildContext();const prompt=buildPrompt(textarea.value,context);await navigator.clipboard.writeText(prompt);status.textContent=open?'Contexto copiado. Abrindo o ChatGPT…':'Contexto copiado. Cole na conversa do projeto Munin.';if(open)window.open(CHATGPT_URL,'_blank','noopener,noreferrer');}
