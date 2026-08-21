@@ -21,6 +21,8 @@ test('host bootstrap stays fail-closed and fast-forward only', async () => {
   assert.match(source, /npm run workspace:supervisor/);
   assert.match(source, /no unsafe process takeover attempted/i);
   assert.match(source, /127\.0\.0\.1:4310\/api\/health/);
+  assert.match(source, /127\.0\.0\.1:5173/);
+  assert.match(source, /\$workspaceReady = \$apiReady -and \$webReady/);
   assert.match(source, /acceptance-chatgpt-first\.ps1/);
   assert.doesNotMatch(source, /reset\s+--hard/i);
   assert.doesNotMatch(source, /clean\s+-fd/i);

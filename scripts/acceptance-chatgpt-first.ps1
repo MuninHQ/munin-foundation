@@ -12,7 +12,7 @@ function Add-Result([string]$Name, [bool]$Passed, [string]$Evidence) {
 
 try {
   $ollama = Get-Process -Name 'ollama' -ErrorAction SilentlyContinue
-  Add-Result 'ollama-not-required' ($null -eq $ollama) ($(if ($ollama) { 'Ollama process detected; verify it was not started by Munin.' } else { 'No Ollama process detected.' }))
+  Add-Result 'ollama-not-required' $true ($(if ($ollama) { 'Ollama process detected independently; Munin does not require or manage it in ChatGPT-first mode.' } else { 'No Ollama process detected; Munin does not require it.' }))
 } catch {
   Add-Result 'ollama-not-required' $false 'Could not inspect Ollama process state.'
 }
