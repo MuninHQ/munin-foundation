@@ -19,6 +19,8 @@ test('mobile launcher only reuses an API that accepts its bearer token', async (
   assert.match(source, /spawn\(command,args,\{stdio:'inherit',shell:false,env\}\)/);
   assert.match(source, /async function webRouteHealthy/);
   assert.match(source, /async function ensureWeb/);
+  assert.match(source, /Replacing existing web runtime with the supervised production server/);
+  assert.doesNotMatch(source, /Reusing compatible web runtime/);
   assert.match(source, /mobile-web-server\.mjs/);
   assert.match(source, /function monitorWeb/);
   assert.match(source, /mobile-release-guard\.js\?v=6/);
