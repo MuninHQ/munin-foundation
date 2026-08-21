@@ -50,6 +50,7 @@
 
 ## P1 — Integrations and operator experience
 
+- [x] **Unified operator workflow** — `munin start|build|verify|ship|doctor|mobile-test` replaces repeated PowerShell/GitHub choreography with fixed, auditable commands; `ship` verifies before push, reuses a single mission PR, creates drafts only when needed, never stages unrelated files and never merges automatically.
 - [x] Mobile-first Munin runtime/API foundation.
 - [x] GitHub-backed execution path and autonomous engineering delivery foundation.
 - [x] Zero-additional-cost Ollama provider fallback foundation.
