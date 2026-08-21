@@ -23,3 +23,25 @@ test('mobile splash memory progress reflects live synchronization state', async 
   assert.match(css,/\.munin-memory-fill/);
   assert.match(css,/@keyframes munin-memory-pulse/);
 });
+
+test('mobile splash can never block access and visibly exposes the enter action', async () => {
+  const html=await readFile(path.resolve('apps/web/mobile.html'),'utf8');
+  const guard=await readFile(path.resolve('apps/web/public/mobile-release-guard.js'),'utf8');
+  assert.match(html,/mobile-release-guard\.js\?v=6/);
+  assert.match(guard,/ENTRAR NO MUNIN/);
+  assert.match(guard,/setTimeout\(close,4000\)/);
+  assert.match(guard,/enter\?\.addEventListener\('click',close/);
+});
+
+test('mobile release invalidates cached clients and bypasses browser HTTP caches', async () => {
+  const html=await readFile(path.resolve('apps/web/mobile.html'),'utf8');
+  const worker=await readFile(path.resolve('apps/web/public/munin-sw.js'),'utf8');
+  const main=await readFile(path.resolve('apps/web/src/mobile-main.tsx'),'utf8');
+  const vite=await readFile(path.resolve('apps/web/vite.config.ts'),'utf8');
+  assert.match(html,/munin-splash\.js\?v=6/);
+  assert.match(worker,/munin-mobile-v6/);
+  assert.match(worker,/client\.navigate\(client\.url\)/);
+  assert.match(main,/updateViaCache:'none'/);
+  assert.match(main,/registration\.update\(\)/);
+  assert.match(vite,/'Cache-Control': 'no-store'/);
+});
