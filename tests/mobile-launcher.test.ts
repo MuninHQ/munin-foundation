@@ -22,6 +22,8 @@ test('mobile launcher only reuses an API that accepts its bearer token', async (
   assert.match(source, /Replacing existing web runtime with the supervised production server/);
   assert.doesNotMatch(source, /Reusing compatible web runtime/);
   assert.match(source, /mobile-web-server\.mjs/);
+  assert.match(source, /data\/runtime\/mobile-web/);
+  assert.match(source, /MUNIN_WEB_OUT_DIR:WEB_ROOT/);
   assert.match(source, /function monitorWeb/);
   assert.match(source, /mobile-release-guard\.js\?v=6/);
   assert.doesNotMatch(source, /response\.status!==404/);

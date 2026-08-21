@@ -12,6 +12,7 @@ const skipBuild=process.env.MUNIN_MOBILE_SKIP_BUILD==='1';
 const skipWeb=process.env.MUNIN_MOBILE_SKIP_WEB==='1';
 const skipTailscale=process.env.MUNIN_MOBILE_SKIP_TAILSCALE==='1';
 const skipLanAddresses=process.env.MUNIN_MOBILE_SKIP_LAN_ADDRESSES==='1';
+const WEB_ROOT=resolve(process.env.MUNIN_MOBILE_WEB_ROOT??resolve(process.cwd(),'data/runtime/mobile-web'));
 const tokenFile=resolve(process.cwd(),'data/runtime/mobile-token.txt');
 const WEB_SERVER_ENTRY=resolve(process.cwd(),'scripts/mobile-web-server.mjs');
 const children=[];
@@ -22,7 +23,7 @@ let webMonitor;
 
 function persistentToken(){if(process.env.MUNIN_MOBILE_TOKEN?.trim())return process.env.MUNIN_MOBILE_TOKEN.trim();if(existsSync(tokenFile)){const value=readFileSync(tokenFile,'utf8').trim();if(value)return value;}mkdirSync(dirname(tokenFile),{recursive:true});const token=randomBytes(24).toString('base64url');writeFileSync(tokenFile,token+'\n',{encoding:'utf8',mode:0o600});return token;}
 const token=persistentToken();
-const env={...process.env,MUNIN_MOBILE_TOKEN:token,MUNIN_API_HOST:'127.0.0.1'};
+const env={...process.env,MUNIN_MOBILE_TOKEN:token,MUNIN_API_HOST:'127.0.0.1',MUNIN_WEB_OUT_DIR:WEB_ROOT,MUNIN_WEB_ROOT:WEB_ROOT};
 function run(command,args,label){const child=spawn(command,args,{stdio:'inherit',shell:false,env});children.push(child);child.on('error',error=>console.error(`[Munin Mobile] ${label} failed to start: ${error.message}`));child.on('exit',code=>{if(code&&code!==0)console.error(`[Munin Mobile] ${label} exited with ${code}`)});return child;}
 function runDone(command,args,label){return new Promise((ok,fail)=>{const child=spawn(command,args,{stdio:'inherit',shell:platform()==='win32',env});child.on('exit',code=>code===0?ok():fail(new Error(`${label} failed with ${code}`)));child.on('error',fail);});}
 function portOpen(port){return new Promise(resolve=>{const socket=net.createConnection({port,host:'127.0.0.1'});const done=value=>{socket.destroy();resolve(value)};socket.setTimeout(500);socket.once('connect',()=>done(true));socket.once('timeout',()=>done(false));socket.once('error',()=>done(false));});}
