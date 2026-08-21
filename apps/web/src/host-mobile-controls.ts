@@ -4,7 +4,9 @@ type HostQueueItem={job:{id:string;type:string;createdAt:string};status:string;e
 const token=()=>localStorage.getItem('munin-mobile-token')??'';
 async function api<T>(path:string,init:RequestInit={}):Promise<T>{
   const headers=new Headers(init.headers);headers.set('Authorization',`Bearer ${token()}`);if(init.body)headers.set('Content-Type','application/json');
-  const response=await fetch(path,{...init,headers});const payload=await response.json().catch(()=>({error:`HTTP ${response.status}`}));
+  let response:Response;
+  try{response=await fetch(path,{...init,headers})}catch{throw new Error('PC temporariamente offline. Reconectando…')}
+  const payload=await response.json().catch(()=>({error:`HTTP ${response.status}`}));
   if(!response.ok)throw new Error(payload.error??`HTTP ${response.status}`);return payload as T;
 }
 
