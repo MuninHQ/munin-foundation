@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import net from 'node:net';
+import {resolve} from 'node:path';
 import test from 'node:test';
 
 const delay=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -9,7 +10,7 @@ async function waitUntil(check:()=>Promise<boolean>,timeout=15000){const started
 test('mobile launcher remains resident and recovers its API and web children', {timeout:45000}, async()=>{
   const apiPort=await freePort();
   const webPort=await freePort();
-  const launcher=spawn(process.execPath,['scripts/launch-mobile.mjs'],{cwd:process.cwd(),env:{...process.env,MUNIN_API_PORT:String(apiPort),MUNIN_WEB_PORT:String(webPort),MUNIN_MOBILE_TOKEN:'lifecycle-test-token',MUNIN_MOBILE_SKIP_BUILD:'1',MUNIN_MOBILE_SKIP_TAILSCALE:'1',MUNIN_MOBILE_SKIP_LAN_ADDRESSES:'1'},stdio:['ignore','pipe','pipe']});
+  const launcher=spawn(process.execPath,['scripts/launch-mobile.mjs'],{cwd:process.cwd(),env:{...process.env,MUNIN_API_PORT:String(apiPort),MUNIN_WEB_PORT:String(webPort),MUNIN_MOBILE_TOKEN:'lifecycle-test-token',MUNIN_MOBILE_SKIP_BUILD:'1',MUNIN_MOBILE_SKIP_TAILSCALE:'1',MUNIN_MOBILE_SKIP_LAN_ADDRESSES:'1',MUNIN_MOBILE_WEB_ROOT:resolve(process.cwd(),'dist-web')},stdio:['ignore','pipe','pipe']});
   let output='';launcher.stdout.on('data',chunk=>{output+=String(chunk)});launcher.stderr.on('data',chunk=>{output+=String(chunk)});
   try{
     await waitUntil(async()=>output.includes('Guardian active')).catch(error=>{throw new Error(`${error instanceof Error?error.message:error}\n${output.slice(-4000)}`)});
