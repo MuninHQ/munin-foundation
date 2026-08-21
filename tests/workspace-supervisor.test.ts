@@ -30,6 +30,7 @@ test('supervisor and launcher avoid arbitrary process killing and shell restart'
  const supervisor=await readFile(new URL('../../scripts/workspace-supervisor.mjs',import.meta.url),'utf8');
  const launcher=await readFile(new URL('../../scripts/launch.mjs',import.meta.url),'utf8');
  assert.match(supervisor,/shell: false/);assert.match(supervisor,/restartExitCode = 75/);assert.match(launcher,/MUNIN_SUPERVISED/);assert.match(launcher,/workspace-restart-request\.json/);
+ assert.match(launcher,/mobile-token\.txt/);assert.match(launcher,/Loaded persistent mobile authentication/);assert.match(launcher,/api\/mobile\/health/);assert.match(launcher,/Authorization:`Bearer \$\{mobileToken\}`/);
  assert.doesNotMatch(supervisor,/taskkill|Stop-Process|exec\(/i);assert.doesNotMatch(launcher,/taskkill|Stop-Process/i);
 });
 

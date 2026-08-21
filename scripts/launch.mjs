@@ -30,6 +30,14 @@ const BROWSER_MODE = process.env.MUNIN_BROWSER_MODE ?? 'browser';
 const SUPERVISED = process.env.MUNIN_SUPERVISED === '1';
 const SKIP_AUTO_OPEN = process.env.MUNIN_SKIP_AUTO_OPEN === '1';
 const DATA_DIR = resolve(process.env.MUNIN_DATA_DIR ?? 'data/runtime');
+const MOBILE_TOKEN_FILE = resolve(DATA_DIR, 'mobile-token.txt');
+if (!process.env.MUNIN_MOBILE_TOKEN?.trim() && existsSync(MOBILE_TOKEN_FILE)) {
+  const persistedMobileToken = readFileSync(MOBILE_TOKEN_FILE, 'utf8').trim();
+  if (persistedMobileToken) {
+    process.env.MUNIN_MOBILE_TOKEN = persistedMobileToken;
+    console.log('[Munin] Loaded persistent mobile authentication.');
+  }
+}
 const RESTART_REQUEST = resolve(DATA_DIR, 'workspace-restart-request.json');
 const SUPERVISOR_RESTART_EXIT = 75;
 
@@ -68,7 +76,11 @@ async function apiHealthy() {
     const response = await fetch(`http://127.0.0.1:${API_PORT}/api/health`, { signal: AbortSignal.timeout(1200) });
     if (!response.ok) return false;
     const data = await response.json();
-    return data?.status === 'ok' && data?.service === 'munin-workspace';
+    if (data?.status !== 'ok' || data?.service !== 'munin-workspace') return false;
+    const mobileToken = process.env.MUNIN_MOBILE_TOKEN?.trim();
+    if (!mobileToken) return true;
+    const mobile = await fetch(`http://127.0.0.1:${API_PORT}/api/mobile/health`, { headers:{ Authorization:`Bearer ${mobileToken}` }, signal:AbortSignal.timeout(1200) });
+    return mobile.ok;
   } catch { return false; }
 }
 
