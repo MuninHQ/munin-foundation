@@ -21,7 +21,7 @@ function localAddresses(){return Object.values(networkInterfaces()).flat().filte
 function tailscaleAvailable(){return spawnSync('tailscale',['version'],{stdio:'ignore',shell:platform()==='win32'}).status===0;}
 function tailscaleDns(){const result=spawnSync('tailscale',['status','--json'],{encoding:'utf8',shell:platform()==='win32'});if(result.status!==0)return undefined;try{const data=JSON.parse(result.stdout);return typeof data.Self?.DNSName==='string'?data.Self.DNSName.replace(/\.$/,''):undefined}catch{return undefined}}
 function configureServe(){const result=spawnSync('tailscale',['serve','--bg',String(WEB_PORT)],{encoding:'utf8',shell:platform()==='win32'});if(result.stdout)process.stdout.write(result.stdout);if(result.stderr)process.stderr.write(result.stderr);return result.status===0;}
-async function mobileRouteHealthy(){try{const response=await fetch(`http://127.0.0.1:${API_PORT}/api/mobile/career`,{headers:{Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(2500)});return response.status!==404;}catch{return false;}}
+async function mobileRouteHealthy(){try{const response=await fetch(`http://127.0.0.1:${API_PORT}/api/mobile/career`,{headers:{Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(2500)});return response.status===200;}catch{return false;}}
 function killPort(port){
   if(platform()!=='win32')return false;
   const script=`$connection=Get-NetTCPConnection -LocalPort ${port} -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if(-not $connection){exit 1}; $pidToKill=$connection.OwningProcess; if(-not $pidToKill){exit 1}; Stop-Process -Id $pidToKill -Force -ErrorAction Stop; Start-Sleep -Milliseconds 250; exit 0`;
