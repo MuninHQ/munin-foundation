@@ -11,6 +11,8 @@ test('mobile home exposes clear actions with visible execution feedback', async 
   assert.match(app, /setActionStatus\(`Executando:/);
   assert.match(app, /aria-live="polite"/);
   assert.match(app, /scrollIntoView/);
+  assert.match(app, /MobileApiError&&e\.status===401/);
+  assert.match(app, /PC reiniciando · reconectando/);
   assert.doesNotMatch(app, />\s*[ᚱᚲᛉᛋ]\s+(?:BUILD|CONTINUE|NEEDS USER|SITREP)</);
 });
 
