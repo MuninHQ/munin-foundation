@@ -24,6 +24,10 @@ test('mobile launcher only reuses an API that accepts its bearer token', async (
   assert.match(source, /mobile-web-server\.mjs/);
   assert.match(source, /data\/runtime\/mobile-web/);
   assert.match(source, /MUNIN_WEB_OUT_DIR:WEB_ROOT/);
+  assert.match(source, /async function emailWorkerStatus/);
+  assert.match(source, /async function refreshEmailIfNeeded/);
+  assert.match(source, /email-intelligence-worker-cli\.js','--once/);
+  assert.match(source, /15\*60_000/);
   assert.match(source, /function monitorWeb/);
   assert.match(source, /mobile-release-guard\.js\?v=6/);
   assert.doesNotMatch(source, /response\.status!==404/);
