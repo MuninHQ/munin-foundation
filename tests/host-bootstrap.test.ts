@@ -6,6 +6,9 @@ const scriptUrl = new URL('../../scripts/bootstrap-chatgpt-first-host.ps1', impo
 
 test('host bootstrap stays fail-closed and fast-forward only', async () => {
   const source = await readFile(scriptUrl, 'utf8');
+  assert.match(source, /\[string\[\]\]\$GitArgs/);
+  assert.match(source, /& git @GitArgs/);
+  assert.doesNotMatch(source, /\[string\[\]\]\$Args|& git @Args/);
   assert.match(source, /branch','--show-current/);
   assert.match(source, /status','--porcelain/);
   assert.match(source, /merge','--ff-only','origin\/main/);
