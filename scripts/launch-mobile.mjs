@@ -12,6 +12,7 @@ const skipBuild=process.env.MUNIN_MOBILE_SKIP_BUILD==='1';
 const skipWeb=process.env.MUNIN_MOBILE_SKIP_WEB==='1';
 const skipTailscale=process.env.MUNIN_MOBILE_SKIP_TAILSCALE==='1';
 const skipLanAddresses=process.env.MUNIN_MOBILE_SKIP_LAN_ADDRESSES==='1';
+const skipEmailSync=process.env.MUNIN_MOBILE_SKIP_EMAIL_SYNC==='1';
 const WEB_ROOT=resolve(process.env.MUNIN_MOBILE_WEB_ROOT??resolve(process.cwd(),'data/runtime/mobile-web'));
 const tokenFile=resolve(process.cwd(),'data/runtime/mobile-token.txt');
 const WEB_SERVER_ENTRY=resolve(process.cwd(),'scripts/mobile-web-server.mjs');
@@ -20,6 +21,7 @@ let apiRecovery;
 let apiMonitor;
 let webRecovery;
 let webMonitor;
+let emailMonitor;
 
 function persistentToken(){if(process.env.MUNIN_MOBILE_TOKEN?.trim())return process.env.MUNIN_MOBILE_TOKEN.trim();if(existsSync(tokenFile)){const value=readFileSync(tokenFile,'utf8').trim();if(value)return value;}mkdirSync(dirname(tokenFile),{recursive:true});const token=randomBytes(24).toString('base64url');writeFileSync(tokenFile,token+'\n',{encoding:'utf8',mode:0o600});return token;}
 const token=persistentToken();
@@ -33,6 +35,7 @@ function tailscaleAvailable(){return spawnSync('tailscale',['version'],{stdio:'i
 function tailscaleDns(){const result=spawnSync('tailscale',['status','--json'],{encoding:'utf8',shell:platform()==='win32'});if(result.status!==0)return undefined;try{const data=JSON.parse(result.stdout);return typeof data.Self?.DNSName==='string'?data.Self.DNSName.replace(/\.$/,''):undefined}catch{return undefined}}
 function configureServe(){const result=spawnSync('tailscale',['serve','--bg',String(WEB_PORT)],{encoding:'utf8',shell:platform()==='win32'});if(result.stdout)process.stdout.write(result.stdout);if(result.stderr)process.stderr.write(result.stderr);return result.status===0;}
 async function mobileRouteHealthy(){try{const response=await fetch(`http://127.0.0.1:${API_PORT}/api/mobile/career`,{headers:{Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(2500)});return response.status===200;}catch{return false;}}
+async function emailWorkerStatus(){try{const response=await fetch(`http://127.0.0.1:${API_PORT}/api/mobile/email-intelligence`,{headers:{Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(2500)});if(!response.ok)return'unknown';const payload=await response.json();return payload?.worker?.status??'unknown'}catch{return'unknown'}}
 async function webRouteHealthy(){try{const response=await fetch(`http://127.0.0.1:${WEB_PORT}/mobile.html`,{cache:'no-store',signal:AbortSignal.timeout(2500)});if(response.status!==200)return false;return (await response.text()).includes('mobile-release-guard.js?v=6');}catch{return false;}}
 function killPort(port){
   if(platform()!=='win32')return false;
@@ -47,6 +50,8 @@ async function recoverApi(){if(apiRecovery)return apiRecovery;apiRecovery=ensure
 function monitorApi(){if(apiMonitor)return;apiMonitor=setInterval(()=>{void (async()=>{if(apiRecovery)return;if(!(await mobileRouteHealthy())){console.warn('[Munin Mobile] API unavailable; recovering automatically…');await recoverApi();}})()},3000);}
 async function recoverWeb(){if(webRecovery)return webRecovery;webRecovery=ensureWeb().catch(error=>{console.error('[Munin Mobile] Web recovery failed:',error instanceof Error?error.message:error)}).finally(()=>{webRecovery=undefined});return webRecovery;}
 function monitorWeb(){if(webMonitor)return;webMonitor=setInterval(()=>{void (async()=>{if(webRecovery)return;if(!(await webRouteHealthy())){console.warn('[Munin Mobile] Web unavailable; recovering automatically…');await recoverWeb();}})()},3000);}
-async function main(){console.log('[Munin Mobile] Building runtime and mobile web…');if(!skipBuild)await runDone(NPM_COMMAND,['run','build'],'runtime build');await ensureApi();monitorApi();if(!skipWeb){await ensureWeb();monitorWeb();}console.log('\n=== MUNIN MOBILE READY ===');console.log(`Token: ${token}`);console.log('Salve este token no primeiro acesso; ele permanece estável neste PC.');if(!skipTailscale&&tailscaleAvailable()){const served=configureServe();const dns=tailscaleDns();if(served&&dns)console.log(`iPhone (Tailscale HTTPS): https://${dns}/mobile.html`);else console.log('Tailscale está instalado, mas Serve requer configuração/consentimento. Rode: tailscale serve --bg '+WEB_PORT);}if(!skipWeb){if(!skipLanAddresses)for(const address of localAddresses())console.log(`LAN: http://${address}:${WEB_PORT}/mobile.html`);console.log('Acesso via Tailscale Serve é preferível: privado no tailnet e HTTPS.');}console.log('[Munin Mobile] Guardian active. Keep this window open.');await new Promise(()=>{});}
-function shutdown(){if(apiMonitor)clearInterval(apiMonitor);if(webMonitor)clearInterval(webMonitor);for(const child of children)if(!child.killed)child.kill('SIGTERM');process.exit(0)}
+async function refreshEmailIfNeeded(){const status=await emailWorkerStatus();if(!['unknown','stale','degraded'].includes(status))return;console.log(`[Munin Mobile] Email sync is ${status}; running a bounded read-only refresh…`);try{await runDone(process.execPath,['dist/src/email-intelligence-worker-cli.js','--once'],'email intelligence sync')}catch(error){console.error('[Munin Mobile] Email refresh failed:',error instanceof Error?error.message:error)}}
+function monitorEmail(){if(skipEmailSync||emailMonitor)return;emailMonitor=setInterval(()=>void refreshEmailIfNeeded(),15*60_000);}
+async function main(){console.log('[Munin Mobile] Building runtime and mobile web…');if(!skipBuild)await runDone(NPM_COMMAND,['run','build'],'runtime build');await ensureApi();monitorApi();if(!skipEmailSync){await refreshEmailIfNeeded();monitorEmail();}if(!skipWeb){await ensureWeb();monitorWeb();}console.log('\n=== MUNIN MOBILE READY ===');console.log(`Token: ${token}`);console.log('Salve este token no primeiro acesso; ele permanece estável neste PC.');if(!skipTailscale&&tailscaleAvailable()){const served=configureServe();const dns=tailscaleDns();if(served&&dns)console.log(`iPhone (Tailscale HTTPS): https://${dns}/mobile.html`);else console.log('Tailscale está instalado, mas Serve requer configuração/consentimento. Rode: tailscale serve --bg '+WEB_PORT);}if(!skipWeb){if(!skipLanAddresses)for(const address of localAddresses())console.log(`LAN: http://${address}:${WEB_PORT}/mobile.html`);console.log('Acesso via Tailscale Serve é preferível: privado no tailnet e HTTPS.');}console.log('[Munin Mobile] Guardian active. Keep this window open.');await new Promise(()=>{});}
+function shutdown(){if(apiMonitor)clearInterval(apiMonitor);if(webMonitor)clearInterval(webMonitor);if(emailMonitor)clearInterval(emailMonitor);for(const child of children)if(!child.killed)child.kill('SIGTERM');process.exit(0)}
 process.on('SIGINT',shutdown);process.on('SIGTERM',shutdown);main().catch(error=>{console.error('[Munin Mobile]',error instanceof Error?error.message:error);process.exitCode=1});
