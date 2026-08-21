@@ -9,6 +9,10 @@ test('host bootstrap stays fail-closed and fast-forward only', async () => {
   assert.match(source, /\[string\[\]\]\$GitArgs/);
   assert.match(source, /& git @GitArgs/);
   assert.doesNotMatch(source, /\[string\[\]\]\$Args|& git @Args/);
+  assert.match(source, /\$ErrorActionPreference = 'Continue'/);
+  assert.match(source, /\$exitCode = \$LASTEXITCODE/);
+  assert.match(source, /finally \{\s*\$ErrorActionPreference = \$previousErrorActionPreference/);
+  assert.match(source, /if \(\$exitCode -ne 0\)/);
   assert.match(source, /branch','--show-current/);
   assert.match(source, /status','--porcelain/);
   assert.match(source, /merge','--ff-only','origin\/main/);

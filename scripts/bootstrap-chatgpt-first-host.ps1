@@ -3,8 +3,15 @@ $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Set-Location $repo
 
 function Invoke-Git([string[]]$GitArgs) {
-  $output = & git @GitArgs 2>&1
-  if ($LASTEXITCODE -ne 0) { throw "git $($GitArgs -join ' ') failed: $output" }
+  $previousErrorActionPreference = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  try {
+    $output = & git @GitArgs 2>&1
+    $exitCode = $LASTEXITCODE
+  } finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+  }
+  if ($exitCode -ne 0) { throw "git $($GitArgs -join ' ') failed: $output" }
   return ($output -join "`n")
 }
 
