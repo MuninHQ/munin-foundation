@@ -9,8 +9,8 @@ const allowedHosts = ['localhost', '127.0.0.1', '.ts.net'];
 export default defineConfig({
   root,
   plugins: [react()],
-  server: { allowedHosts, proxy: { '/api': apiTarget } },
-  preview: { allowedHosts, proxy: { '/api': apiTarget } },
+  server: { allowedHosts, headers: { 'Cache-Control': 'no-store' }, proxy: { '/api': apiTarget } },
+  preview: { allowedHosts, headers: { 'Cache-Control': 'no-store' }, proxy: { '/api': apiTarget } },
   build: {
     outDir: path.resolve(root, '../../dist-web'),
     emptyOutDir: true,
