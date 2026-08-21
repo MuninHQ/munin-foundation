@@ -4,7 +4,7 @@ import { extname, resolve, sep } from 'node:path';
 
 const port=Number(process.env.MUNIN_WEB_PORT??5173);
 const apiPort=Number(process.env.MUNIN_API_PORT??4310);
-const root=resolve(process.cwd(),'dist-web');
+const root=resolve(process.env.MUNIN_WEB_ROOT??resolve(process.cwd(),'dist-web'));
 const mime={'.css':'text/css; charset=utf-8','.html':'text/html; charset=utf-8','.ico':'image/x-icon','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'};
 
 function proxy(req,res){
