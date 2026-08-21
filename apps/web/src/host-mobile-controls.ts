@@ -25,12 +25,12 @@ const css=`
 function mount(){
   if(document.querySelector('.munin-host-launch'))return;
   const style=document.createElement('style');style.textContent=css;document.head.appendChild(style);
-  const launch=document.createElement('button');launch.className='munin-host-launch';launch.textContent='HOST';launch.title='Munin Host Bridge';
+  const launch=document.createElement('button');launch.className='munin-host-launch';launch.textContent='PC';launch.title='Controles do PC';launch.setAttribute('aria-label','Abrir controles do PC');
   const panel=document.createElement('section');panel.className='munin-host-panel';panel.innerHTML=`<h3>HOST BRIDGE</h3><p>Jobs tipados e autenticados. Sem shell remoto. Restart só executa quando o Workspace Supervisor local estiver saudável; caso contrário falha fechado.</p><div class="munin-host-actions"></div><span class="munin-host-status"></span><div class="munin-host-history"></div>`;
   document.body.append(panel,launch);
   const actions=panel.querySelector('.munin-host-actions') as HTMLDivElement;const status=panel.querySelector('.munin-host-status') as HTMLSpanElement;const history=panel.querySelector('.munin-host-history') as HTMLDivElement;
   for(const type of Object.keys(labels) as HostJobType[]){const button=document.createElement('button');button.textContent=labels[type];if(type==='git-fast-forward')button.className='update';if(type==='restart-munin')button.className='restart';button.onclick=()=>void enqueue(type);actions.appendChild(button)}
-  launch.onclick=()=>{panel.classList.toggle('open');if(panel.classList.contains('open'))void refresh()};
+  launch.onclick=()=>{panel.classList.toggle('open');launch.setAttribute('aria-expanded',String(panel.classList.contains('open')));if(panel.classList.contains('open'))void refresh()};
 
   async function enqueue(type:HostJobType){
     if(!token()){status.textContent='Token mobile ausente.';return}

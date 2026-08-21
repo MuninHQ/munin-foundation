@@ -1,0 +1,29 @@
+/* iPhone product layer: readable hierarchy and controls that never overlap. */
+.shell{padding-left:18px;padding-right:18px;padding-bottom:calc(env(safe-area-inset-bottom) + 148px)}
+header{align-items:flex-start;position:relative}
+header:before{display:none}
+header h1{font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:1.75rem;line-height:1.12;letter-spacing:-.03em;font-weight:780;margin:.3rem 0 .25rem}
+.action-status{display:block;color:var(--muted);font-size:.72rem;line-height:1.3;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sync-button{min-width:84px;min-height:44px;padding:10px 12px}
+.sync-button:disabled,.quick-grid button:disabled{opacity:.55;cursor:wait}
+.status-card{align-items:flex-start;flex-direction:column;gap:5px;border-radius:14px}
+.status-card small{padding-left:15px;color:var(--muted)}
+.priority-card{padding:18px}
+.priority-card h2{font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:1.35rem;line-height:1.25;letter-spacing:-.02em;font-weight:740}
+.quick-grid{gap:10px}
+.quick-grid button{display:flex;min-height:74px;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;padding:13px 14px}
+.quick-grid button span{font-size:.98rem}
+.quick-grid button small{font-size:.7rem;color:var(--muted);font-weight:600;line-height:1.25}
+.conversation{min-height:150px;padding:12px;margin-bottom:12px}
+.composer{position:static;left:auto;bottom:auto;transform:none;width:100%;grid-template-columns:1fr;padding:0;background:none;backdrop-filter:none;margin:0 0 16px}
+.composer textarea{font-size:16px;min-height:72px}
+.composer button{min-height:48px}
+.raven-nav{grid-template-columns:repeat(5,minmax(0,1fr));padding-left:5px;padding-right:5px}
+.raven-nav button{min-width:0;min-height:54px;padding:6px 1px}
+.raven-nav button span{font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:1rem}
+.raven-nav button small{font-size:.56rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+body .munin-mail-launch{left:12px;bottom:max(76px,calc(env(safe-area-inset-bottom) + 64px))}
+body .munin-gpt-launch{left:50%;transform:translateX(-50%);bottom:max(76px,calc(env(safe-area-inset-bottom) + 64px));padding:10px 12px;white-space:nowrap}
+body .munin-host-launch{right:12px;bottom:max(76px,calc(env(safe-area-inset-bottom) + 64px))}
+body .munin-mail-panel,body .munin-gpt-panel,body .munin-host-panel{bottom:max(124px,calc(env(safe-area-inset-bottom) + 112px));max-height:68dvh;overflow:auto}
+@media(max-width:370px){.shell{padding-left:12px;padding-right:12px}.quick-grid{grid-template-columns:1fr}.quick-grid button{min-height:60px}.raven-nav button small{font-size:.5rem}body .munin-gpt-launch{font-size:0;padding:10px 13px}body .munin-gpt-launch:after{content:'GPT';font-size:10px}}
