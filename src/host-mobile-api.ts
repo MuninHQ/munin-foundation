@@ -4,9 +4,17 @@ import { resolve } from 'node:path';
 import { json, readJsonBody } from './http.js';
 import { mobileAuthorized } from './mobile-api.js';
 import { JsonHostJobQueue } from './json-host-job-queue.js';
+import { HostBridgeWorker } from './host-bridge-worker.js';
 import { validateHostJob, type HostJobType } from './host-bridge-protocol.js';
 
-const queue = new JsonHostJobQueue(resolve(process.cwd(), 'data', 'runtime', 'host-bridge-queue.json'));
+const queuePath = resolve(process.cwd(), 'data', 'runtime', 'host-bridge-queue.json');
+const worker = new HostBridgeWorker({ queuePath });
+const queue: JsonHostJobQueue = worker.queue;
+let activeDrain: Promise<number> | undefined;
+function drainQueue(): Promise<number> {
+  if (!activeDrain) activeDrain = worker.runUntilEmpty().finally(() => { activeDrain = undefined; });
+  return activeDrain;
+}
 const ALLOWED: ReadonlySet<HostJobType> = new Set(['runtime-health','git-fast-forward','restart-munin','run-acceptance','tailscale-health']);
 
 function parseType(value: unknown): HostJobType | undefined {
@@ -19,6 +27,7 @@ export async function handleHostMobileApi(request: IncomingMessage, response: Se
   const url = new URL(request.url ?? '/', 'http://localhost');
   try {
     if (request.method === 'GET' && url.pathname === '/api/mobile/host/jobs') {
+      void drainQueue();
       const jobs = await queue.list();
       return json(request, response, 200, { jobs: jobs.slice(-50).reverse() });
     }
@@ -35,7 +44,10 @@ export async function handleHostMobileApi(request: IncomingMessage, response: Se
       };
       const gate = validateHostJob(job);
       if (gate.status !== 'approved') return json(request, response, 400, gate);
-      return json(request, response, 202, await queue.enqueue(job));
+      const queued = await queue.enqueue(job);
+      json(request, response, 202, queued);
+      void drainQueue();
+      return;
     }
     return json(request, response, 404, { error:'Host Bridge mobile route not found' });
   } catch (error) {
