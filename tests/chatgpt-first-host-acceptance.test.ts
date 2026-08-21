@@ -9,6 +9,9 @@ test('host acceptance runner is read-only and checks ChatGPT-first signals', asy
   assert.match(script, /Get-Process -Name 'ollama'/);
   assert.match(script, /Ollama process detected independently/);
   assert.match(script, /Add-Result 'ollama-not-required' \$true/);
+  assert.match(script, /function Invoke-WebWithRetry/);
+  assert.match(script, /Start-Sleep -Milliseconds 500/);
+  assert.match(script, /Invoke-WebWithRetry \$WebUrl/);
   assert.match(script, /api\/workspace/);
   assert.match(script, /chatgpt-operator-bridge/);
   assert.doesNotMatch(script, /Stop-Process|Remove-Item|Set-Content|Invoke-Expression|Start-Process/);
