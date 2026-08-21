@@ -6,6 +6,9 @@ test('mobile Host Bridge API requires existing mobile auth and only enqueues typ
   const source = await readFile(new URL('../../src/host-mobile-api.ts', import.meta.url), 'utf8');
   assert.match(source, /mobileAuthorized/);
   assert.match(source, /JsonHostJobQueue/);
+  assert.match(source, /HostBridgeWorker/);
+  assert.match(source, /worker\.runUntilEmpty/);
+  assert.match(source, /void drainQueue\(\)/);
   assert.match(source, /validateHostJob/);
   assert.match(source, /MuninHQ\/munin-foundation/);
   assert.match(source, /branch:'main'/);
