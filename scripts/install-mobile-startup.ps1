@@ -3,9 +3,12 @@ $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $taskName = 'Munin Mobile Guardian'
 $userId = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
 $powershell = (Get-Command powershell.exe -ErrorAction Stop).Source
+$node = (Get-Command node.exe -ErrorAction Stop).Source
+$npm = (Get-Command npm.cmd -ErrorAction Stop).Source
 $runner = Join-Path $repo 'scripts\run-mobile-guardian.ps1'
 
-$action = New-ScheduledTaskAction -Execute $powershell -Argument "-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$runner`"" -WorkingDirectory $repo
+$arguments = "-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$runner`" -NodePath `"$node`" -NpmPath `"$npm`""
+$action = New-ScheduledTaskAction -Execute $powershell -Argument $arguments -WorkingDirectory $repo
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $userId
 $principal = New-ScheduledTaskPrincipal -UserId $userId -LogonType Interactive -RunLevel Limited
 $settings = New-ScheduledTaskSettingsSet `
