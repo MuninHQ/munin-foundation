@@ -16,6 +16,8 @@ test('mobile Host Bridge UI only enqueues allowlisted governed jobs including su
   assert.match(source,/restart-munin/);
   assert.match(source,/Supervisor local estiver saudável/);
   assert.match(source,/\/api\/mobile\/host\/jobs/);
+  assert.match(source,/async function follow/);
+  assert.match(source,/setTimeout\(resolveDelay=>setTimeout|setTimeout\(resolveDelay,1000\)/);
   assert.match(source,/Authorization/);
   assert.doesNotMatch(source,/execFile|spawn\(|shell\s*:/);
 });
