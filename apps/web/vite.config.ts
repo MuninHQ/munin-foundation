@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname);
+const outputDirectory = process.env.MUNIN_WEB_OUT_DIR
+  ? path.resolve(process.env.MUNIN_WEB_OUT_DIR)
+  : path.resolve(root, '../../dist-web');
 const apiTarget = `http://127.0.0.1:${process.env.MUNIN_API_PORT ?? 4310}`;
 const allowedHosts = ['localhost', '127.0.0.1', '.ts.net'];
 
@@ -12,7 +15,7 @@ export default defineConfig({
   server: { allowedHosts, headers: { 'Cache-Control': 'no-store' }, proxy: { '/api': apiTarget } },
   preview: { allowedHosts, headers: { 'Cache-Control': 'no-store' }, proxy: { '/api': apiTarget } },
   build: {
-    outDir: path.resolve(root, '../../dist-web'),
+    outDir: outputDirectory,
     emptyOutDir: true,
     rollupOptions: {
       input: {
