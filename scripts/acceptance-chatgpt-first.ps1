@@ -10,6 +10,16 @@ function Add-Result([string]$Name, [bool]$Passed, [string]$Evidence) {
   $script:results += [pscustomobject]@{ name=$Name; passed=$Passed; evidence=$Evidence }
 }
 
+function Invoke-WebWithRetry([string]$Uri, [int]$Attempts = 10) {
+  for ($attempt = 1; $attempt -le $Attempts; $attempt++) {
+    try { return Invoke-WebRequest -UseBasicParsing -Uri $Uri -TimeoutSec 5 }
+    catch {
+      if ($attempt -eq $Attempts) { throw }
+      Start-Sleep -Milliseconds 500
+    }
+  }
+}
+
 try {
   $ollama = Get-Process -Name 'ollama' -ErrorAction SilentlyContinue
   Add-Result 'ollama-not-required' $true ($(if ($ollama) { 'Ollama process detected independently; Munin does not require or manage it in ChatGPT-first mode.' } else { 'No Ollama process detected; Munin does not require it.' }))
@@ -18,14 +28,14 @@ try {
 }
 
 try {
-  $workspace = Invoke-WebRequest -UseBasicParsing -Uri "$ApiUrl/api/workspace" -TimeoutSec 5
+  $workspace = Invoke-WebWithRetry "$ApiUrl/api/workspace"
   Add-Result 'workspace-api' ($workspace.StatusCode -eq 200) "HTTP $($workspace.StatusCode)"
 } catch {
   Add-Result 'workspace-api' $false 'Workspace endpoint unavailable on the configured API URL.'
 }
 
 try {
-  $home = Invoke-WebRequest -UseBasicParsing -Uri $WebUrl -TimeoutSec 5
+  $home = Invoke-WebWithRetry $WebUrl
   $hasCockpit = $home.Content -match 'chatgpt-operator-bridge'
   Add-Result 'web-chatgpt-cockpit' $hasCockpit ($(if ($hasCockpit) { 'Operator bridge present in Web entrypoint.' } else { 'Operator bridge marker not found.' }))
 } catch {
