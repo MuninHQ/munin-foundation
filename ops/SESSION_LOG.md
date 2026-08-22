@@ -1,5 +1,13 @@
 # Munin Session Log
 
+## 2026-08-22 — Unified Mobile UI
+
+- Removed the desktop-only minimum width from the React workspace.
+- Added a shared bottom navigation and mobile action launcher.
+- Redesigned Action Inbox around explanation, recommendation and consequence.
+- Added skeleton, retry, empty, toast and execution-timeline states.
+- Preserved approval-first behavior and avoided new external mutations.
+
 > Append concise, durable execution events. This is not a transcript archive.
 
 ## 2026-08-22 — Proactive Operator Hub
