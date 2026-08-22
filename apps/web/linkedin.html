@@ -186,8 +186,10 @@
           <p>Histórico editorial, memória visual e próxima publicação.</p>
         </div>
         <div class="buttons">
-          <a class="btn" href="/">← Command Center</a><a class="btn" href="/image-settings.html">Image AI</a
-          ><button class="primary" onclick="openImport()">+ Importar post anterior</button>
+          <a class="btn" href="/">← Command Center</a><a class="btn" href="/linkedin-compose.html">Composer</a
+          ><a class="btn" href="/linkedin-brand.html">Authority</a><a class="btn" href="/linkedin-history.html">Histórico</a
+          ><a class="btn" href="/linkedin-assets.html">Assets</a><a class="btn" href="/linkedin-publisher.html">Publisher</a
+          ><a class="btn" href="/image-settings.html">Image AI</a><button class="primary" onclick="openImport()">+ Importar post</button>
         </div>
       </div>
       <div class="grid">
@@ -199,7 +201,7 @@
               <button onclick="load()">Atualizar</button>
             </div>
             <p>O ranking considera repetição dos últimos temas, pesquisas, projetos e sinais do Career OS.</p>
-            <div id="suggestions" class="suggestions"></div>
+            <div id="suggestions" class="suggestions"><div class="empty">Carregando sugestões…</div></div>
           </article>
           <article class="panel" style="margin-top: 16px">
             <div class="row">
@@ -209,7 +211,7 @@
               </div>
               <span id="count" class="muted"></span>
             </div>
-            <div id="posts" class="posts"></div>
+            <div id="posts" class="posts"><div class="empty">Carregando memória editorial…</div></div>
           </article>
         </section>
         <aside>

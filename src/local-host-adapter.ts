@@ -72,7 +72,24 @@ export class LocalHostAdapter implements HostExecutionAdapter {
       if (!hudMobileResponse.ok || !hudMobile.includes('<title>Munin · HUD Mobile</title>')) {
         throw new Error(`HUD mobile publication check failed with HTTP ${hudMobileResponse.status}`);
       }
-      web = `HTTP ${webResponse.status}; HUD mobile HTTP ${hudMobileResponse.status}`;
+      const linkedinPages = [
+        ['/linkedin.html', '<title>Munin LinkedIn Intelligence</title>'],
+        ['/linkedin-compose.html', '<title>Munin LinkedIn Composer</title>'],
+        ['/linkedin-brand.html', '<title>Munin Personal Brand Intelligence</title>'],
+        ['/linkedin-history.html', '<title>Munin Editorial History</title>'],
+        ['/linkedin-assets.html', '<title>Munin Visual Asset Memory</title>'],
+        ['/linkedin-publisher.html', '<title>Munin LinkedIn Publisher</title>'],
+      ] as const;
+      for (const [path, marker] of linkedinPages) {
+        const pageResponse = await fetch(`${this.webUrl}${path}`, { signal: AbortSignal.timeout(Math.min(this.timeoutMs, 5000)) });
+        const page = await pageResponse.text();
+        if (!pageResponse.ok || !page.includes(marker)) throw new Error(`LinkedIn Studio publication check failed for ${path} with HTTP ${pageResponse.status}`);
+      }
+      const linkedinContent = await fetch(`${this.apiUrl}/api/linkedin-content`, { signal: AbortSignal.timeout(Math.min(this.timeoutMs, 5000)) });
+      const linkedinComposer = await fetch(`${this.apiUrl}/api/linkedin-composer/status`, { signal: AbortSignal.timeout(Math.min(this.timeoutMs, 5000)) });
+      const linkedinPublisher = await fetch(`${this.apiUrl}/api/linkedin-publisher`, { signal: AbortSignal.timeout(Math.min(this.timeoutMs, 5000)) });
+      if (!linkedinContent.ok || !linkedinComposer.ok || !linkedinPublisher.ok) throw new Error('LinkedIn Studio API publication check failed.');
+      web = `HTTP ${webResponse.status}; HUD mobile HTTP ${hudMobileResponse.status}; LinkedIn Studio 6/6 pages and 3/3 APIs healthy`;
     } catch (error) {
       throw new Error(`Munin web publication is unhealthy: ${error instanceof Error ? error.message : String(error)}`);
     }
