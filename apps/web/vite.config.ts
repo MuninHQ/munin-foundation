@@ -38,6 +38,7 @@ export default defineConfig({
         'executive-briefing': path.resolve(root, 'executive-briefing.html'),
         'image-settings': path.resolve(root, 'image-settings.html'),
         'linkedin-assets': path.resolve(root, 'linkedin-assets.html'),
+        'linkedin-brand': path.resolve(root, 'linkedin-brand.html'),
         'linkedin-compose': path.resolve(root, 'linkedin-compose.html'),
         'linkedin-history': path.resolve(root, 'linkedin-history.html'),
         'linkedin-publisher': path.resolve(root, 'linkedin-publisher.html'),
