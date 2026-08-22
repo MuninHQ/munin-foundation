@@ -1,0 +1,3 @@
+import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import test from 'node:test';
+const web=(path:string)=>readFile(new URL(`../../apps/web/${path}`,import.meta.url),'utf8');
+test('dedicated HUD mobile route is cache-independent and single-column',async()=>{const page=await web('hud-mobile.html');assert.match(page,/hud-mobile-route-1/);assert.match(page,/flex-direction:column!important/);assert.match(page,/\.hud-node,.hud-reticle,.hud-readout\{display:none!important\}/);assert.match(page,/\.hud-calendar,#vitals-panel,#adaptive-panel\{display:none!important\}/);assert.match(page,/viewport-fit=cover/)});

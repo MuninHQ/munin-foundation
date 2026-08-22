@@ -22,6 +22,7 @@ export default defineConfig({
         index: path.resolve(root, 'index.html'),
         mobile: path.resolve(root, 'mobile.html'),
         hud: path.resolve(root, 'hud.html'),
+        'hud-mobile': path.resolve(root, 'hud-mobile.html'),
         'career-command': path.resolve(root, 'career-command.html'),
         'career-inbox': path.resolve(root, 'career-inbox.html'),
         'career-intake': path.resolve(root, 'career-intake.html'),

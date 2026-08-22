@@ -1,5 +1,11 @@
 # Munin Session Log
 
+## 2026-08-22 — Dedicated HUD mobile route
+
+- Replaced cache-sensitive responsive overrides with a new `/hud-mobile.html` entrypoint.
+- Embedded authoritative mobile layout overrides directly in the new HTML route.
+- Kept `/hud.html` as the desktop cinematic interface.
+
 ## 2026-08-22 — HUD mobile cache bust
 
 - Confirmed from a second iPhone capture that cached HUD assets kept the desktop layout active.
