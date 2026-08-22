@@ -1,5 +1,12 @@
 # Munin Canonical Backlog
 
+## HUD Mobile Layout — completed 2026-08-22
+
+- [x] Replace compressed desktop HUD with a dedicated single-column mobile composition.
+- [x] Remove overlapping orbit nodes and ambient canvases from small screens.
+- [x] Keep feed, career, chrono and activity readable in natural scroll order.
+- [x] Contain the command composer within iPhone width and safe-area bounds.
+
 ## Unified Mobile UI — completed 2026-08-22
 
 - [x] Five-destination mobile navigation shared by Home and standalone modules.
