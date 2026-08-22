@@ -42,6 +42,45 @@ try {
   Add-Result 'web-chatgpt-cockpit' $false 'Web entrypoint unavailable on the configured Web URL.'
 }
 
+
+$linkedinPages = @(
+  @{ path='/linkedin.html'; marker='<title>Munin LinkedIn Intelligence</title>' },
+  @{ path='/linkedin-compose.html'; marker='<title>Munin LinkedIn Composer</title>' },
+  @{ path='/linkedin-brand.html'; marker='<title>Munin Personal Brand Intelligence</title>' },
+  @{ path='/linkedin-history.html'; marker='<title>Munin Editorial History</title>' },
+  @{ path='/linkedin-assets.html'; marker='<title>Munin Visual Asset Memory</title>' },
+  @{ path='/linkedin-publisher.html'; marker='<title>Munin LinkedIn Publisher</title>' }
+)
+foreach ($page in $linkedinPages) {
+  try {
+    $response = Invoke-WebWithRetry "$WebUrl$($page.path)"
+    $valid = $response.StatusCode -eq 200 -and $response.Content.Contains($page.marker)
+    Add-Result "linkedin-page-$($page.path.Trim('/').Replace('.html',''))" $valid ($(if ($valid) { "HTTP 200 with expected release marker." } else { "Unexpected status or content." }))
+  } catch {
+    Add-Result "linkedin-page-$($page.path.Trim('/').Replace('.html',''))" $false "Published route unavailable."
+  }
+}
+
+$linkedinApis = @(
+  @{ name='content'; path='/api/linkedin-content'; required=@('posts','suggestions','visualProfile') },
+  @{ name='composer-status'; path='/api/linkedin-composer/status'; required=@('text','image','brandIntelligence') },
+  @{ name='brand'; path='/api/linkedin-composer/brand'; required=@('profile','authorityFlywheel') },
+  @{ name='suggestions'; path='/api/linkedin-composer/suggestions'; required=@('suggestions','sourceMode') },
+  @{ name='publisher'; path='/api/linkedin-publisher'; required=@('policy','items') },
+  @{ name='visual-assets-health'; path='/api/visual-assets/health'; required=@('provider') }
+)
+foreach ($check in $linkedinApis) {
+  try {
+    $response = Invoke-WebWithRetry "$ApiUrl$($check.path)"
+    $payload = $response.Content | ConvertFrom-Json
+    $missing = @($check.required | Where-Object { $null -eq $payload.$_ })
+    $valid = $response.StatusCode -eq 200 -and $missing.Count -eq 0
+    Add-Result "linkedin-api-$($check.name)" $valid ($(if ($valid) { "HTTP 200 with required contract fields." } else { "Missing fields: $($missing -join ', ')" }))
+  } catch {
+    Add-Result "linkedin-api-$($check.name)" $false "Read-only API contract unavailable: $($_.Exception.Message)"
+  }
+}
+
 $failed = @($results | Where-Object { -not $_.passed })
 $output = [pscustomobject]@{
   generatedAt = (Get-Date).ToUniversalTime().ToString('o')
