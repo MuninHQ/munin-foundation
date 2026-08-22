@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "id": "acceptance-20260822164937",
-  "type": "run-acceptance",
-  "createdAt": "2026-08-22T16:49:37.111Z",
-  "expiresAt": "2026-08-22T17:03:37.111Z",
+  "id": "deploy-20260822170548",
+  "type": "deploy-main",
+  "createdAt": "2026-08-22T17:05:48.253Z",
+  "expiresAt": "2026-08-22T17:19:48.253Z",
   "repo": "MuninHQ/munin-foundation",
   "branch": "main"
 }
