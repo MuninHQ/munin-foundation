@@ -21,6 +21,11 @@ import { trustedSourceRadar } from './trusted-source-radar.js';
 import { buildActionInbox } from './action-inbox.js';
 import { connectorRegistry } from './connector-registry.js';
 import { ManusTaskStore, manusBridgeStatus, refreshManusTasks, submitManusTask, type ManusTaskKind } from './manus-operational-bridge.js';
+import { buildProactiveOperator } from './proactive-operator.js';
+import { recentOrchestrationTraces } from './orchestration-api.js';
+import { readFile } from 'node:fs/promises';
+import { runtimePath } from './config.js';
+import type { EngineeringJob } from './engineering-jobs.js';
 const store=new ContextStore(); const service=new MuninService(store); const inbox=new CareerInboxStore(); const watchFolder=new CareerWatchFolder();
 const manusTasks=new ManusTaskStore();
 const body=(request:IncomingMessage)=>readJsonBody(request,5_000_000);
@@ -31,6 +36,7 @@ if(request.method==='GET'&&url.pathname==='/api/action-inbox'){const [state,emai
 if(request.method==='GET'&&url.pathname==='/api/connectors'){const [radar,connections,manus]=await Promise.all([trustedSourceRadar(false),connectionStatus(),manusBridgeStatus(manusTasks)]);return json(request,response,200,{generatedAt:new Date().toISOString(),items:[...connectorRegistry(radar,connections),{id:'manus',name:'Manus Operational Bridge',category:'research',cost:'free',auth:'oauth',enabled:manus.enabled,health:manus.enabled?'healthy':'not-connected',detail:manus.enabled?`${manus.profile} · ${manus.declaredCreditsToday}/${manus.dailyCreditBudget} créditos reservados hoje`:manus.reason}]});}
 if(request.method==='GET'&&url.pathname==='/api/manus/status')return json(request,response,200,await manusBridgeStatus(manusTasks));
 if(request.method==='GET'&&url.pathname==='/api/manus/tasks')return json(request,response,200,{items:await manusTasks.list()});
+if(request.method==='GET'&&url.pathname==='/api/proactive-operator'){let engineering:EngineeringJob[]=[];try{engineering=JSON.parse(await readFile(runtimePath('engineering-jobs.json'),'utf8')) as EngineeringJob[]}catch{}const [state,email,manus]=await Promise.all([store.load(),inbox.load(),manusTasks.list()]);return json(request,response,200,buildProactiveOperator({state,inbox:email,manus,traces:recentOrchestrationTraces(),engineering}));}
 if(request.method==='POST'&&url.pathname==='/api/manus/tasks'){const input=await body(request);return json(request,response,201,await submitManusTask({kind:text(input.kind,'kind') as ManusTaskKind,title:text(input.title,'title'),prompt:text(input.prompt,'prompt'),declaredCreditBudget:typeof input.declaredCreditBudget==='number'?input.declaredCreditBudget:undefined},manusTasks));}
 if(request.method==='POST'&&url.pathname==='/api/manus/refresh')return json(request,response,200,{items:await refreshManusTasks(manusTasks)});
 if(request.method==='GET'&&url.pathname==='/api/workspace'){const state=await store.load();const events=await store.events();const careerQueue=await service.careerQueue();return json(request,response,200,{state,events:events.slice(-20).reverse(),careerQueue,intelligence:{dailyBrief:generateDailyBrief(state),timeline:buildTimeline(state,events,30),graph:buildKnowledgeGraph(state),insights:generateInsights(state).slice(0,20)}});}

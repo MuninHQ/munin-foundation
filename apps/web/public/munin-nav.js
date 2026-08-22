@@ -3,6 +3,7 @@
   const sections = [
     { label: 'Home', href: '/' },
     { label: 'Inbox', href: '/action-inbox.html' },
+    { label: 'Today', href: '/operator-hub.html' },
     { label: 'Radar', href: '/radar.html' },
     { label: 'Manus', href: '/manus.html' },
     { label: 'Flows', href: '/flows.html' },
@@ -37,6 +38,7 @@
   const commands = [
     ['/', 'Home', 'Visão geral do workspace'],
     ['/action-inbox.html', 'Action Inbox', 'O que precisa de atenção'],
+    ['/operator-hub.html', 'Today · Operator Hub', 'Agenda, follow-ups e aprovações'],
     ['/operator-chat.html', 'Chat operacional', 'Executar comandos e continuar no ChatGPT'],
     ['/flows.html', 'Fluxos', 'Acompanhar rotas e tentativas'],
     ['/radar.html', 'Radar', 'Sinais e fontes confiáveis'],

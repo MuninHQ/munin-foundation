@@ -1,0 +1,2 @@
+import assert from 'node:assert/strict';import { readFile } from 'node:fs/promises';import test from 'node:test';
+test('Operator Hub exposes all proactive lanes without consequential mutations',async()=>{const page=await readFile(new URL('../../apps/web/operator-hub.html',import.meta.url),'utf8');assert.match(page,/\/api\/proactive-operator/);for(const label of ['Waiting For','Approvals','Pessoas','Browser Plans','Briefs','Analytics'])assert.match(page,new RegExp(label));assert.doesNotMatch(page,/method:\s*['"]POST/)});

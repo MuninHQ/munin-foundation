@@ -30,6 +30,7 @@ export default defineConfig({
         manus: path.resolve(root, 'manus.html'),
         flows: path.resolve(root, 'flows.html'),
         'operator-chat': path.resolve(root, 'operator-chat.html'),
+        'operator-hub': path.resolve(root, 'operator-hub.html'),
         intelligence: path.resolve(root, 'intelligence.html'),
         'context-memory': path.resolve(root, 'context-memory.html'),
         council: path.resolve(root, 'council.html'),
