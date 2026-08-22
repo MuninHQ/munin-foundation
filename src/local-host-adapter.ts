@@ -77,7 +77,7 @@ export class LocalHostAdapter implements HostExecutionAdapter {
         ['/linkedin-compose.html', '<title>Munin LinkedIn Composer</title>'],
         ['/linkedin-brand.html', '<title>Munin Personal Brand Intelligence</title>'],
         ['/linkedin-history.html', '<title>Munin Editorial History</title>'],
-        ['/linkedin-assets.html', '<title>Munin Visual Asset Memory</title>'],
+        ['/linkedin-assets.html', '<title>Munin Visual Asset Library</title>'],
         ['/linkedin-publisher.html', '<title>Munin LinkedIn Publisher</title>'],
       ] as const;
       for (const [path, marker] of linkedinPages) {
