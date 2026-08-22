@@ -66,6 +66,18 @@ export class LocalHostAdapter implements HostExecutionAdapter {
     return output || 'main already up to date.';
   }
 
+  async deployMain(): Promise<string> {
+    const update = await this.gitFastForward();
+    const verification = await runFixed(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['test'], this.cwd, Math.max(this.timeoutMs, 240000));
+    const restart = await this.restartMunin();
+    let health = 'Health will be rechecked by the resident host worker.';
+    for (let attempt = 0; attempt < 12; attempt++) {
+      await new Promise(resolveDelay => setTimeout(resolveDelay, 2500));
+      try { health = await this.runtimeHealth(); break; } catch {}
+    }
+    return `UPDATE\n${update}\nVERIFY\n${verification.slice(-4000)}\nRESTART\n${restart}\nHEALTH\n${health}`;
+  }
+
   async restartMunin(): Promise<string> {
     let state: { status?: string; heartbeatAt?: string; pid?: number };
     try { state = JSON.parse(await readFile(this.supervisorStatePath, 'utf8')); }

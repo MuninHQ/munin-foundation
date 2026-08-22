@@ -1,4 +1,4 @@
-export type HostJobType = 'runtime-health' | 'git-fast-forward' | 'restart-munin' | 'run-acceptance' | 'tailscale-health';
+export type HostJobType = 'runtime-health' | 'git-fast-forward' | 'deploy-main' | 'restart-munin' | 'run-acceptance' | 'tailscale-health';
 export type HostJobStatus = 'queued' | 'approved' | 'running' | 'completed' | 'blocked' | 'failed';
 
 export interface HostJob {
@@ -17,12 +17,12 @@ export interface HostJobResult {
   evidence?: string[];
 }
 
-const ALLOWED: ReadonlySet<HostJobType> = new Set(['runtime-health','git-fast-forward','restart-munin','run-acceptance','tailscale-health']);
+const ALLOWED: ReadonlySet<HostJobType> = new Set(['runtime-health','git-fast-forward','deploy-main','restart-munin','run-acceptance','tailscale-health']);
 
 export function validateHostJob(job: HostJob): HostJobResult {
   if (!job.id.trim()) return { id: job.id, status: 'blocked', summary: 'Missing job id.' };
   if (!ALLOWED.has(job.type)) return { id: job.id, status: 'blocked', summary: 'Host job type is not allowlisted.' };
-  if (job.type === 'git-fast-forward' && (job.repo !== 'MuninHQ/munin-foundation' || job.branch !== 'main')) return { id: job.id, status: 'blocked', summary: 'Git update is restricted to approved repository main branch.' };
+  if ((job.type === 'git-fast-forward'||job.type==='deploy-main') && (job.repo !== 'MuninHQ/munin-foundation' || job.branch !== 'main')) return { id: job.id, status: 'blocked', summary: 'Git update is restricted to approved repository main branch.' };
   return { id: job.id, status: 'approved', summary: job.dryRun ? 'Approved for dry-run only.' : 'Approved typed host action.' };
 }
 

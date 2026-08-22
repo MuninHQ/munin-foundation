@@ -44,6 +44,8 @@ In-process AI is optional. The default runtime does not probe, start or wait for
 - Munin Radar and unified Action Inbox: trusted regulatory-source changes, workspace actions and actionable career/email signals converge into explicit `Agora`, `Revisar`, `Executando`, `Concluído` and `Radar` lanes.
 - Connector Registry exposes enabled state, zero-cost policy, authentication mode, last check and health for trusted sources plus Gmail/Outlook without exposing credentials.
 - Mobile-first Radar and Action Inbox surfaces are available from shared navigation and command keyboard shortcuts.
+- Manus Operational Bridge delegates only allowlisted research/analysis/draft/diagnostic tasks through API v2, enforces local daily task and declared-credit budgets, polls asynchronous results and projects waiting/completed/failed work into the Action Inbox.
+- The existing Host Worker now supports one composite `deploy-main` operation pinned to clean `main`: fast-forward, full tests/build, supervised restart and API/web health verification. Manus Desktop remains folder-scoped and no arbitrary remote shell is introduced.
 - Web navigation hardening includes shared standalone navigation/styles, missing Intelligence page restoration, Career Quick Intake exposure and a navigation integrity test.
 - Unified operator workflow exposes `munin start`, `build`, `verify`, `ship`, `doctor` and `mobile-test`; the ship gate requires committed changes, passes the full test suite, pushes the mission branch and reuses one draft PR without automatic merge.
 

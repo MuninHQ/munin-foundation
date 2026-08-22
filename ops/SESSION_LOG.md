@@ -2,6 +2,29 @@
 
 > Append concise, durable execution events. This is not a transcript archive.
 
+## 2026-08-22 — Manus bidirectional operational bridge
+
+### Existing state preserved
+
+- Manus Desktop was already installed on Windows.
+- `munin-foundation-git` was already authorized in My Computer.
+- Earlier Manus repository diagnosis and remote OAuth remediation were not repeated.
+
+### Changes
+
+- Added bounded Manus API v2 task creation, persistent local task state and asynchronous result polling.
+- Added allowlisted task kinds, Lite profile default, daily task cap and declared-credit budget.
+- Added Manus Operator web surface, connector health and Action Inbox projection.
+- Added reversible Windows startup scripts for the Manus result worker.
+- Extended the typed Host Bridge with `deploy-main`: clean `main` fast-forward, full verification, supervised restart and health check.
+- Preserved fail-closed boundaries for dirty checkout, non-main branch, test failure, stale supervisor, credentials and consequential external actions.
+
+### Validation
+
+- TypeScript core build passed.
+- Vite production build passed and emitted `manus.html`.
+- Full suite passed: 507 tests, 0 failures.
+
 ## 2026-08-21 — Unified operator workflow implemented
 
 ### Decision

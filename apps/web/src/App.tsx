@@ -36,7 +36,7 @@ export function App() {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setPalette(v => !v); }
       if (event.key === 'Escape') { setPalette(false); setEditor(null); setSitrep(''); }
       if ((event.ctrlKey || event.metaKey) && event.shiftKey) {
-        const shortcuts: Record<string, string> = { i: '/intelligence.html', x: '/action-inbox.html', r: '/radar.html', m: '/context-memory.html', l: '/linkedin.html', p: '/linkedin-compose.html', h: '/linkedin-history.html', a: '/linkedin-assets.html', j:'/career-intake.html' };
+        const shortcuts: Record<string, string> = { i: '/intelligence.html', x: '/action-inbox.html', r: '/radar.html', u: '/manus.html', m: '/context-memory.html', l: '/linkedin.html', p: '/linkedin-compose.html', h: '/linkedin-history.html', a: '/linkedin-assets.html', j:'/career-intake.html' };
         const target = shortcuts[event.key.toLowerCase()];
         if (target) { event.preventDefault(); window.location.assign(target); }
       }

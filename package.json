@@ -62,6 +62,10 @@
     "host:worker:once": "npm run build:core && node dist/src/host-worker-cli.js --once",
     "host:worker:startup:install": "powershell -ExecutionPolicy Bypass -File scripts/install-host-worker-startup.ps1",
     "host:worker:startup:remove": "powershell -ExecutionPolicy Bypass -File scripts/remove-host-worker-startup.ps1",
+    "manus:worker": "npm run build:core && node dist/src/manus-worker-cli.js",
+    "manus:worker:once": "npm run build:core && node dist/src/manus-worker-cli.js --once",
+    "manus:worker:startup:install": "powershell -ExecutionPolicy Bypass -File scripts/install-manus-bridge-startup.ps1",
+    "manus:worker:startup:remove": "powershell -ExecutionPolicy Bypass -File scripts/remove-manus-bridge-startup.ps1",
     "linkedin:editorial:once": "npm run build:core && node dist/src/linkedin-editorial-worker-cli.js",
     "linkedin:editorial:task:install": "powershell -ExecutionPolicy Bypass -File scripts/install-linkedin-editorial-task.ps1",
     "linkedin:editorial:task:remove": "powershell -ExecutionPolicy Bypass -File scripts/remove-linkedin-editorial-task.ps1"
