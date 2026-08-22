@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "id": "deploy-20260822151243",
-  "type": "deploy-main",
-  "createdAt": "2026-08-22T15:12:43.148Z",
-  "expiresAt": "2026-08-22T15:26:43.148Z",
+  "id": "tailscale-20260822153048",
+  "type": "tailscale-health",
+  "createdAt": "2026-08-22T15:30:48.793Z",
+  "expiresAt": "2026-08-22T15:40:48.793Z",
   "repo": "MuninHQ/munin-foundation",
   "branch": "main"
 }
