@@ -6,7 +6,7 @@ import test from 'node:test';
 import { buildOperatorSitrep, type OperatorSitrepDependencies } from '../src/operator-sitrep.js';
 
 async function fixture(){const root=await mkdtemp(path.join(os.tmpdir(),'munin-operator-score-'));await mkdir(path.join(root,'ops'),{recursive:true});await writeFile(path.join(root,'ops/CURRENT_STATE.md'),'# Current\n');await writeFile(path.join(root,'ops/BACKLOG.md'),'# Backlog\n');await writeFile(path.join(root,'ops/SESSION_LOG.md'),'# Sessions\n');return root}
-const base:OperatorSitrepDependencies={jobs:async()=>[],browser:async()=>({backend:'playwright-cli',available:true,command:'playwright-cli'}),ledgerCount:async()=>0,connectors:async()=>[],blockers:async()=>[]};
+const base:OperatorSitrepDependencies={jobs:async()=>[],browser:async()=>({backend:'playwright-cli',available:true,command:'playwright-cli'}),ledgerCount:async()=>0,connectors:async()=>[],blockers:async()=>[],email:async()=>undefined,emailHealth:async()=>undefined};
 
 test('operator exposes latest chief developer scorecard without degrading a strong run',async()=>{const root=await fixture();try{const result=await buildOperatorSitrep(root,{...base,scorecard:async()=>({agentId:'chief-developer',samples:4,completionRate:1,evidenceRate:1,retryRate:0,defectEscapeRate:0,humanEscalationRate:0,score:1,updatedAt:new Date().toISOString()})});assert.equal(result.severity,'ok');assert.equal(result.chiefDeveloper.scorecard?.score,1)}finally{await rm(root,{recursive:true,force:true})}});
 
