@@ -19,6 +19,10 @@ test('operator SITREP aggregates healthy execution surfaces into one snapshot',a
    browser:async()=>({backend:'playwright-cli',available:true,command:'playwright-cli'}),
    ledgerCount:async()=>42,
    connectors,
+   blockers:async()=>[],
+   scorecard:async()=>undefined,
+   email:async()=>undefined,
+   emailHealth:async()=>undefined,
   });
   assert.equal(result.severity,'ok');
   assert.equal(result.controlRoom.ready,true);
@@ -39,6 +43,10 @@ test('operator SITREP surfaces failed jobs and unavailable browser as attention'
    browser:async()=>({backend:'playwright-cli',available:false,command:'playwright-cli',detail:'not installed'}),
    ledgerCount:async()=>0,
    connectors,
+   blockers:async()=>[],
+   scorecard:async()=>undefined,
+   email:async()=>undefined,
+   emailHealth:async()=>undefined,
   });
   assert.equal(result.severity,'attention');
   assert.equal(result.engineering.failed,1);

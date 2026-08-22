@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -42,7 +43,10 @@ test('authenticated mobile host action leaves queued and reaches a terminal resu
     assert.ok(['completed', 'failed', 'blocked'].includes(current.status));
     assert.ok(current.result?.summary);
   } finally {
-    server.kill('SIGTERM');
-    await rm(cwd, { recursive: true, force: true });
+    if (server.exitCode === null && server.signalCode === null) {
+      server.kill('SIGTERM');
+      await once(server, 'exit');
+    }
+    await rm(cwd, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 });

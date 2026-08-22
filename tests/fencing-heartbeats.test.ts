@@ -30,7 +30,7 @@ test('renews a lease only for the current worker and fencing version', async () 
     assert.equal((await store.renew('task-1', 'worker-b', version, 100, 1_060)).reason, 'stale-fence');
     assert.equal((await store.renew('task-1', 'worker-a', version + 1, 100, 1_060)).reason, 'stale-fence');
   } finally {
-    await rm(root, { recursive: true, force: true });
+    await rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 });
 
@@ -48,7 +48,7 @@ test('rejects stale workers after lease takeover', async () => {
     assert.equal((await store.assertCurrent('task-1', 'worker-b', second.lease!.version, 1_102)).workerId, 'worker-b');
     assert.equal(await store.release('task-1', 'worker-a', first.lease!.version), false);
   } finally {
-    await rm(root, { recursive: true, force: true });
+    await rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 });
 
@@ -62,7 +62,7 @@ test('leased runtime keeps long execution alive with heartbeats', async () => {
     assert.equal(engine.calls, 1);
     assert.equal(await new PersistentLeaseStore(root).get('plan:plan-1'), undefined);
   } finally {
-    await rm(root, { recursive: true, force: true });
+    await rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 });
 
