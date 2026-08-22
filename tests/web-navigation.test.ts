@@ -26,3 +26,12 @@ test('Career OS exposes quick intake from the main React workspace',async()=>{
  assert.match(app,/career-intake\.html/);
  assert.match(app,/Analisar vaga/);
 });
+
+test('main workspace exposes Action Inbox and Radar command surfaces',async()=>{
+ const app=await readFile(join(web,'src','App.tsx'),'utf8');
+ const nav=await readFile(join(publicDir,'munin-nav.js'),'utf8');
+ assert.match(app,/action-inbox\.html/);assert.match(app,/radar\.html/);
+ assert.match(nav,/Action Inbox|Inbox/);assert.match(nav,/Radar/);
+});
+
+test('shared workspace navigation exposes governed Manus Operator',async()=>{const nav=await readFile(join(publicDir,'munin-nav.js'),'utf8');const page=await readFile(join(web,'manus.html'),'utf8');assert.match(nav,/manus\.html/);assert.match(page,/\/api\/manus\/tasks/);assert.match(page,/Reserva máxima de créditos/);});

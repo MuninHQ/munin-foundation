@@ -5,6 +5,7 @@ import { HostAcceptanceQueue, redactHostOutput, validateHostJob } from '../src/h
 test('host bridge only approves typed allowlisted actions', () => {
   assert.equal(validateHostJob({ id:'h1', type:'runtime-health', dryRun:true, createdAt:new Date().toISOString() }).status, 'approved');
   assert.equal(validateHostJob({ id:'h2', type:'git-fast-forward', repo:'MuninHQ/munin-foundation', branch:'main', createdAt:new Date().toISOString() }).status, 'approved');
+  assert.equal(validateHostJob({ id:'h2-deploy', type:'deploy-main', repo:'MuninHQ/munin-foundation', branch:'main', createdAt:new Date().toISOString() }).status, 'approved');
 });
 
 test('git host action is pinned to approved repo and main branch', () => {

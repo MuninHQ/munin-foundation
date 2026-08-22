@@ -10,7 +10,7 @@ const REMOTE='origin';
 const INBOX_BRANCH='munin-host-inbox';
 const REMOTE_REF=`refs/remotes/${REMOTE}/${INBOX_BRANCH}`;
 const INBOX_FILE='host-intent.json';
-const ALLOWED:ReadonlySet<HostJobType>=new Set(['runtime-health','git-fast-forward','restart-munin','run-acceptance','tailscale-health']);
+const ALLOWED:ReadonlySet<HostJobType>=new Set(['runtime-health','git-fast-forward','deploy-main','restart-munin','run-acceptance','tailscale-health']);
 const MAX_INTENT_AGE_MS=15*60*1000;
 
 export interface GitHubHostIntent{
@@ -62,7 +62,7 @@ export class GitHubHostInbox{
   let intent:GitHubHostIntent;try{intent=parseGitHubHostIntent(parsed,now)}catch(error){return{status:'invalid',summary:error instanceof Error?error.message:String(error)}}
   if(Date.parse(intent.expiresAt)<=now){await this.mark(intent.id);return{status:'expired',summary:`Host intent ${intent.id} expired before processing.`}}
   if(await this.seen(intent.id))return{status:'replayed',summary:`Host intent ${intent.id} already processed.`}
-  const job:HostJob={id:`github-${intent.id}`,type:intent.type,repo:intent.type==='git-fast-forward'?intent.repo:undefined,branch:intent.type==='git-fast-forward'?intent.branch:undefined,dryRun:intent.dryRun,createdAt:intent.createdAt};
+  const gitTarget=intent.type==='git-fast-forward'||intent.type==='deploy-main';const job:HostJob={id:`github-${intent.id}`,type:intent.type,repo:gitTarget?intent.repo:undefined,branch:gitTarget?intent.branch:undefined,dryRun:intent.dryRun,createdAt:intent.createdAt};
   const gate=validateHostJob(job);if(gate.status!=='approved'){await this.mark(intent.id);return{status:'invalid',summary:gate.summary}}
   await this.queue.enqueue(job);await this.mark(intent.id);return{status:'enqueued',summary:`Host intent ${intent.id} enqueued as ${job.id}.`,jobId:job.id};
  }

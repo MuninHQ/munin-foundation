@@ -6,6 +6,7 @@ function adapter(){
   return {
     runtimeHealth: async()=> 'healthy',
     gitFastForward: async()=> 'updated',
+    deployMain: async()=> 'deployed',
     restartMunin: async()=> 'restarted',
     runAcceptance: async()=> 'Authorization: Bearer secret accepted',
     tailscaleHealth: async()=> 'tailscale ok',

@@ -15,7 +15,7 @@ function drainQueue(): Promise<number> {
   if (!activeDrain) activeDrain = worker.runUntilEmpty().finally(() => { activeDrain = undefined; });
   return activeDrain;
 }
-const ALLOWED: ReadonlySet<HostJobType> = new Set(['runtime-health','git-fast-forward','restart-munin','run-acceptance','tailscale-health']);
+const ALLOWED: ReadonlySet<HostJobType> = new Set(['runtime-health','git-fast-forward','deploy-main','restart-munin','run-acceptance','tailscale-health']);
 
 function parseType(value: unknown): HostJobType | undefined {
   return typeof value === 'string' && ALLOWED.has(value as HostJobType) ? value as HostJobType : undefined;
@@ -40,7 +40,7 @@ export async function handleHostMobileApi(request: IncomingMessage, response: Se
         type,
         dryRun: input.dryRun === true,
         createdAt: new Date().toISOString(),
-        ...(type === 'git-fast-forward' ? { repo:'MuninHQ/munin-foundation' as const, branch:'main' as const } : {}),
+        ...(type === 'git-fast-forward'||type==='deploy-main' ? { repo:'MuninHQ/munin-foundation' as const, branch:'main' as const } : {}),
       };
       const gate = validateHostJob(job);
       if (gate.status !== 'approved') return json(request, response, 400, gate);

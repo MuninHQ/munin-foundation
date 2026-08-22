@@ -18,7 +18,7 @@ test('host job queue persists and deduplicates typed jobs', async () => {
 
 test('worker drains a queued job through governed executor and persists result', async () => {
   const dir=await mkdtemp(join(tmpdir(),'munin-hostq-')); const path=join(dir,'queue.json');
-  const adapter={runtimeHealth:async()=> 'ok',gitFastForward:async()=> 'ok',restartMunin:async()=> 'no',runAcceptance:async()=> 'ok',tailscaleHealth:async()=> 'ok'};
+  const adapter={runtimeHealth:async()=> 'ok',gitFastForward:async()=> 'ok',deployMain:async()=> 'deployed',restartMunin:async()=> 'no',runAcceptance:async()=> 'ok',tailscaleHealth:async()=> 'ok'};
   const executor=new HostBridgeExecutor(adapter);
   const worker=new HostBridgeWorker({queuePath:path},executor);
   await worker.queue.enqueue({id:'j2',type:'runtime-health',createdAt:new Date().toISOString()});

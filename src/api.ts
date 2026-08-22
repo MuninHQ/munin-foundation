@@ -17,10 +17,22 @@ import { deleteImageSettings, loadImageSettings, publicImageSettings, saveImageS
 import { generateLinkedInImage, getGeneratedImage, imageProviderStatus, testImageProvider } from './image-provider.js';
 import { bytes, json, readJsonBody, redirect, requireText as text } from './http.js';
 import { apiPort, webBaseUrl } from './config.js';
+import { trustedSourceRadar } from './trusted-source-radar.js';
+import { buildActionInbox } from './action-inbox.js';
+import { connectorRegistry } from './connector-registry.js';
+import { ManusTaskStore, manusBridgeStatus, refreshManusTasks, submitManusTask, type ManusTaskKind } from './manus-operational-bridge.js';
 const store=new ContextStore(); const service=new MuninService(store); const inbox=new CareerInboxStore(); const watchFolder=new CareerWatchFolder();
+const manusTasks=new ManusTaskStore();
 const body=(request:IncomingMessage)=>readJsonBody(request,5_000_000);
 export async function handleApi(request:IncomingMessage,response:ServerResponse):Promise<void>{if(request.method==='OPTIONS')return json(request,response,204,{});const url=new URL(request.url??'/','http://localhost');try{
 if(request.method==='GET'&&url.pathname==='/api/health')return json(request,response,200,{status:'ok',service:'munin-workspace'});
+if(request.method==='GET'&&url.pathname==='/api/radar'){const snapshot=await trustedSourceRadar(url.searchParams.get('refresh')==='1');return json(request,response,200,snapshot);}
+if(request.method==='GET'&&url.pathname==='/api/action-inbox'){const [state,email,radar,manus]=await Promise.all([store.load(),inbox.load(),trustedSourceRadar(false),manusTasks.list()]);return json(request,response,200,buildActionInbox(state,email,radar,new Date(),manus));}
+if(request.method==='GET'&&url.pathname==='/api/connectors'){const [radar,connections,manus]=await Promise.all([trustedSourceRadar(false),connectionStatus(),manusBridgeStatus(manusTasks)]);return json(request,response,200,{generatedAt:new Date().toISOString(),items:[...connectorRegistry(radar,connections),{id:'manus',name:'Manus Operational Bridge',category:'research',cost:'free',auth:'oauth',enabled:manus.enabled,health:manus.enabled?'healthy':'not-connected',detail:manus.enabled?`${manus.profile} · ${manus.declaredCreditsToday}/${manus.dailyCreditBudget} créditos reservados hoje`:manus.reason}]});}
+if(request.method==='GET'&&url.pathname==='/api/manus/status')return json(request,response,200,await manusBridgeStatus(manusTasks));
+if(request.method==='GET'&&url.pathname==='/api/manus/tasks')return json(request,response,200,{items:await manusTasks.list()});
+if(request.method==='POST'&&url.pathname==='/api/manus/tasks'){const input=await body(request);return json(request,response,201,await submitManusTask({kind:text(input.kind,'kind') as ManusTaskKind,title:text(input.title,'title'),prompt:text(input.prompt,'prompt'),declaredCreditBudget:typeof input.declaredCreditBudget==='number'?input.declaredCreditBudget:undefined},manusTasks));}
+if(request.method==='POST'&&url.pathname==='/api/manus/refresh')return json(request,response,200,{items:await refreshManusTasks(manusTasks)});
 if(request.method==='GET'&&url.pathname==='/api/workspace'){const state=await store.load();const events=await store.events();const careerQueue=await service.careerQueue();return json(request,response,200,{state,events:events.slice(-20).reverse(),careerQueue,intelligence:{dailyBrief:generateDailyBrief(state),timeline:buildTimeline(state,events,30),graph:buildKnowledgeGraph(state),insights:generateInsights(state).slice(0,20)}});}
 if(request.method==='POST'&&url.pathname==='/api/assistant'){const input=await body(request);return json(request,response,200,await executeAssistantCommand(text(input.command,'command')));}
 if(request.method==='GET'&&url.pathname==='/api/assistant/history')return json(request,response,200,await loadAssistantMemory());

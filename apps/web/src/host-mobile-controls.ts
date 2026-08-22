@@ -1,4 +1,4 @@
-type HostJobType='runtime-health'|'git-fast-forward'|'restart-munin'|'run-acceptance'|'tailscale-health';
+type HostJobType='runtime-health'|'git-fast-forward'|'deploy-main'|'restart-munin'|'run-acceptance'|'tailscale-health';
 type HostQueueItem={job:{id:string;type:string;createdAt:string};status:string;enqueuedAt:string;finishedAt?:string;result?:{summary?:string;evidence?:string[]}};
 
 const token=()=>localStorage.getItem('munin-mobile-token')??'';
@@ -14,6 +14,7 @@ const labels:Record<HostJobType,string>={
   'runtime-health':'HEALTH',
   'run-acceptance':'VALIDAR',
   'git-fast-forward':'ATUALIZAR MAIN',
+  'deploy-main':'DEPLOY COMPLETO',
   'restart-munin':'RESTART SEGURO',
   'tailscale-health':'TAILSCALE',
 };
@@ -31,7 +32,7 @@ function mount(){
   const panel=document.createElement('section');panel.className='munin-host-panel';panel.innerHTML=`<h3>HOST BRIDGE</h3><p>Jobs tipados e autenticados. Sem shell remoto. Restart só executa quando o Workspace Supervisor local estiver saudável; caso contrário falha fechado.</p><div class="munin-host-actions"></div><span class="munin-host-status"></span><div class="munin-host-history"></div>`;
   document.body.append(panel,launch);
   const actions=panel.querySelector('.munin-host-actions') as HTMLDivElement;const status=panel.querySelector('.munin-host-status') as HTMLSpanElement;const history=panel.querySelector('.munin-host-history') as HTMLDivElement;
-  for(const type of Object.keys(labels) as HostJobType[]){const button=document.createElement('button');button.textContent=labels[type];if(type==='git-fast-forward')button.className='update';if(type==='restart-munin')button.className='restart';button.onclick=()=>void enqueue(type);actions.appendChild(button)}
+  for(const type of Object.keys(labels) as HostJobType[]){const button=document.createElement('button');button.textContent=labels[type];if(type==='git-fast-forward'||type==='deploy-main')button.className='update';if(type==='restart-munin')button.className='restart';button.onclick=()=>void enqueue(type);actions.appendChild(button)}
   launch.onclick=()=>{panel.classList.toggle('open');launch.setAttribute('aria-expanded',String(panel.classList.contains('open')));if(panel.classList.contains('open'))void refresh()};
 
   async function enqueue(type:HostJobType){

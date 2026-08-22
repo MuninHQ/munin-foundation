@@ -10,6 +10,8 @@ test('local adapter source forbids arbitrary shell execution and pins commands',
   assert.match(source, /shell: false/);
   assert.match(source, /\['fetch', 'origin', 'main'\]/);
   assert.match(source, /\['merge', '--ff-only', 'origin\/main'\]/);
+  assert.match(source, /async deployMain\(\)/);
+  assert.match(source, /\['test'\]/);
   assert.match(source, /\['status', '--json'\]/);
   assert.doesNotMatch(source, /exec\(|spawn\(|Invoke-Expression|cmd\.exe|powershell -Command/);
 });

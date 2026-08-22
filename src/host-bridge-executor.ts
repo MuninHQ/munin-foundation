@@ -3,6 +3,7 @@ import { validateHostJob, redactHostOutput, type HostJob, type HostJobResult } f
 export interface HostExecutionAdapter {
   runtimeHealth(): Promise<string>;
   gitFastForward(): Promise<string>;
+  deployMain(): Promise<string>;
   restartMunin(): Promise<string>;
   runAcceptance(): Promise<string>;
   tailscaleHealth(): Promise<string>;
@@ -29,6 +30,7 @@ export class HostBridgeExecutor {
     switch (job.type) {
       case 'runtime-health': return this.adapter.runtimeHealth();
       case 'git-fast-forward': return this.adapter.gitFastForward();
+      case 'deploy-main': return this.adapter.deployMain();
       case 'restart-munin': return this.adapter.restartMunin();
       case 'run-acceptance': return this.adapter.runAcceptance();
       case 'tailscale-health': return this.adapter.tailscaleHealth();

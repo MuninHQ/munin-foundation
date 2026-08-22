@@ -2,7 +2,7 @@
 
 > Repo-backed execution queue for Munin. Priorities are P0 highest to P3 lowest.
 >
-> Last updated: 2026-08-18
+> Last updated: 2026-08-22
 
 ## P0 — Execution foundation
 
@@ -49,6 +49,12 @@
 - [x] **Munin v0.1 product specification and implementation plan consolidation** — current product contract, trust boundaries, capability map, acceptance criteria and remaining integration sequence are canonical in `docs/product/`.
 
 ## P1 — Integrations and operator experience
+
+- [x] **Manus Operational Bridge** — bounded Manus API v2 task delegation and result polling, daily task/credit budget, Action Inbox projection and a Windows startup worker; no key or prompt secret is committed.
+- [x] **Governed automatic main deployment** — one typed `deploy-main` Host Bridge action performs clean-main fast-forward, full verification, supervised restart and health check without exposing arbitrary shell access.
+
+- [x] **Munin Radar + unified Action Inbox** — aggregate trusted regulatory changes, workspace actions and actionable email/career signals into visible operator lanes; expose connector health and preserve explicit approval for consequential actions.
+- [x] **Mobile-first command access** — Action Inbox and Radar are directly reachable through shared navigation and keyboard shortcuts without adding a heavy UI framework.
 
 - [x] **Unified operator workflow** — `munin start|build|verify|ship|doctor|mobile-test` replaces repeated PowerShell/GitHub choreography with fixed, auditable commands; `ship` verifies before push, reuses a single mission PR, creates drafts only when needed, never stages unrelated files and never merges automatically.
 - [x] Mobile-first Munin runtime/API foundation.

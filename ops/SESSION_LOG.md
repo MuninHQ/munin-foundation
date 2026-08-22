@@ -2,6 +2,29 @@
 
 > Append concise, durable execution events. This is not a transcript archive.
 
+## 2026-08-22 — Manus bidirectional operational bridge
+
+### Existing state preserved
+
+- Manus Desktop was already installed on Windows.
+- `munin-foundation-git` was already authorized in My Computer.
+- Earlier Manus repository diagnosis and remote OAuth remediation were not repeated.
+
+### Changes
+
+- Added bounded Manus API v2 task creation, persistent local task state and asynchronous result polling.
+- Added allowlisted task kinds, Lite profile default, daily task cap and declared-credit budget.
+- Added Manus Operator web surface, connector health and Action Inbox projection.
+- Added reversible Windows startup scripts for the Manus result worker.
+- Extended the typed Host Bridge with `deploy-main`: clean `main` fast-forward, full verification, supervised restart and health check.
+- Preserved fail-closed boundaries for dirty checkout, non-main branch, test failure, stale supervisor, credentials and consequential external actions.
+
+### Validation
+
+- TypeScript core build passed.
+- Vite production build passed and emitted `manus.html`.
+- Full suite passed: 507 tests, 0 failures.
+
 ## 2026-08-21 — Unified operator workflow implemented
 
 ### Decision
@@ -132,3 +155,24 @@ Close the remaining zero-cost Windows token-at-rest gap with the operating syste
 ### Validation note
 
 The DPAPI implementation still requires the same final full-batch build/test evidence as the rest of this closeout; no green result is inferred from source edits alone.
+## 2026-08-22 — Munin Radar and Action Inbox
+
+### Decision
+
+Adapt high-value patterns from changedetection.io, public-apis, n8n and command-palette products natively instead of importing another orchestration platform or adding a paid/heavy runtime dependency.
+
+### Changes
+
+- Added a deterministic unified Action Inbox with `Agora`, `Revisar`, `Executando`, `Concluído` and `Radar` lanes.
+- Aggregated canonical workspace actions, actionable Gmail/Outlook career signals and trusted-source regulatory signals.
+- Added Munin Radar UI/API with explicit refresh, provenance, relevance, freshness and source health.
+- Added a zero-cost Connector Registry exposing authentication and health without credentials.
+- Added mobile-responsive standalone surfaces, shared navigation entries and command shortcuts.
+- Reused the existing Trusted Source Radar, intelligence timeline, ChatGPT Operator Bridge and governed LinkedIn composer rather than duplicating those capabilities.
+- Added deterministic unit and navigation coverage.
+
+### Validation
+
+- Core TypeScript build passed.
+- Vite production build passed and emitted both new pages.
+- Full suite passed: 502 tests, 0 failures.
