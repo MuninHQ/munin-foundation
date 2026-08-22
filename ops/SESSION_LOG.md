@@ -2,6 +2,19 @@
 
 > Append concise, durable execution events. This is not a transcript archive.
 
+## 2026-08-22 — GitHub-inspired UX completion
+
+### Decision
+
+Complete the full recommendation set originally derived from public-apis, n8n and modern command/chat products without importing a heavy framework or paid runtime.
+
+### Changes
+
+- Added a global phone-first command bottom sheet with search and `Ctrl/Cmd+K` parity.
+- Added a read-only visual flow page backed by real orchestration traces; the existing Munin orchestrator remains authoritative.
+- Added a full operational chat page backed by the deterministic Assistant API/history and the sanitized ChatGPT Operator Bridge.
+- Preserved local-first behavior, zero additional cost, explicit consequential-action boundaries and no mandatory local LLM.
+
 ## 2026-08-22 — Remote deployment acceptance hardening
 
 ### Evidence
