@@ -1,5 +1,11 @@
 # Munin Session Log
 
+## 2026-08-22 — HUD mobile layout remediation
+
+- Reproduced the overlap/cropping problem from the iPhone capture.
+- Added a purpose-built HUD layout below 760px instead of scaling the desktop canvas.
+- Preserved the cinematic desktop HUD while simplifying mobile effects and interactions.
+
 ## 2026-08-22 — Unified Mobile UI
 
 - Removed the desktop-only minimum width from the React workspace.
