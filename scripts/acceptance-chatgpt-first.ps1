@@ -5,6 +5,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $results = @()
+$linkedinSnapshot = @()
 
 function Add-Result([string]$Name, [bool]$Passed, [string]$Evidence) {
   $script:results += [pscustomobject]@{ name=$Name; passed=$Passed; evidence=$Evidence }
@@ -73,6 +74,9 @@ foreach ($check in $linkedinApis) {
   try {
     $response = Invoke-WebWithRetry "$ApiUrl$($check.path)"
     $payload = $response.Content | ConvertFrom-Json
+    if ($check.name -eq 'content') {
+      $linkedinSnapshot = @($payload.posts | Select-Object -First 20 id,title,status,publishedAt,createdAt,updatedAt,notes)
+    }
     $missing = @($check.required | Where-Object { $null -eq $payload.$_ })
     $valid = $response.StatusCode -eq 200 -and $missing.Count -eq 0
     Add-Result "linkedin-api-$($check.name)" $valid ($(if ($valid) { "HTTP 200 with required contract fields." } else { "Missing fields: $($missing -join ', ')" }))
@@ -88,6 +92,7 @@ $output = [pscustomobject]@{
   webUrl = $WebUrl
   passed = ($failed.Count -eq 0)
   results = $results
+  linkedinSnapshot = $linkedinSnapshot
 }
 
 $output | ConvertTo-Json -Depth 4
