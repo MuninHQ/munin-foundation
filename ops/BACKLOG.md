@@ -50,6 +50,14 @@
 
 ## P1 — Integrations and operator experience
 
+- [x] **Waiting For / Follow-up Engine** — derives pending replies, stale opportunities and due follow-ups from read-only email/career state without automatic sending.
+- [x] **Read-only intelligent agenda foundation** — merges due P0 actions and follow-ups into Today; external calendar remains an explicit OAuth boundary.
+- [x] **Approval Center / Trust Receipts projection** — centralizes required decisions, waiting Manus tasks and reply reviews with impact and evidence before action.
+- [x] **People Intelligence foundation** — projects recruiter and hiring-manager relationship context, last contact, stage and next action from Career state.
+- [x] **Agent Session Analytics** — summarizes orchestration success, attempts and engineering-job outcomes from local runtime evidence.
+- [x] **Approval-first Browser Plans** — represents fixed inspect/prepare/approve steps while keeping the current browser surface non-mutating by default.
+- [x] **Morning Brief + Evening Review** — deterministic proactive summaries combine Today, Waiting For and execution evidence without paid inference.
+
 - [x] **Manus Operational Bridge** — bounded Manus API v2 task delegation and result polling, daily task/credit budget, Action Inbox projection and a Windows startup worker; no key or prompt secret is committed.
 - [x] **Governed automatic main deployment** — one typed `deploy-main` Host Bridge action performs clean-main fast-forward, full verification, supervised restart and health check without exposing arbitrary shell access.
 - [x] **Clean deployment invariant** — the Host Bridge removes only reproducible `dist`/`dist-web` artifacts before and after verification so every successful deployment leaves `main` clean for the next intent.

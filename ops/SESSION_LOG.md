@@ -2,6 +2,16 @@
 
 > Append concise, durable execution events. This is not a transcript archive.
 
+## 2026-08-22 — Proactive Operator Hub
+
+### Changes
+
+- Added deterministic Waiting For detection across actionable mail and stale/due Career follow-ups.
+- Added Today agenda projection, People Intelligence, centralized approvals and approval-first browser plans.
+- Added agent session analytics from orchestration traces and engineering outcomes.
+- Added Morning Brief and Evening Review without requiring a paid or local LLM.
+- Kept calendar integration read-only and explicitly disconnected until the user grants OAuth.
+
 ## 2026-08-22 — GitHub-inspired UX completion
 
 ### Decision
