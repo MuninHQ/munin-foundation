@@ -1,5 +1,9 @@
 # Munin Current State
 
+## Unified Mobile UI
+
+The workspace now uses one mobile navigation model (`Hoje`, `Inbox`, `Carreira`, `LinkedIn`, `Mais`), responsive Home layouts, resilient loading/error feedback, and a decision-oriented Action Inbox. View-only defer/discard controls do not create external or consequential effects.
+
 > Canonical operational snapshot. Update after meaningful execution.
 >
 > Last updated: 2026-08-22

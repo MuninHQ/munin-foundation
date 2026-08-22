@@ -1,5 +1,13 @@
 # Munin Canonical Backlog
 
+## Unified Mobile UI — completed 2026-08-22
+
+- [x] Five-destination mobile navigation shared by Home and standalone modules.
+- [x] Mobile-safe React Command Center without fixed desktop minimum width.
+- [x] Decision-oriented Action Inbox with context, recommendation and impact.
+- [x] Loading skeletons, retry states, success feedback and useful empty states.
+- [x] Compact execution timeline and semantic status language.
+
 > Repo-backed execution queue for Munin. Priorities are P0 highest to P3 lowest.
 >
 > Last updated: 2026-08-22
