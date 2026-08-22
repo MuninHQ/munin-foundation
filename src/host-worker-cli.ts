@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 import { HostBridgeWorker } from './host-bridge-worker.js';
 import { GitHubHostInbox } from './github-host-inbox.js';
+import { GitHubHostOutbox } from './github-host-outbox.js';
 
 const once = process.argv.includes('--once');
 const githubInboxEnabled = process.argv.includes('--github-inbox') || process.env.MUNIN_HOST_GITHUB_INBOX === '1';
@@ -10,6 +11,7 @@ const intervalMs = Number.isFinite(requested) ? Math.max(1000, Math.min(60000, r
 const queuePath = resolve(process.cwd(), 'data', 'runtime', 'host-bridge-queue.json');
 const worker = new HostBridgeWorker({ queuePath });
 const githubInbox = githubInboxEnabled ? new GitHubHostInbox(worker.queue) : undefined;
+const githubOutbox = githubInboxEnabled ? new GitHubHostOutbox() : undefined;
 let stopping = false;
 
 process.on('SIGINT', () => { stopping = true; });
@@ -21,17 +23,20 @@ async function pollRemote():Promise<void>{
  if(!['empty','replayed'].includes(result.status))process.stdout.write(JSON.stringify({source:'github-host-inbox',...result})+'\n');
 }
 
+async function publishReceipts():Promise<void>{if(!githubOutbox)return;const published=await githubOutbox.publishPending(await worker.queue.list());if(published)process.stdout.write(JSON.stringify({source:'github-host-outbox',published})+'\n')}
+
 async function main(): Promise<void> {
   if (once) {
     await pollRemote();
     const processed = await worker.runUntilEmpty();
+    await publishReceipts();
     process.stdout.write(JSON.stringify({ mode:'once', processed, queuePath, githubInbox:githubInboxEnabled }) + '\n');
     return;
   }
 
   process.stdout.write(JSON.stringify({ mode:'continuous', intervalMs, queuePath, githubInbox:githubInboxEnabled }) + '\n');
   while (!stopping) {
-    try { await pollRemote(); await worker.runUntilEmpty(); }
+    try { await pollRemote(); await worker.runUntilEmpty(); await publishReceipts(); }
     catch (error) { process.stderr.write(JSON.stringify({ status:'worker-error', summary:error instanceof Error ? error.message : String(error) }) + '\n'); }
     if (!stopping) await new Promise(resolveTimer => setTimeout(resolveTimer, intervalMs));
   }
