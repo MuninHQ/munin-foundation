@@ -14,6 +14,9 @@ test('local adapter source forbids arbitrary shell execution and pins commands',
   assert.match(source, /process\.execPath/);
   assert.match(source, /npm_execpath/);
   assert.doesNotMatch(source, /npm\.cmd/);
+  assert.match(source, /cleanGeneratedArtifacts/);
+  assert.match(source, /\['restore', '--worktree', '--', 'dist-web'\]/);
+  assert.match(source, /\['clean', '-fd', '--', 'dist-web'\]/);
   assert.match(source, /\[\.\.\.npm\.args, 'test'\]/);
   assert.match(source, /\['status', '--json'\]/);
   assert.doesNotMatch(source, /exec\(|spawn\(|Invoke-Expression|cmd\.exe|powershell -Command/);

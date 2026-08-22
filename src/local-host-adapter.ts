@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { basename, dirname, isAbsolute, resolve } from 'node:path';
 import type { HostExecutionAdapter } from './host-bridge-executor.js';
@@ -33,6 +33,12 @@ function npmInvocation(): { command: string; args: string[] } {
     throw new Error('Windows npm CLI path is unavailable; refusing shell fallback.');
   }
   return { command: process.execPath, args: [cli] };
+}
+
+async function cleanGeneratedArtifacts(cwd: string, timeoutMs: number): Promise<void> {
+  await rm(resolve(cwd, 'dist'), { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  await runFixed('git', ['restore', '--worktree', '--', 'dist-web'], cwd, timeoutMs);
+  await runFixed('git', ['clean', '-fd', '--', 'dist-web'], cwd, timeoutMs);
 }
 
 export class LocalHostAdapter implements HostExecutionAdapter {
@@ -78,7 +84,13 @@ export class LocalHostAdapter implements HostExecutionAdapter {
   async deployMain(): Promise<string> {
     const update = await this.gitFastForward();
     const npm = npmInvocation();
-    const verification = await runFixed(npm.command, [...npm.args, 'test'], this.cwd, Math.max(this.timeoutMs, 240000));
+    await cleanGeneratedArtifacts(this.cwd, this.timeoutMs);
+    let verification: string;
+    try {
+      verification = await runFixed(npm.command, [...npm.args, 'test'], this.cwd, Math.max(this.timeoutMs, 240000));
+    } finally {
+      await cleanGeneratedArtifacts(this.cwd, this.timeoutMs);
+    }
     const restart = await this.restartMunin();
     let health = 'Health will be rechecked by the resident host worker.';
     for (let attempt = 0; attempt < 12; attempt++) {

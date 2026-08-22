@@ -23,6 +23,8 @@ The Host Worker polls `munin-host-inbox` for a short-lived typed `host-intent.js
 
 No arbitrary remote shell is exposed. The intent is valid for at most 15 minutes, replay-protected and restricted to `MuninHQ/munin-foundation:main`.
 
+Terminal results are returned as a sanitized `host-result.json` on the dedicated `munin-host-outbox` branch. The worker publishes only receipts for typed GitHub jobs, redacts credential-shaped output and uses fixed shell-free Git commands. Build artifacts under `dist` and `dist-web` are cleaned before and after verification so a successful deployment leaves the checkout ready for the next intent.
+
 ```json
 {
   "version": 1,

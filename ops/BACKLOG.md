@@ -52,6 +52,8 @@
 
 - [x] **Manus Operational Bridge** — bounded Manus API v2 task delegation and result polling, daily task/credit budget, Action Inbox projection and a Windows startup worker; no key or prompt secret is committed.
 - [x] **Governed automatic main deployment** — one typed `deploy-main` Host Bridge action performs clean-main fast-forward, full verification, supervised restart and health check without exposing arbitrary shell access.
+- [x] **Clean deployment invariant** — the Host Bridge removes only reproducible `dist`/`dist-web` artifacts before and after verification so every successful deployment leaves `main` clean for the next intent.
+- [x] **Remote Host receipt** — completed, blocked and failed GitHub Host Inbox jobs publish one sanitized `host-result.json` receipt to the dedicated `munin-host-outbox` branch, eliminating routine desktop inspection.
 
 - [x] **Munin Radar + unified Action Inbox** — aggregate trusted regulatory changes, workspace actions and actionable email/career signals into visible operator lanes; expose connector health and preserve explicit approval for consequential actions.
 - [x] **Mobile-first command access** — Action Inbox and Radar are directly reachable through shared navigation and keyboard shortcuts without adding a heavy UI framework.

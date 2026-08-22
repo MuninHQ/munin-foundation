@@ -2,6 +2,19 @@
 
 > Append concise, durable execution events. This is not a transcript archive.
 
+## 2026-08-22 — Remote deployment acceptance hardening
+
+### Evidence
+
+- A real `deploy-main` Host Inbox intent completed on Windows with 507/507 tests, supervised restart and HTTP 200 API/Web health.
+- The first empirical attempt exposed Windows `npm.cmd` `spawn EINVAL`; execution now uses `node.exe` with an absolute validated `npm-cli.js` path while keeping `shell:false`.
+
+### Changes
+
+- Added deterministic cleanup of only `dist` and `dist-web` around deployment verification so generated output does not dirty the next release.
+- Added a dedicated GitHub Host Outbox that publishes one redacted receipt file for terminal remote jobs.
+- Kept branch, filename, commands, repository and secret redaction fixed; arbitrary shell and credential prompting remain disabled.
+
 ## 2026-08-22 — Manus bidirectional operational bridge
 
 ### Existing state preserved
