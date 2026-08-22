@@ -1,5 +1,10 @@
 # Munin Session Log
 
+## 2026-08-22 — HUD mobile cache bust
+
+- Confirmed from a second iPhone capture that cached HUD assets kept the desktop layout active.
+- Versioned HUD CSS/JS URLs and widened mobile detection for coarse-pointer Safari viewports.
+
 ## 2026-08-22 — HUD mobile layout remediation
 
 - Reproduced the overlap/cropping problem from the iPhone capture.
