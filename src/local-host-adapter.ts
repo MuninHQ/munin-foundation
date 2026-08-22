@@ -66,8 +66,16 @@ export class LocalHostAdapter implements HostExecutionAdapter {
     let web = 'unavailable';
     try {
       const webResponse = await fetch(this.webUrl, { signal: AbortSignal.timeout(Math.min(this.timeoutMs, 5000)) });
-      web = `HTTP ${webResponse.status}`;
-    } catch {}
+      if (!webResponse.ok) throw new Error(`root returned HTTP ${webResponse.status}`);
+      const hudMobileResponse = await fetch(`${this.webUrl}/hud-mobile.html`, { signal: AbortSignal.timeout(Math.min(this.timeoutMs, 5000)) });
+      const hudMobile = await hudMobileResponse.text();
+      if (!hudMobileResponse.ok || !hudMobile.includes('<title>Munin · HUD Mobile</title>')) {
+        throw new Error(`HUD mobile publication check failed with HTTP ${hudMobileResponse.status}`);
+      }
+      web = `HTTP ${webResponse.status}; HUD mobile HTTP ${hudMobileResponse.status}`;
+    } catch (error) {
+      throw new Error(`Munin web publication is unhealthy: ${error instanceof Error ? error.message : String(error)}`);
+    }
     return `API ${response.status}: ${api.slice(0, 2000)}\nWEB: ${web}`;
   }
 
@@ -91,6 +99,8 @@ export class LocalHostAdapter implements HostExecutionAdapter {
     } finally {
       await cleanGeneratedArtifacts(this.cwd, this.timeoutMs);
     }
+    const publishedWebRoot = resolve(this.cwd, 'data/runtime/mobile-web');
+    await runFixed(npm.command, [...npm.args, 'run', 'build:web', '--', '--outDir', publishedWebRoot], this.cwd, Math.max(this.timeoutMs, 120000));
     const restart = await this.restartMunin();
     let health = 'Health will be rechecked by the resident host worker.';
     for (let attempt = 0; attempt < 12; attempt++) {
