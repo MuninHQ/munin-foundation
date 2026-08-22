@@ -67,7 +67,7 @@ $linkedinApis = @(
   @{ name='brand'; path='/api/linkedin-composer/brand'; required=@('profile','authorityFlywheel') },
   @{ name='suggestions'; path='/api/linkedin-composer/suggestions'; required=@('suggestions','sourceMode') },
   @{ name='publisher'; path='/api/linkedin-publisher'; required=@('policy','items') },
-  @{ name='visual-assets-health'; path='/api/visual-assets/health'; required=@('provider') }
+  @{ name='visual-assets-health'; path='/api/visual-assets/health'; required=@('status','service','visualIntelligence') }
 )
 foreach ($check in $linkedinApis) {
   try {
