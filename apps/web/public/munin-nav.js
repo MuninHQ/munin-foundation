@@ -2,6 +2,8 @@
 (() => {
   const sections = [
     { label: 'Home', href: '/' },
+    { label: 'Inbox', href: '/action-inbox.html' },
+    { label: 'Radar', href: '/radar.html' },
     { label: 'Portfolio', href: '/portfolio.html' },
     { label: 'Briefing', href: '/executive-briefing.html' },
     { label: 'Intelligence', href: '/intelligence.html' },

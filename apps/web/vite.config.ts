@@ -25,6 +25,8 @@ export default defineConfig({
         'career-command': path.resolve(root, 'career-command.html'),
         'career-inbox': path.resolve(root, 'career-inbox.html'),
         'career-intake': path.resolve(root, 'career-intake.html'),
+        'action-inbox': path.resolve(root, 'action-inbox.html'),
+        radar: path.resolve(root, 'radar.html'),
         intelligence: path.resolve(root, 'intelligence.html'),
         'context-memory': path.resolve(root, 'context-memory.html'),
         council: path.resolve(root, 'council.html'),

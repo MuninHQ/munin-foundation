@@ -2,7 +2,7 @@
 
 > Canonical operational snapshot. Update after meaningful execution.
 >
-> Last updated: 2026-08-20
+> Last updated: 2026-08-22
 
 ## Current objective
 
@@ -41,6 +41,9 @@ In-process AI is optional. The default runtime does not probe, start or wait for
 - Provider-neutral `media.local-video` capability with no automatic model downloads, explicit runner configuration and host benchmark CLI; MiniMax H3 evaluation recorded without making it a default dependency.
 - Remote/local Windows + Tailscale operator runbook including deterministic stale-port/UI recovery.
 - August 2026 GitHub ecosystem scan completed; future scans are trigger-based instead of a permanently open queue item.
+- Munin Radar and unified Action Inbox: trusted regulatory-source changes, workspace actions and actionable career/email signals converge into explicit `Agora`, `Revisar`, `Executando`, `Concluído` and `Radar` lanes.
+- Connector Registry exposes enabled state, zero-cost policy, authentication mode, last check and health for trusted sources plus Gmail/Outlook without exposing credentials.
+- Mobile-first Radar and Action Inbox surfaces are available from shared navigation and command keyboard shortcuts.
 - Web navigation hardening includes shared standalone navigation/styles, missing Intelligence page restoration, Career Quick Intake exposure and a navigation integrity test.
 - Unified operator workflow exposes `munin start`, `build`, `verify`, `ship`, `doctor` and `mobile-test`; the ship gate requires committed changes, passes the full test suite, pushes the mission branch and reuses one draft PR without automatic merge.
 

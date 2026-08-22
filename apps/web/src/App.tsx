@@ -36,7 +36,7 @@ export function App() {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setPalette(v => !v); }
       if (event.key === 'Escape') { setPalette(false); setEditor(null); setSitrep(''); }
       if ((event.ctrlKey || event.metaKey) && event.shiftKey) {
-        const shortcuts: Record<string, string> = { i: '/intelligence.html', m: '/context-memory.html', l: '/linkedin.html', p: '/linkedin-compose.html', h: '/linkedin-history.html', a: '/linkedin-assets.html', j:'/career-intake.html' };
+        const shortcuts: Record<string, string> = { i: '/intelligence.html', x: '/action-inbox.html', r: '/radar.html', m: '/context-memory.html', l: '/linkedin.html', p: '/linkedin-compose.html', h: '/linkedin-history.html', a: '/linkedin-assets.html', j:'/career-intake.html' };
         const target = shortcuts[event.key.toLowerCase()];
         if (target) { event.preventDefault(); window.location.assign(target); }
       }
@@ -61,7 +61,7 @@ export function App() {
 
   return <div className="shell">
     <aside className="sidebar"><div className="brand"><span className="brand-mark">M</span><div><strong>MUNIN</strong><small>Interactive Workspace</small></div></div><nav>{nav.map(item => <button key={item} className={section === item ? 'active' : ''} onClick={() => setSection(item)}>{item}</button>)}</nav><p className="nav-group">MODULES</p><nav className="nav-modules">
-      <a href="/career-intake.html">Analyze Job</a><a href="/career-command.html">Career Command</a><a href="/executive-briefing.html">Executive Briefing</a><a href="/intelligence.html">Intelligence</a><a href="/context-memory.html">Context Memory</a><a href="/linkedin.html">LinkedIn Studio</a><a href="/linkedin-compose.html">Post Composer</a><a href="/linkedin-history.html">Editorial History</a><a href="/linkedin-assets.html">Visual Assets</a><a href="/settings.html">Settings</a>
+      <a href="/action-inbox.html">Action Inbox</a><a href="/radar.html">Munin Radar</a><a href="/career-intake.html">Analyze Job</a><a href="/career-command.html">Career Command</a><a href="/executive-briefing.html">Executive Briefing</a><a href="/intelligence.html">Intelligence</a><a href="/context-memory.html">Context Memory</a><a href="/linkedin.html">LinkedIn Studio</a><a href="/linkedin-compose.html">Post Composer</a><a href="/linkedin-history.html">Editorial History</a><a href="/linkedin-assets.html">Visual Assets</a><a href="/settings.html">Settings</a>
     </nav><div className="sidebar-foot"><span className="status-dot" /> {error ? 'API desconectada' : 'Dados ao vivo'}</div></aside>
     <main><header><div><p className="eyebrow">WORKSPACE LOCAL</p><h1>{section}</h1></div><div className="tools"><div className="search"><span>⌕</span><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Pesquisar no Munin" />{matches.length > 0 && <div className="search-results">{matches.map(item => <button key={item}>{item}</button>)}</div>}</div><button className="command" onClick={() => setPalette(true)}>⌘ Comandos <kbd>Ctrl K</kbd></button></div></header>
       {notice && <div className="toast">{notice}</div>}
