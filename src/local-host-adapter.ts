@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
-import { dirname, resolve } from 'node:path';
+import { basename, dirname, isAbsolute, resolve } from 'node:path';
 import type { HostExecutionAdapter } from './host-bridge-executor.js';
 
 const execFileAsync = promisify(execFile);
@@ -24,6 +24,15 @@ async function runFixed(command: string, args: string[], cwd: string, timeoutMs:
     shell: false,
   });
   return `${stdout ?? ''}${stderr ? `\n${stderr}` : ''}`.trim();
+}
+
+function npmInvocation(): { command: string; args: string[] } {
+  if (process.platform !== 'win32') return { command: 'npm', args: [] };
+  const cli = process.env.npm_execpath?.trim();
+  if (!cli || !isAbsolute(cli) || basename(cli).toLowerCase() !== 'npm-cli.js') {
+    throw new Error('Windows npm CLI path is unavailable; refusing shell fallback.');
+  }
+  return { command: process.execPath, args: [cli] };
 }
 
 export class LocalHostAdapter implements HostExecutionAdapter {
@@ -68,7 +77,8 @@ export class LocalHostAdapter implements HostExecutionAdapter {
 
   async deployMain(): Promise<string> {
     const update = await this.gitFastForward();
-    const verification = await runFixed(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['test'], this.cwd, Math.max(this.timeoutMs, 240000));
+    const npm = npmInvocation();
+    const verification = await runFixed(npm.command, [...npm.args, 'test'], this.cwd, Math.max(this.timeoutMs, 240000));
     const restart = await this.restartMunin();
     let health = 'Health will be rechecked by the resident host worker.';
     for (let attempt = 0; attempt < 12; attempt++) {
