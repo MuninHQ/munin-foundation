@@ -1,5 +1,12 @@
 {
   "version": 1,
-  "status": "initialized",
-  "updatedAt": "2026-08-22T13:58:04.514Z"
+  "jobId": "github-deploy-20260822131221",
+  "type": "deploy-main",
+  "status": "failed",
+  "finishedAt": "2026-08-22T13:12:14.959Z",
+  "result": {
+    "id": "github-deploy-20260822131221",
+    "status": "failed",
+    "summary": "spawn EINVAL"
+  }
 }
