@@ -48,7 +48,7 @@ $linkedinPages = @(
   @{ path='/linkedin-compose.html'; marker='<title>Munin LinkedIn Composer</title>' },
   @{ path='/linkedin-brand.html'; marker='<title>Munin Personal Brand Intelligence</title>' },
   @{ path='/linkedin-history.html'; marker='<title>Munin Editorial History</title>' },
-  @{ path='/linkedin-assets.html'; marker='<title>Munin Visual Asset Memory</title>' },
+  @{ path='/linkedin-assets.html'; marker='<title>Munin Visual Asset Library</title>' },
   @{ path='/linkedin-publisher.html'; marker='<title>Munin LinkedIn Publisher</title>' }
 )
 foreach ($page in $linkedinPages) {
