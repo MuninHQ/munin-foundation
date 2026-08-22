@@ -28,6 +28,8 @@ export default defineConfig({
         'action-inbox': path.resolve(root, 'action-inbox.html'),
         radar: path.resolve(root, 'radar.html'),
         manus: path.resolve(root, 'manus.html'),
+        flows: path.resolve(root, 'flows.html'),
+        'operator-chat': path.resolve(root, 'operator-chat.html'),
         intelligence: path.resolve(root, 'intelligence.html'),
         'context-memory': path.resolve(root, 'context-memory.html'),
         council: path.resolve(root, 'council.html'),

@@ -57,6 +57,9 @@
 
 - [x] **Munin Radar + unified Action Inbox** — aggregate trusted regulatory changes, workspace actions and actionable email/career signals into visible operator lanes; expose connector health and preserve explicit approval for consequential actions.
 - [x] **Mobile-first command access** — Action Inbox and Radar are directly reachable through shared navigation and keyboard shortcuts without adding a heavy UI framework.
+- [x] **Mobile-first global Command Palette** — every standalone Munin surface exposes a bottom-sheet command launcher on phones plus `Ctrl/Cmd+K`, search and direct access to the highest-value operating modules.
+- [x] **n8n-inspired visual flow viewer** — a read-only, dependency-free flow surface renders real orchestration traces, routing, provider attempts and terminal outcomes without creating a second workflow engine.
+- [x] **Operational chat workspace** — a full local command conversation surface reuses Assistant history/API and provides an explicit sanitized handoff to the existing ChatGPT session for free-form reasoning.
 
 - [x] **Unified operator workflow** — `munin start|build|verify|ship|doctor|mobile-test` replaces repeated PowerShell/GitHub choreography with fixed, auditable commands; `ship` verifies before push, reuses a single mission PR, creates drafts only when needed, never stages unrelated files and never merges automatically.
 - [x] Mobile-first Munin runtime/API foundation.
