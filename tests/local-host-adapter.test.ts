@@ -18,6 +18,10 @@ test('local adapter source forbids arbitrary shell execution and pins commands',
   assert.match(source, /\['restore', '--worktree', '--', 'dist-web'\]/);
   assert.match(source, /\['clean', '-fd', '--', 'dist-web'\]/);
   assert.match(source, /\[\.\.\.npm\.args, 'test'\]/);
+  assert.match(source, /data\/runtime\/mobile-web/);
+  assert.match(source, /'run', 'build:web', '--', '--outDir'/);
+  assert.match(source, /hud-mobile\.html/);
+  assert.match(source, /HUD mobile publication check failed/);
   assert.match(source, /\['status', '--json'\]/);
   assert.doesNotMatch(source, /exec\(|spawn\(|Invoke-Expression|cmd\.exe|powershell -Command/);
 });
