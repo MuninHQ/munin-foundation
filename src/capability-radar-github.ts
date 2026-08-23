@@ -6,7 +6,10 @@ export interface GitHubRepositorySnapshot {
   description: string | null;
   archived: boolean;
   stargazers_count: number;
+  forks_count: number;
   open_issues_count: number;
+  created_at: string;
+  pushed_at: string;
   updated_at: string;
   license?: { spdx_id?: string | null } | null;
 }
@@ -64,6 +67,9 @@ export async function discoverGitHubCapabilities(options: GitHubDiscoveryOptions
       `License: ${license || 'unknown'}`,
       `Archived: ${repository.archived}`,
       `Stars: ${repository.stargazers_count}`,
+      `Forks: ${repository.forks_count}`,
+      `Created: ${repository.created_at}`,
+      `Pushed: ${repository.pushed_at}`,
       `Open issues: ${repository.open_issues_count}`,
       `Updated: ${repository.updated_at}`,
     ];
@@ -78,6 +84,13 @@ export async function discoverGitHubCapabilities(options: GitHubDiscoveryOptions
       maintenanceScore: maintenance,
       securityScore: security,
       duplicationScore: 0,
+      github: {
+        stars: repository.stargazers_count,
+        forks: repository.forks_count,
+        createdAt: repository.created_at,
+        pushedAt: repository.pushed_at,
+        archived: repository.archived,
+      },
       evidence,
     };
     return { candidate, repository, evidence };
