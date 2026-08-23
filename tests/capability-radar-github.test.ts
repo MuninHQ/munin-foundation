@@ -8,7 +8,7 @@ import { runCapabilityRadar } from '../src/capability-radar-service.js';
 import { JsonCapabilityDecisionLog } from '../src/json-capability-decision-log.js';
 
 const payload={items:[{
- full_name:'example/tool',html_url:'https://github.com/example/tool',description:'tool',archived:false,stargazers_count:1000,open_issues_count:12,updated_at:new Date().toISOString(),license:{spdx_id:'MIT'},
+ full_name:'example/tool',html_url:'https://github.com/example/tool',description:'tool',archived:false,stargazers_count:1000,forks_count:100,open_issues_count:12,created_at:new Date(Date.now()-30*86_400_000).toISOString(),pushed_at:new Date().toISOString(),updated_at:new Date().toISOString(),license:{spdx_id:'MIT'},
 }]};
 const fetcher=async()=>new Response(JSON.stringify(payload),{status:200,headers:{'content-type':'application/json'}});
 
@@ -20,6 +20,8 @@ test('GitHub discovery yields zero-cost candidates with evidence',async()=>{
  assert.equal(result[0].candidate.paidApiRequired,false);
  assert.equal(result[0].candidate.license,'MIT');
  assert.ok(result[0].candidate.securityScore!>=0.5);
+ assert.equal(result[0].candidate.github?.stars,1000);
+ assert.equal(result[0].candidate.github?.forks,100);
  assert.match(result[0].evidence.join('\n'),/MIT/);
 });
 
