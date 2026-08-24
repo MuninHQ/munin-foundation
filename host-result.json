@@ -1,15 +1,15 @@
 {
   "version": 1,
-  "jobId": "github-content-studio-restart-20260824-1958",
-  "type": "restart-munin",
+  "jobId": "github-content-studio-health-20260824-1959",
+  "type": "runtime-health",
   "status": "completed",
-  "finishedAt": "2026-08-24T19:58:39.540Z",
+  "finishedAt": "2026-08-24T19:59:11.915Z",
   "result": {
-    "id": "github-content-studio-restart-20260824-1958",
+    "id": "github-content-studio-health-20260824-1959",
     "status": "completed",
-    "summary": "restart-munin completed.",
+    "summary": "runtime-health completed.",
     "evidence": [
-      "Controlled Munin restart requested through workspace supervisor (restart-1787601519539-oqb31i)."
+      "API 200: {\"status\":\"ok\",\"service\":\"munin-workspace\"}\nWEB: HTTP 200; HUD mobile HTTP 200; LinkedIn Studio 6/6 pages and 3/3 APIs healthy"
     ]
   }
 }
