@@ -6,22 +6,24 @@
   <meta name="theme-color" content="#02070d" />
   <title>Munin — Adaptive Command HUD</title>
   <link rel="stylesheet" href="/munin.css" />
-  <link rel="stylesheet" href="/hud.css?v=22ff6bf-mobile2" />
+  <link rel="stylesheet" href="/hud.css?v=20260824-jarvis3" />
 </head>
 <body class="hud-body">
-  <div id="hud-grid" class="hud-grid"></div><div id="hud-halo" class="hud-halo"></div><div class="hud-scanline"></div>
-  <canvas id="hud-fx"></canvas><svg id="hud-links" class="hud-links" aria-hidden="true"></svg><canvas id="hud-iris"></canvas>
+  <a class="hud-skip-link" href="#hud-command-input">Pular para o comando</a>
+  <canvas id="hud-sphere-bg" aria-hidden="true"></canvas>
+  <div id="hud-grid" class="hud-grid" aria-hidden="true"></div><div id="hud-halo" class="hud-halo" aria-hidden="true"></div><div class="hud-scanline" aria-hidden="true"></div>
+  <canvas id="hud-fx" aria-hidden="true"></canvas><svg id="hud-links" class="hud-links" aria-hidden="true"></svg><canvas id="hud-iris" aria-hidden="true"></canvas>
   <header class="hud-top"><a href="/" class="hud-brand">MUNIN</a><span>ADAPTIVE COMMAND HUD</span><div class="hud-top-actions"><span id="hud-adaptive">ADAPTIVE · OBSERVANDO</span><button id="hud-fx-toggle" type="button">AMBIENT ON</button><button id="hud-voice" type="button">VOZ OFF</button><span id="hud-status">CONECTANDO</span></div></header>
   <section class="hud-panel drag-panel" id="chrono-panel" data-panel="chrono"><span class="hud-label">CHRONO</span><strong id="hud-time">--:--</strong><small id="hud-date">—</small><div id="hud-calendar" class="hud-calendar"></div></section>
   <section class="hud-panel drag-panel" id="vitals-panel" data-panel="vitals"><span class="hud-label">SYSTEM VITALS</span><div class="hud-stat"><span>API latency</span><b id="hud-api">—</b></div><div class="hud-meter"><i id="hud-api-meter"></i></div><div class="hud-stat"><span>Sessão</span><b id="hud-session">00:00</b></div><div class="hud-stat"><span>Email sync</span><b id="hud-mail-sync">—</b></div><div class="hud-stat"><span>Render</span><b id="hud-fps">—</b></div></section>
   <section class="hud-panel drag-panel" id="adaptive-panel" data-panel="adaptive"><span class="hud-label">ADAPTIVE INTELLIGENCE</span><div id="hud-predictive">Observando padrões de uso.</div><div id="hud-usage"></div></section>
   <section class="hud-panel drag-panel" id="brief-panel" data-panel="brief"><span class="hud-label">EXECUTIVE FEED</span><h2 id="hud-headline">Carregando contexto…</h2><div id="hud-feed"></div></section>
   <section class="hud-panel drag-panel" id="career-panel" data-panel="career"><span class="hud-label">CAREER PIPELINE</span><div id="hud-career"></div></section>
-  <main id="hud-stage" class="hud-stage"><div id="hud-core-hit" class="hud-core-hit" title="Falar com o Munin"></div><div id="hud-core-label" class="hud-core-label"><b>MUNIN CORE</b><small id="hud-core-sub">EXECUTIVE INTELLIGENCE</small></div></main>
+  <main id="hud-stage" class="hud-stage"><div id="hud-core-hit" class="hud-core-hit" title="Falar com o Munin" role="button" tabindex="0" aria-label="Falar com o Munin"></div><div id="hud-core-label" class="hud-core-label"><b>MUNIN CORE</b><small id="hud-core-sub">EXECUTIVE INTELLIGENCE</small></div></main>
   <section id="activity-panel" class="hud-activity"><span class="hud-label">ACTIVITY STREAM</span><span id="hud-wave-caption">—</span><canvas id="hud-wave"></canvas></section>
-  <section class="hud-command"><div id="hud-reply" class="hud-reply"></div><form id="hud-command-form"><span class="command-dot"></span><input id="hud-command-input" autocomplete="off" placeholder="Fale com o Munin… (prioridades · SITREP · carreira · LinkedIn)" /><button>EXECUTAR</button></form></section>
-  <div id="hud-readout" class="hud-readout"></div><div id="hud-toast" class="hud-toast"></div><div id="hud-reticle" class="hud-reticle"><div></div><i></i></div><div id="hud-boot" class="hud-boot"><div><div class="boot-word">MUNIN</div><div id="hud-boot-lines" class="boot-lines"></div><div class="boot-bar"><i id="hud-boot-bar"></i></div></div></div>
+  <section class="hud-command"><div id="hud-reply" class="hud-reply" aria-live="polite"></div><form id="hud-command-form"><span class="command-dot"></span><input id="hud-command-input" autocomplete="off" placeholder="Fale com o Munin… (prioridades · SITREP · carreira · LinkedIn)" /><button>EXECUTAR</button></form></section>
+  <div id="hud-readout" class="hud-readout" aria-hidden="true"></div><div id="hud-toast" class="hud-toast" role="status" aria-live="polite"></div><div id="hud-reticle" class="hud-reticle" aria-hidden="true"><div></div><i></i></div><div id="hud-boot" class="hud-boot"><div><div class="boot-word">MUNIN</div><div id="hud-boot-lines" class="boot-lines"></div><div class="boot-bar"><i id="hud-boot-bar"></i></div></div></div>
   <script src="/munin-client.js"></script>
   <script>if(window.MuninClient?.request){const request=window.MuninClient.request.bind(window.MuninClient);window.MuninClient.request=(path,options={})=>{if(path!=='/api/chat')return request(path,options);let payload={};try{payload=JSON.parse(options.body||'{}')}catch{}return request('/api/assistant',{...options,headers:{'content-type':'application/json',...(options.headers||{})},body:JSON.stringify({command:payload.message||payload.command||''})})}}</script>
-  <script src="/hud.js?v=22ff6bf-mobile2"></script><script src="/hud-career.js?v=22ff6bf-mobile2"></script>
+  <script src="/hud.js?v=20260824-jarvis3"></script><script src="/hud-career.js?v=20260824-jarvis3"></script>
 </body></html>
