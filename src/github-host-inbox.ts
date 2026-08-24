@@ -10,7 +10,7 @@ const REMOTE='origin';
 const INBOX_BRANCH='munin-host-inbox';
 const REMOTE_REF=`refs/remotes/${REMOTE}/${INBOX_BRANCH}`;
 const INBOX_FILE='host-intent.json';
-const ALLOWED:ReadonlySet<HostJobType>=new Set(['runtime-health','git-fast-forward','deploy-main','restart-munin','run-acceptance','tailscale-health']);
+const ALLOWED:ReadonlySet<HostJobType>=new Set(['runtime-health','git-fast-forward','deploy-main','restart-munin','run-acceptance','tailscale-health','creative-review']);
 const MAX_INTENT_AGE_MS=15*60*1000;
 
 export interface GitHubHostIntent{
