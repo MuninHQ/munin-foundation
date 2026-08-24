@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "jobId": "github-content-studio-health-20260824-1954",
-  "type": "runtime-health",
+  "jobId": "github-content-studio-deploy-20260824-1957",
+  "type": "deploy-main",
   "status": "failed",
-  "finishedAt": "2026-08-24T19:54:03.820Z",
+  "finishedAt": "2026-08-24T19:57:33.849Z",
   "result": {
-    "id": "github-content-studio-health-20260824-1954",
+    "id": "github-content-studio-deploy-20260824-1957",
     "status": "failed",
-    "summary": "Munin web publication is unhealthy: fetch failed"
+    "summary": "Command failed: C:\\Program Files\\nodejs\\node.exe C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js test\n"
   }
 }
