@@ -1,12 +1,15 @@
 {
   "version": 1,
-  "jobId": "github-content-studio-deploy-20260824-1957",
-  "type": "deploy-main",
-  "status": "failed",
-  "finishedAt": "2026-08-24T19:57:33.849Z",
+  "jobId": "github-content-studio-restart-20260824-1958",
+  "type": "restart-munin",
+  "status": "completed",
+  "finishedAt": "2026-08-24T19:58:39.540Z",
   "result": {
-    "id": "github-content-studio-deploy-20260824-1957",
-    "status": "failed",
-    "summary": "Command failed: C:\\Program Files\\nodejs\\node.exe C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js test\n"
+    "id": "github-content-studio-restart-20260824-1958",
+    "status": "completed",
+    "summary": "restart-munin completed.",
+    "evidence": [
+      "Controlled Munin restart requested through workspace supervisor (restart-1787601519539-oqb31i)."
+    ]
   }
 }
