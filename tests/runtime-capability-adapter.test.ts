@@ -10,7 +10,7 @@ test('runtime capability adapter stays disabled by default when explicitly false
 
 test('runtime capability adapter exposes governed capabilities only when enabled',()=>{
  const adapter=new RuntimeCapabilityAdapter(new ExecutionEngine(),{enabled:true});
- assert.deepEqual(adapter.capabilityNames(),['browser.operator','code.semantic-intelligence','engineering.autonomous-mission','engineering.independent-review','execution.autonomous-loop','intelligence.external','media.local-video','observability.sentry']);
+ assert.deepEqual(adapter.capabilityNames(),['browser.operator','code.semantic-intelligence','engineering.autonomous-mission','engineering.independent-review','execution.autonomous-loop','intelligence.external','media.content-video','media.local-video','observability.sentry']);
 });
 
 test('disabled adapter fails closed before capability execution',async()=>{
@@ -23,6 +23,7 @@ test('disabled adapter fails closed before capability execution',async()=>{
  await assert.rejects(adapter.externalIntelligence({objective:'research'}),/capability seam is disabled/);
  await assert.rejects(adapter.independentReview({objective:'review',implementationSummary:'done'}),/capability seam is disabled/);
  await assert.rejects(adapter.localVideo({action:'health'}),/capability seam is disabled/);
+ await assert.rejects(adapter.contentVideo({action:'health'}),/capability seam is disabled/);
 });
 
 test('enabled adapter executes browser health through policy-gated seam',async()=>{

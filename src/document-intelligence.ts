@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { promisify } from 'node:util';
 import { promises as fs } from 'node:fs';
@@ -7,10 +7,11 @@ import path from 'node:path';
 const execFileAsync=promisify(execFile);
 
 export type DocumentChunk={id:string;index:number;text:string;source:string;sourceHash:string;heading?:string};
-export type DocumentManifest={version:1;source:string;sourceHash:string;sourceBytes:number;sourceModifiedAt:string;ingestedAt:string;engine:'docling'|'native-fallback';artifacts:{markdown?:string;json?:string;chunks?:string};chunkCount:number;warnings:string[]};
+export type DocumentEngine='mineru'|'docling'|'native-fallback';
+export type DocumentManifest={version:1;source:string;sourceHash:string;sourceBytes:number;sourceModifiedAt:string;ingestedAt:string;engine:DocumentEngine;artifacts:{markdown?:string;json?:string;chunks?:string};chunkCount:number;warnings:string[]};
 export type DocumentIngestResult={
   source:string;
-  engine:'docling'|'native-fallback';
+  engine:DocumentEngine;
   outputDir:string;
   markdown?:string;
   json?:unknown;
@@ -46,11 +47,16 @@ async function readDoclingOutputs(source:string,outputDir:string){
   if(await exists(jsonPath)){const raw=await fs.readFile(jsonPath,'utf8');try{json=JSON.parse(raw)}catch{json={raw}}}
   return {markdown,json,mdPath,jsonPath};
 }
-async function finalize(source:string,outputDir:string,engine:'docling'|'native-fallback',markdown: string|undefined,json:unknown,warnings:string[]):Promise<DocumentIngestResult>{
+async function finalize(source:string,outputDir:string,engine:DocumentEngine,markdown: string|undefined,json:unknown,warnings:string[]):Promise<DocumentIngestResult>{
   const stat=await fs.stat(source);const sourceHash=await sha256(source);const stem=outputStem(source);const chunks=markdown?splitChunks(markdown,source,sourceHash):[];
   const chunksPath=path.join(outputDir,`${stem}.chunks.jsonl`);if(chunks.length)await fs.writeFile(chunksPath,chunks.map(x=>JSON.stringify(x)).join('\n')+'\n','utf8');
   const manifest:DocumentManifest={version:1,source,sourceHash,sourceBytes:stat.size,sourceModifiedAt:stat.mtime.toISOString(),ingestedAt:new Date().toISOString(),engine,artifacts:{markdown:markdown?`${stem}.md`:undefined,json:json?`${stem}.json`:undefined,chunks:chunks.length?`${stem}.chunks.jsonl`:undefined},chunkCount:chunks.length,warnings:[...warnings]};
   await fs.writeFile(path.join(outputDir,`${stem}.manifest.json`),JSON.stringify(manifest,null,2)+'\n','utf8');return {source,engine,outputDir,markdown,json,chunks,manifest,warnings};
+}
+async function ingestWithMineru(source:string,outputDir:string):Promise<DocumentIngestResult|undefined>{
+  const runner=process.env.MUNIN_MINERU_RUNNER?.trim();if(!runner)return undefined;if(!path.isAbsolute(runner))throw new Error('MUNIN_MINERU_RUNNER must be an absolute path');
+  const payload=await new Promise<{markdown?:string;json?:unknown}>((resolve,reject)=>{const child=spawn(runner,[],{stdio:['pipe','pipe','pipe'],shell:false,windowsHide:true,env:process.env});let stdout='',stderr='';child.stdout.setEncoding('utf8');child.stderr.setEncoding('utf8');child.stdout.on('data',value=>stdout+=value);child.stderr.on('data',value=>stderr+=value);child.once('error',reject);child.once('exit',code=>{if(code!==0)return reject(new Error(`MinerU runner exited ${code}: ${stderr.trim().slice(0,800)}`));try{resolve(JSON.parse(stdout));}catch{reject(new Error('MinerU runner must return JSON with markdown and optional json fields'));}});child.stdin.end(JSON.stringify({source,outputDir,formats:['markdown','json']}));});
+  if(!payload.markdown&&!payload.json)throw new Error('MinerU runner returned no document content');await fs.mkdir(outputDir,{recursive:true});const stem=outputStem(source);if(payload.markdown)await fs.writeFile(path.join(outputDir,`${stem}.md`),payload.markdown,'utf8');if(payload.json)await fs.writeFile(path.join(outputDir,`${stem}.json`),JSON.stringify(payload.json,null,2)+'\n','utf8');return finalize(source,outputDir,'mineru',payload.markdown,payload.json,[]);
 }
 async function nativeFallback(source:string,outputDir:string):Promise<DocumentIngestResult>{
   const ext=path.extname(source).toLowerCase(),warnings=['Docling não está disponível; Munin usou ingestão determinística limitada.'];await fs.mkdir(outputDir,{recursive:true});
@@ -61,6 +67,8 @@ async function nativeFallback(source:string,outputDir:string):Promise<DocumentIn
   warnings.push(`Formato ${ext||'(sem extensão)'} requer Docling para extração estruturada.`);return finalize(source,outputDir,'native-fallback',undefined,undefined,warnings);
 }
 export async function ingestDocument(source:string,outputDir=path.resolve('data/runtime/documents'),deps:Deps={}):Promise<DocumentIngestResult>{
-  const abs=path.resolve(source);if(!await exists(abs))throw new Error(`Documento não encontrado: ${abs}`);await fs.mkdir(outputDir,{recursive:true});const execFileImpl=deps.execFileImpl??execFileAsync;const docling=await findDocling(execFileImpl);if(!docling)return nativeFallback(abs,outputDir);
+  const abs=path.resolve(source);if(!await exists(abs))throw new Error(`Documento não encontrado: ${abs}`);await fs.mkdir(outputDir,{recursive:true});
+  if(process.env.MUNIN_DOCUMENT_ENGINE==='mineru'){try{const result=await ingestWithMineru(abs,outputDir);if(result)return result;}catch(error){const fallback=await nativeFallback(abs,outputDir);fallback.warnings.unshift(`MinerU falhou: ${error instanceof Error?error.message:String(error)}`);return fallback;}}
+  const execFileImpl=deps.execFileImpl??execFileAsync;const docling=await findDocling(execFileImpl);if(!docling)return nativeFallback(abs,outputDir);
   try{await execFileImpl(docling,['convert',abs,'--to','md','--to','json','--output',outputDir,'--abort-on-error','--quiet'],{timeout:Number(process.env.MUNIN_DOCLING_TIMEOUT_MS??600000),windowsHide:true,maxBuffer:16*1024*1024});const outputs=await readDoclingOutputs(abs,outputDir);if(!outputs.markdown&&!outputs.json)throw new Error('Docling concluiu sem produzir Markdown ou JSON esperado.');return finalize(abs,outputDir,'docling',outputs.markdown,outputs.json,[])}catch(error){const fallback=await nativeFallback(abs,outputDir);fallback.warnings.unshift(`Docling falhou: ${error instanceof Error?error.message:String(error)}`);fallback.manifest.warnings=[...fallback.warnings];await fs.writeFile(path.join(outputDir,`${outputStem(abs)}.manifest.json`),JSON.stringify(fallback.manifest,null,2)+'\n','utf8');return fallback}
 }

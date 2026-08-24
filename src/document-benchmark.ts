@@ -3,7 +3,7 @@ import path from 'node:path';
 import { ingestDocument } from './document-intelligence.js';
 
 export type DocumentBenchmarkItem={file:string;extension:string;bytes:number;engine:string;durationMs:number;chunks:number;warnings:string[];ok:boolean};
-export type DocumentBenchmarkReport={generatedAt:string;inputDir:string;outputDir:string;documents:number;docling:number;fallback:number;failed:number;totalMs:number;items:DocumentBenchmarkItem[]};
+export type DocumentBenchmarkReport={generatedAt:string;inputDir:string;outputDir:string;documents:number;mineru?:number;docling:number;fallback:number;failed:number;totalMs:number;items:DocumentBenchmarkItem[]};
 
 const supported=/\.(pdf|docx|pptx|xlsx|html?|epub|md|txt|json|csv|png|jpe?g|webp|tiff?|wav|mp3|m4a|eml|msg|odt|ods|odp|xbrl)$/i;
 
@@ -15,6 +15,6 @@ export async function benchmarkDocuments(inputDir:string,outputDir=path.resolve(
   try{const result=await ingestDocument(file,artifactOut);items.push({file:path.basename(file),extension:path.extname(file).toLowerCase(),bytes:stat.size,engine:result.engine,durationMs:Math.round(performance.now()-t0),chunks:result.manifest.chunkCount,warnings:result.warnings,ok:Boolean(result.markdown||result.json)});}
   catch(error){items.push({file:path.basename(file),extension:path.extname(file).toLowerCase(),bytes:stat.size,engine:'error',durationMs:Math.round(performance.now()-t0),chunks:0,warnings:[error instanceof Error?error.message:String(error)],ok:false});}
  }
- const report:DocumentBenchmarkReport={generatedAt:new Date().toISOString(),inputDir:input,outputDir:out,documents:items.length,docling:items.filter(x=>x.engine==='docling').length,fallback:items.filter(x=>x.engine==='native-fallback').length,failed:items.filter(x=>!x.ok).length,totalMs:Math.round(performance.now()-started),items};
+ const report:DocumentBenchmarkReport={generatedAt:new Date().toISOString(),inputDir:input,outputDir:out,documents:items.length,mineru:items.filter(x=>x.engine==='mineru').length,docling:items.filter(x=>x.engine==='docling').length,fallback:items.filter(x=>x.engine==='native-fallback').length,failed:items.filter(x=>!x.ok).length,totalMs:Math.round(performance.now()-started),items};
  await fs.writeFile(path.join(out,'benchmark-report.json'),JSON.stringify(report,null,2)+'\n','utf8');return report;
 }
