@@ -1,12 +1,15 @@
 {
   "version": 1,
-  "jobId": "github-content-studio-restarted-health2-20260824-2009",
+  "jobId": "github-content-studio-recovered-health-20260824-2026",
   "type": "runtime-health",
-  "status": "failed",
-  "finishedAt": "2026-08-24T20:09:53.581Z",
+  "status": "completed",
+  "finishedAt": "2026-08-24T20:26:36.418Z",
   "result": {
-    "id": "github-content-studio-restarted-health2-20260824-2009",
-    "status": "failed",
-    "summary": "fetch failed"
+    "id": "github-content-studio-recovered-health-20260824-2026",
+    "status": "completed",
+    "summary": "runtime-health completed.",
+    "evidence": [
+      "API 200: {\"status\":\"ok\",\"service\":\"munin-workspace\"}\nWEB: HTTP 200; HUD mobile HTTP 200; LinkedIn Studio 6/6 pages and 3/3 APIs healthy"
+    ]
   }
 }
