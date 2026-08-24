@@ -13,6 +13,8 @@ Munin Foundation is the canonical product, architecture and execution repository
 
 The repository contains working Control Room orchestration, bounded autonomous engineering, durable context/memory, Career intelligence/mobile intake, provider-neutral runtime seams, browser verification and operator-facing APIs. ChatGPT is the primary interactive operator cockpit for the current phase; Munin's default runtime requires neither a local LLM nor a paid AI API. Ollama remains an explicit opt-in capability rather than a startup dependency.
 
+Hermes Agent is supported as an optional project-aware engineering/research operator. `AGENTS.md` supplies Munin's repository constraints to compatible agents and `skills/hermes-learning-loop/` provides a bounded path for promoting repeated successful procedures into reusable Munin skills. Hermes does not replace the Munin orchestrator, become a startup dependency, or add a mandatory paid provider.
+
 ## Repository map
 
 - `ops/` — canonical current state, backlog and session log
