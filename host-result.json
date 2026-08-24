@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "jobId": "github-content-studio-restarted-health-20260824-2009",
+  "jobId": "github-content-studio-restarted-health2-20260824-2009",
   "type": "runtime-health",
   "status": "failed",
-  "finishedAt": "2026-08-24T20:09:10.358Z",
+  "finishedAt": "2026-08-24T20:09:53.581Z",
   "result": {
-    "id": "github-content-studio-restarted-health-20260824-2009",
+    "id": "github-content-studio-restarted-health2-20260824-2009",
     "status": "failed",
     "summary": "fetch failed"
   }
