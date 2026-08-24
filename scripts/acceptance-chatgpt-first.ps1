@@ -85,6 +85,33 @@ foreach ($check in $linkedinApis) {
   }
 }
 
+try {
+  $contentPage = Invoke-WebWithRetry "$WebUrl/content-studio.html"
+  $valid = $contentPage.StatusCode -eq 200 -and $contentPage.Content.Contains('<title>Munin Content Studio</title>')
+  Add-Result 'content-studio-page' $valid ($(if ($valid) { 'HTTP 200 with expected Content Studio marker.' } else { 'Unexpected status or content.' }))
+} catch {
+  Add-Result 'content-studio-page' $false "Content Studio route unavailable: $($_.Exception.Message)"
+}
+
+try {
+  $statusResponse = Invoke-WebWithRetry "$ApiUrl/api/content-studio/status"
+  $statusPayload = $statusResponse.Content | ConvertFrom-Json
+  $valid = $statusResponse.StatusCode -eq 200 -and $null -ne $statusPayload.contentVideo -and $statusPayload.publication.humanApprovalRequired -eq $true
+  Add-Result 'content-studio-status' $valid ($(if ($valid) { 'HTTP 200; governed capability status and human approval gate present.' } else { 'Content Studio status contract is incomplete.' }))
+} catch {
+  Add-Result 'content-studio-status' $false "Content Studio status unavailable: $($_.Exception.Message)"
+}
+
+try {
+  $planBody = @{ action='plan'; topic='O caminho invisível de um Pix'; aspectRatio='9:16' } | ConvertTo-Json
+  $planResponse = Invoke-WebRequest -UseBasicParsing -Uri "$ApiUrl/api/content-studio/video" -Method Post -ContentType 'application/json' -Body $planBody -TimeoutSec 10
+  $planPayload = $planResponse.Content | ConvertFrom-Json
+  $valid = $planResponse.StatusCode -eq 200 -and $planPayload.action -eq 'plan' -and $planPayload.request.provider -eq 'moneyprinterturbo' -and $planPayload.policy.automaticPublishAllowed -eq $false -and $planPayload.request.brandRules.noLogo -eq $true
+  Add-Result 'content-studio-plan' $valid ($(if ($valid) { 'Real plan created with MoneyPrinterTurbo adapter, no-logo rule and automatic publication blocked.' } else { 'Content Studio plan contract is incomplete.' }))
+} catch {
+  Add-Result 'content-studio-plan' $false "Content Studio plan failed: $($_.Exception.Message)"
+}
+
 $failed = @($results | Where-Object { -not $_.passed })
 $output = [pscustomobject]@{
   generatedAt = (Get-Date).ToUniversalTime().ToString('o')
