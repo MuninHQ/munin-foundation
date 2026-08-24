@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "jobId": "github-deploy-creative-202608241501",
+  "jobId": "github-deploy-creative-202608241534",
   "type": "deploy-main",
   "status": "failed",
-  "finishedAt": "2026-08-24T18:01:46.628Z",
+  "finishedAt": "2026-08-24T18:36:41.003Z",
   "result": {
-    "id": "github-deploy-creative-202608241501",
+    "id": "github-deploy-creative-202608241534",
     "status": "failed",
-    "summary": "Command failed: C:\\Program Files\\nodejs\\node.exe C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js test\n"
+    "summary": "Working tree is not clean; refusing automatic fast-forward."
   }
 }
