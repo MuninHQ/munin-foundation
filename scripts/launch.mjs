@@ -25,7 +25,7 @@ loadLocalEnv();
 
 const API_PORT = Number(process.env.MUNIN_API_PORT ?? 4310);
 const WEB_PORT = Number(process.env.MUNIN_WEB_PORT ?? 5173);
-const START_PAGE = process.env.MUNIN_START_PAGE ?? '';
+const START_PAGE = process.env.MUNIN_START_PAGE ?? 'hud.html';
 const BROWSER_MODE = process.env.MUNIN_BROWSER_MODE ?? 'browser';
 const SUPERVISED = process.env.MUNIN_SUPERVISED === '1';
 const SKIP_AUTO_OPEN = process.env.MUNIN_SKIP_AUTO_OPEN === '1';
