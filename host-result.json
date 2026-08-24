@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "jobId": "github-content-studio-acceptance-20260824-2000",
-  "type": "run-acceptance",
+  "jobId": "github-content-studio-restarted-health-20260824-2009",
+  "type": "runtime-health",
   "status": "failed",
-  "finishedAt": "2026-08-24T20:00:58.331Z",
+  "finishedAt": "2026-08-24T20:09:10.358Z",
   "result": {
-    "id": "github-content-studio-acceptance-20260824-2000",
+    "id": "github-content-studio-restarted-health-20260824-2009",
     "status": "failed",
-    "summary": "Command failed: powershell -NoProfile -ExecutionPolicy Bypass -File D:\\Dev\\munin-foundation-git\\scripts\\acceptance-chatgpt-first.ps1 -ApiUrl http://127.0.0.1:4310 -WebUrl http://127.0.0.1:5173\n"
+    "summary": "fetch failed"
   }
 }
