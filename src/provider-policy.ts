@@ -1,4 +1,5 @@
 import { OllamaProvider } from './ollama-provider.js';
+import { OpenRouterProvider } from './openrouter-provider.js';
 import { DeterministicProvider, type ExecutionProvider, type ProviderRequest } from './providers.js';
 import { ProviderResilience, ResilientProvider } from './resilience.js';
 
@@ -40,6 +41,12 @@ export function defaultProviderProfiles(): ProviderProfile[] {
     new OllamaProvider({ timeoutMs: ollamaTimeoutMs }),
     new ProviderResilience({ timeoutMs: ollamaTimeoutMs, maxAttempts: 1, circuitFailureThreshold: 3, circuitResetMs: 30_000 }),
   );
+  const openRouterTimeoutMs = Number(process.env.OPENROUTER_TIMEOUT_MS ?? 120_000);
+  const openRouter = new ResilientProvider(
+    new OpenRouterProvider({ timeoutMs: openRouterTimeoutMs }),
+    new ProviderResilience({ timeoutMs: openRouterTimeoutMs, maxAttempts: 1, circuitFailureThreshold: 2, circuitResetMs: 60_000 }),
+  );
+
   return [
     {
       id: deterministic.id,
@@ -58,6 +65,15 @@ export function defaultProviderProfiles(): ProviderProfile[] {
       estimatedCostPerCall: 0,
       estimatedLatencyMs: 30_000,
       enabled: process.env.MUNIN_OLLAMA_ENABLED !== '0',
+    },
+    {
+      id: openRouter.id,
+      provider: openRouter,
+      capabilities: ['code', 'review', 'strategy', 'synthesis'],
+      mode: 'external',
+      estimatedCostPerCall: 0,
+      estimatedLatencyMs: 15_000,
+      enabled: process.env.MUNIN_OPENROUTER_ENABLED === '1' && Boolean(process.env.OPENROUTER_API_KEY),
     },
   ];
 }
