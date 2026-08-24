@@ -1,15 +1,12 @@
 {
   "version": 1,
-  "jobId": "github-content-studio-sync-20260824-2000",
-  "type": "git-fast-forward",
-  "status": "completed",
-  "finishedAt": "2026-08-24T20:00:24.285Z",
+  "jobId": "github-content-studio-acceptance-20260824-2000",
+  "type": "run-acceptance",
+  "status": "failed",
+  "finishedAt": "2026-08-24T20:00:58.331Z",
   "result": {
-    "id": "github-content-studio-sync-20260824-2000",
-    "status": "completed",
-    "summary": "git-fast-forward completed.",
-    "evidence": [
-      "Updating 84434e3..981a44c\nFast-forward\n scripts/acceptance-chatgpt-first.ps1 | 27 +++++++++++++++++++++++++++\n 1 file changed, 27 insertions(+)"
-    ]
+    "id": "github-content-studio-acceptance-20260824-2000",
+    "status": "failed",
+    "summary": "Command failed: powershell -NoProfile -ExecutionPolicy Bypass -File D:\\Dev\\munin-foundation-git\\scripts\\acceptance-chatgpt-first.ps1 -ApiUrl http://127.0.0.1:4310 -WebUrl http://127.0.0.1:5173\n"
   }
 }
