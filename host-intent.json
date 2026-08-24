@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "id": "content-studio-restart-20260824-1958",
-  "type": "restart-munin",
-  "createdAt": "2026-08-24T19:58:42.000Z",
-  "expiresAt": "2026-08-24T20:10:42.000Z",
+  "id": "content-studio-health-20260824-1959",
+  "type": "runtime-health",
+  "createdAt": "2026-08-24T19:59:12.000Z",
+  "expiresAt": "2026-08-24T20:09:12.000Z",
   "repo": "MuninHQ/munin-foundation",
   "branch": "main"
 }
