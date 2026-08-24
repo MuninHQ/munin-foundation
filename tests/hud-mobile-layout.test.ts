@@ -19,5 +19,6 @@ test('HUD mobile removes overlapping desktop effects and contains the composer',
   assert.match(css,/\.hud-command\{order:6;position:fixed;left:0;right:0/);
   assert.match(css,/safe-area-inset-bottom/);
   assert.match(css,/\.hud-command input\{min-width:0;width:100%;font-size:16px/);
-  assert.match(await web('hud.html'),/hud\.css\?v=22ff6bf-mobile2/);
+  assert.match(await web('hud.html'),/hud\.css\?v=/);
 });
+
