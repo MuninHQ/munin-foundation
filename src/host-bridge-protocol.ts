@@ -1,4 +1,4 @@
-export type HostJobType = 'runtime-health' | 'git-fast-forward' | 'deploy-main' | 'restart-munin' | 'run-acceptance' | 'tailscale-health';
+export type HostJobType = 'runtime-health' | 'git-fast-forward' | 'deploy-main' | 'restart-munin' | 'run-acceptance' | 'tailscale-health' | 'creative-review';
 export type HostJobStatus = 'queued' | 'approved' | 'running' | 'completed' | 'blocked' | 'failed';
 
 export interface HostJob {
@@ -17,7 +17,7 @@ export interface HostJobResult {
   evidence?: string[];
 }
 
-const ALLOWED: ReadonlySet<HostJobType> = new Set(['runtime-health','git-fast-forward','deploy-main','restart-munin','run-acceptance','tailscale-health']);
+const ALLOWED: ReadonlySet<HostJobType> = new Set(['runtime-health','git-fast-forward','deploy-main','restart-munin','run-acceptance','tailscale-health','creative-review']);
 
 export function validateHostJob(job: HostJob): HostJobResult {
   if (!job.id.trim()) return { id: job.id, status: 'blocked', summary: 'Missing job id.' };
