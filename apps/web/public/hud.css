@@ -31,3 +31,17 @@ body.fx-off .hud-grid,body.fx-off .hud-halo,body.fx-off .hud-scanline,body.fx-of
   .hud-command{order:6;position:fixed;left:0;right:0;bottom:0;transform:none;width:auto;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(2,7,13,.98) 22%)}.hud-command form{width:100%;gap:7px;padding:5px 5px 5px 10px;border-radius:13px}.hud-command input{min-width:0;width:100%;font-size:16px;padding:10px 0}.hud-command button{flex:0 0 auto;font-size:9px;padding:10px 9px}.command-dot{display:none}.hud-reply{max-height:34vh;font-size:12px;margin:0 0 7px}
   .hud-toast{top:66px;width:calc(100% - 28px);text-align:center}.hud-boot>div{width:calc(100% - 44px)}.boot-word{font-size:24px}
 }
+
+/* JARVIS depth and accessibility upgrade */
+#hud-sphere-bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none}
+.hud-body:after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 50% 106%,rgba(0,3,6,.62),transparent 62%)}
+@keyframes hud-nebula{0%,100%{background-position:50% 44%,12% 88%,88% 10%,0 0}50%{background-position:52% 42%,10% 86%,86% 12%,0 0}}
+.hud-body{animation:hud-nebula 46s ease-in-out infinite}
+#hud-time{background:linear-gradient(180deg,var(--hud-bright),var(--hud-cyan));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 20px rgba(53,200,232,.35))}
+@keyframes hud-breathe{0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.04),inset 0 0 40px rgba(53,200,232,.03),0 0 0 rgba(53,200,232,0)}50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.05),inset 0 0 46px rgba(53,200,232,.05),0 0 22px rgba(30,140,175,.10)}}
+.hud-panel{animation:hud-breathe 7s ease-in-out infinite}.hud-panel:hover,.hud-panel.dragging{animation-play-state:paused}
+.hud-skip-link{position:fixed;top:-60px;left:12px;z-index:200;background:var(--hud-bright);color:#01222e;padding:8px 14px;border-radius:6px;font:700 12px system-ui;text-decoration:none;transition:top .2s}.hud-skip-link:focus{top:12px}
+a:focus-visible,button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--hud-bright);outline-offset:3px;border-radius:6px}
+.hud-body.touch{cursor:auto}.hud-body.touch .hud-reticle,.hud-body.touch .hud-halo{display:none}.hud-body.touch button,.hud-body.touch a{cursor:pointer}
+@media(max-width:900px),(pointer:coarse) and (max-width:1100px){#hud-sphere-bg{display:none}.hud-panel{animation:none}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
