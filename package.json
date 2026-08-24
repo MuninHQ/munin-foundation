@@ -68,7 +68,8 @@
     "manus:worker:startup:remove": "powershell -ExecutionPolicy Bypass -File scripts/remove-manus-bridge-startup.ps1",
     "linkedin:editorial:once": "npm run build:core && node dist/src/linkedin-editorial-worker-cli.js",
     "linkedin:editorial:task:install": "powershell -ExecutionPolicy Bypass -File scripts/install-linkedin-editorial-task.ps1",
-    "linkedin:editorial:task:remove": "powershell -ExecutionPolicy Bypass -File scripts/remove-linkedin-editorial-task.ps1"
+    "linkedin:editorial:task:remove": "powershell -ExecutionPolicy Bypass -File scripts/remove-linkedin-editorial-task.ps1",
+    "creative:review": "npm run build:core && node dist/src/creative-studio-cli.js"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
