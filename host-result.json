@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "jobId": "github-deploy-creative-202608241448",
+  "jobId": "github-deploy-creative-202608241501",
   "type": "deploy-main",
   "status": "failed",
-  "finishedAt": "2026-08-24T17:55:54.316Z",
+  "finishedAt": "2026-08-24T18:01:46.628Z",
   "result": {
-    "id": "github-deploy-creative-202608241448",
+    "id": "github-deploy-creative-202608241501",
     "status": "failed",
-    "summary": "Command failed: git merge --ff-only origin/main\nhint: Diverging branches can't be fast-forwarded, you need to either:\nhint:\nhint: \tgit merge --no-ff\nhint:\nhint: or:\nhint:\nhint: \tgit rebase\nhint:\nhint: Disable this message with \"git config set advice.diverging false\"\nfatal: Not possible to fast-forward, aborting.\n"
+    "summary": "Command failed: C:\\Program Files\\nodejs\\node.exe C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js test\n"
   }
 }
