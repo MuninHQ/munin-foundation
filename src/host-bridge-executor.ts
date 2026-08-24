@@ -1,3 +1,4 @@
+import { runHostCreativeReview } from './creative-studio/host-review.js';
 import { validateHostJob, redactHostOutput, type HostJob, type HostJobResult } from './host-bridge-protocol.js';
 
 export interface HostExecutionAdapter {
@@ -7,7 +8,6 @@ export interface HostExecutionAdapter {
   restartMunin(): Promise<string>;
   runAcceptance(): Promise<string>;
   tailscaleHealth(): Promise<string>;
-  creativeReview(): Promise<string>;
 }
 
 export class HostBridgeExecutor {
@@ -35,7 +35,7 @@ export class HostBridgeExecutor {
       case 'restart-munin': return this.adapter.restartMunin();
       case 'run-acceptance': return this.adapter.runAcceptance();
       case 'tailscale-health': return this.adapter.tailscaleHealth();
-      case 'creative-review': return this.adapter.creativeReview();
+      case 'creative-review': return runHostCreativeReview();
     }
   }
 }
