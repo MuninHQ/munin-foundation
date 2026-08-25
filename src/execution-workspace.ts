@@ -3,6 +3,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
+import { resolveExecutionSandbox, type ExecutionSandbox, type SandboxStrength } from './execution-sandbox.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -20,6 +21,8 @@ export interface WorkspaceCommandResult {
   stdout: string;
   stderr: string;
   durationMs: number;
+  sandboxBackend?: string;
+  sandboxStrength?: SandboxStrength;
 }
 
 export interface ExecutionWorkspaceInfo {
@@ -28,6 +31,8 @@ export interface ExecutionWorkspaceInfo {
   workspacePath: string;
   baseRef: string;
   isolated: true;
+  sandboxBackend: string;
+  sandboxStrength: SandboxStrength;
 }
 
 export interface ExecutionWorkspace {
@@ -42,6 +47,8 @@ export interface GitWorktreeWorkspaceOptions {
   baseRef?: string;
   tempRoot?: string;
   commandTimeoutMs?: number;
+  sandbox?: ExecutionSandbox;
+  sandboxPolicy?: 'auto' | 'strict' | 'guarded';
 }
 
 function safeId(): string {
@@ -54,6 +61,7 @@ export class GitWorktreeExecutionWorkspace implements ExecutionWorkspace {
   private constructor(
     readonly info: ExecutionWorkspaceInfo,
     private readonly commandTimeoutMs: number,
+    private readonly sandbox: ExecutionSandbox,
   ) {}
 
   static async create(options: GitWorktreeWorkspaceOptions): Promise<GitWorktreeExecutionWorkspace> {
@@ -62,6 +70,7 @@ export class GitWorktreeExecutionWorkspace implements ExecutionWorkspace {
     const root = resolve(options.tempRoot ?? tmpdir());
     const workspacePath = await mkdtemp(join(root, 'munin-worktree-'));
     const id = safeId();
+    const sandbox = options.sandbox ?? await resolveExecutionSandbox({ policy: options.sandboxPolicy });
 
     try {
       await execFileAsync('git', ['-C', repositoryPath, 'worktree', 'add', '--detach', workspacePath, baseRef], {
@@ -73,7 +82,15 @@ export class GitWorktreeExecutionWorkspace implements ExecutionWorkspace {
       throw error;
     }
 
-    return new GitWorktreeExecutionWorkspace({ id, repositoryPath, workspacePath, baseRef, isolated: true }, options.commandTimeoutMs ?? 120_000);
+    return new GitWorktreeExecutionWorkspace({
+      id,
+      repositoryPath,
+      workspacePath,
+      baseRef,
+      isolated: true,
+      sandboxBackend: sandbox.status.backend,
+      sandboxStrength: sandbox.status.strength,
+    }, options.commandTimeoutMs ?? 120_000, sandbox);
   }
 
   async run(input: WorkspaceCommand): Promise<WorkspaceCommandResult> {
@@ -81,22 +98,23 @@ export class GitWorktreeExecutionWorkspace implements ExecutionWorkspace {
     if (!input.command.trim()) throw new Error('Workspace command is required.');
 
     const args = input.args ?? [];
-    const startedAt = Date.now();
-    const { stdout, stderr } = await execFileAsync(input.command, args, {
+    const result = await this.sandbox.run({
+      command: input.command,
+      args,
       cwd: this.info.workspacePath,
-      env: input.env ?? process.env,
-      windowsHide: true,
-      timeout: input.timeoutMs ?? this.commandTimeoutMs,
-      maxBuffer: 10 * 1024 * 1024,
+      env: input.env,
+      timeoutMs: input.timeoutMs ?? this.commandTimeoutMs,
     });
 
     return {
       command: input.command,
       args,
       cwd: this.info.workspacePath,
-      stdout,
-      stderr,
-      durationMs: Date.now() - startedAt,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      durationMs: result.durationMs,
+      sandboxBackend: result.backend,
+      sandboxStrength: result.strength,
     };
   }
 
