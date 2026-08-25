@@ -102,6 +102,8 @@
 
 ## P2 — Hardening
 
+- [x] **Daily briefing intake — 2026-08-25** — mapped Agent Safety Gate to the existing Action Constitution, added bounded Audit Replay retrieval, promoted explicit `whyItMatters`/recommendation/impact fields in Action Inbox, added FEBRABAN to the trusted Radar and preserved two follow-on LinkedIn themes in Content Intelligence.
+
 - [x] **Control Room cross-run continuity acceptance** — deterministic acceptance proves objective execution writes canonical state/session evidence and a fresh runtime rehydrates it.
 - [x] **Engineering end-to-end acceptance** — deterministic Control Room acceptance exercises production Product State, QA, Memory Curator and Operator boundaries while replacing only the external-mutating Engineer; it proves missing evidence triggers Engineer → QA recovery, corrected evidence passes QA, durable write-back occurs and the Operator closes healthy.
 - [x] Failure recovery, bounded retry, leases/fencing/outbox and idempotent runtime primitives exist.

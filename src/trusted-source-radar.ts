@@ -2,8 +2,8 @@ import { readFile } from 'node:fs/promises';
 import { runtimePath } from './config.js';
 import { writeJsonAtomic } from './storage.js';
 
-export type TrustedSourceId='bcb'|'cvm'|'bis'|'fsb';
-export type TrustedSource={id:TrustedSourceId;name:string;url:string;feedUrl?:string;authority:'national-regulator'|'international-standard-setter';weight:number};
+export type TrustedSourceId='bcb'|'cvm'|'bis'|'fsb'|'febraban';
+export type TrustedSource={id:TrustedSourceId;name:string;url:string;feedUrl?:string;authority:'national-regulator'|'international-standard-setter'|'industry-association';weight:number};
 export type TrustedSignal={id:string;sourceId:TrustedSourceId;sourceName:string;title:string;url:string;publishedAt?:string;summary?:string;relevance:number;themes:string[];fetchedAt:string;freshnessDays?:number;dateVerified:boolean};
 export type SourceFetchStatus={sourceId:TrustedSourceId;ok:boolean;count:number;error?:string;fetchedAt:string};
 export type TrustedSourceSnapshot={signals:TrustedSignal[];sources:TrustedSource[];status:SourceFetchStatus[];fetchedAt:string;expiresAt:string};
@@ -18,13 +18,14 @@ export const TRUSTED_SOURCES:TrustedSource[]=[
   {id:'cvm',name:'Comissão de Valores Mobiliários',url:'https://www.gov.br/cvm/pt-br/assuntos/noticias',authority:'national-regulator',weight:1.2},
   {id:'bis',name:'Bank for International Settlements',url:'https://www.bis.org/',feedUrl:'https://www.bis.org/doclist/rss_all_categories.rss',authority:'international-standard-setter',weight:1.05},
   {id:'fsb',name:'Financial Stability Board',url:'https://www.fsb.org/',feedUrl:'https://www.fsb.org/wordpress/content_type/press-releases/feed/',authority:'international-standard-setter',weight:1.1},
+  {id:'febraban',name:'FEBRABAN',url:'https://portal.febraban.org.br/noticias',authority:'industry-association',weight:1.05},
 ];
 const TOPICS:{theme:string;keys:string[];weight:number}[]=[
   {theme:'Stablecoins',keys:['stablecoin','stablecoins'],weight:6},{theme:'Digital Assets',keys:['digital asset','ativos digitais','crypto','cripto','tokeniza','tokenisation','tokenization'],weight:5},{theme:'Drex',keys:['drex','real digital'],weight:6},{theme:'Open Finance',keys:['open finance','open banking'],weight:5},{theme:'Pagamentos',keys:['payment','payments','pagamento','pagamentos','pix','cross-border'],weight:4},{theme:'IA',keys:['artificial intelligence','inteligência artificial','inteligencia artificial',' ai ',' ia '],weight:5},{theme:'Infraestrutura Financeira',keys:['financial infrastructure','infraestrutura financeira','settlement','liquidação','liquidacao','clearing','resilience','resiliência'],weight:3},{theme:'Regulação',keys:['regulation','regulatory','supervision','supervisory','regulação','regulacao','norma','resolução','resolucao','consulta pública','consultation'],weight:3},{theme:'Identidade Digital',keys:['digital identity','identidade digital'],weight:4},
 ];
 function decode(v:string){return v.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,'$1').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();}
 function score(title:string,summary=''){const text=` ${decode(`${title} ${summary}`).toLowerCase()} `;let points=0;const themes:string[]=[];for(const topic of TOPICS){if(topic.keys.some(k=>text.includes(k))){points+=topic.weight;themes.push(topic.theme);}}if(/press release|notícia|noticias|news|report|relatório|relatorio|consulta|consultation|regulat|supervis/.test(text))points+=1;return {relevance:Math.min(100,Math.round(points*12)),themes:[...new Set(themes)]};}
-function absolute(base:string,href:string){try{return new URL(href,base).toString();}catch{return base;}}
+function absolute(base:string,href:string){try{const resolved=new URL(href,base).toString();if(/portal\.febraban\.org\.br/i.test(base)&&!/febraban\.org\.br/i.test(resolved))return base;return resolved;}catch{return base;}}
 function safeDate(value?:string){if(!value)return undefined;let normalized=value.trim();const br=normalized.match(/^(\d{1,2})\/(\d{1,2})\/(20\d{2})$/);if(br)normalized=`${br[3]}-${br[2].padStart(2,'0')}-${br[1].padStart(2,'0')}T12:00:00Z`;const d=new Date(normalized);return Number.isNaN(d.getTime())?undefined:d.toISOString();}
 export function trustedSignalFreshness(publishedAt?:string,now=Date.now()){if(!publishedAt)return {dateVerified:false as const};const ms=Date.parse(publishedAt);if(!Number.isFinite(ms))return {dateVerified:false as const};return {dateVerified:true as const,freshnessDays:Math.max(0,Math.floor((now-ms)/DAY_MS))};}
 export function isTrustedSignalFresh(signal:Pick<TrustedSignal,'publishedAt'|'dateVerified'|'freshnessDays'>,maxDays=MAX_TRUSTED_SIGNAL_AGE_DAYS){const freshness=signal.dateVerified&&typeof signal.freshnessDays==='number'?signal:trustedSignalFreshness(signal.publishedAt);return freshness.dateVerified&&typeof freshness.freshnessDays==='number'&&freshness.freshnessDays<=maxDays;}

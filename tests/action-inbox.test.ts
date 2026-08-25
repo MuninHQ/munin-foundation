@@ -11,6 +11,8 @@ test('Action Inbox merges workspace, email and radar into explicit lanes',()=>{
  const radar={signals:[{id:'s1',sourceId:'bcb' as const,sourceName:'BCB',title:'Nova consulta sobre ativos digitais',url:'https://example.test',relevance:80,themes:['Digital Assets'],fetchedAt:'2026-08-22T11:00:00Z',dateVerified:true,freshnessDays:0}],sources:[],status:[],fetchedAt:'2026-08-22T11:00:00Z',expiresAt:'2026-08-22T12:00:00Z'} satisfies TrustedSourceSnapshot;
  const result=buildActionInbox(state,email,radar,new Date('2026-08-22T13:00:00Z'));
  assert.equal(result.counts.now,2);assert.equal(result.counts.radar,1);assert.equal(result.items[0].priority,'P0');
+ assert.ok(result.items.every(item=>item.whyItMatters&&item.recommendation&&item.impact));
+ assert.match(result.items.find(item=>item.origin==='radar')?.recommendation??'',/fonte/i);
 });
 
 test('handled email never returns to the operator queue',()=>{

@@ -27,6 +27,14 @@
 
 > Append concise, durable execution events. This is not a transcript archive.
 
+## 2026-08-25 — Daily briefing promoted into Munin
+
+- Confirmed the existing Action Constitution already provides the Agent Safety Gate for external and destructive actions.
+- Added bounded read-only Audit Replay over the append-only local action log; replay cannot execute actions.
+- Replaced generic Action Inbox explanation fallbacks with structured why-it-matters, recommendation and impact fields.
+- Added FEBRABAN as a governed industry-association source in the Trusted Source Radar.
+- Saved two editorial territories in LinkedIn Content Intelligence: agent containment and tokenized settlement infrastructure.
+
 ## 2026-08-22 — Proactive Operator Hub
 
 ### Changes

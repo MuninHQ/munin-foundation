@@ -21,7 +21,7 @@ Secret-like payloads and writes into `.env`, `.git`, `node_modules` or `data/run
 
 ## Audit
 
-Every evaluated consequential action can be appended to `data/runtime/action-audit.jsonl`. The file is local/Git-ignored and append-only by the policy API.
+Every evaluated consequential action can be appended to `data/runtime/action-audit.jsonl`. The file is local/Git-ignored and append-only by the policy API. `ActionAuditLog.replay()` provides bounded newest-first retrieval with decision and action-class filters; replay is evidence inspection only and never re-executes an action.
 
 ## Integration sequence
 

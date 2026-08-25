@@ -1,4 +1,4 @@
-import { appendFile, mkdir } from 'node:fs/promises';
+import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 
@@ -6,6 +6,8 @@ export type ActionClass='read'|'local-write'|'git-write'|'network-read'|'externa
 export type PolicyDecision='allow'|'deny'|'needs_user';
 export type ActionRequest={class:ActionClass;tool:string;target?:string;payloadPreview?:string;reason?:string};
 export type PolicyResult={decision:PolicyDecision;rule:string;request:ActionRequest};
+export type ActionAuditRecord=PolicyResult&{id:string;at:string};
+export type ActionAuditReplayFilter={decision?:PolicyDecision;actionClass?:ActionClass;limit?:number};
 
 const secretPattern=/(?:api[_-]?key|secret|password|passwd|token|authorization|bearer|private[_-]?key)\s*[:=]\s*[^\s]{6,}/i;
 const protectedPathPattern=/(^|\/)(?:\.git|node_modules|data\/runtime)(\/|$)|(^|\/)\.env(?:\.|$)/i;
@@ -33,4 +35,11 @@ export function requireAllowed(request:ActionRequest){const result=evaluateActio
 export class ActionAuditLog{
  constructor(private readonly file=path.resolve('data/runtime/action-audit.jsonl')){}
  async append(result:PolicyResult){await mkdir(path.dirname(this.file),{recursive:true});const record={id:randomUUID(),at:new Date().toISOString(),...result};await appendFile(this.file,JSON.stringify(record)+'\n','utf8');return record}
+ async replay(filter:ActionAuditReplayFilter={}):Promise<ActionAuditRecord[]>{
+  const limit=Math.max(1,Math.min(500,filter.limit??100));
+  let raw='';try{raw=await readFile(this.file,'utf8')}catch(error){if((error as NodeJS.ErrnoException).code==='ENOENT')return[];throw error}
+  return raw.split('\n').filter(Boolean).flatMap(line=>{try{return[JSON.parse(line) as ActionAuditRecord]}catch{return[]}})
+   .filter(record=>(!filter.decision||record.decision===filter.decision)&&(!filter.actionClass||record.request.class===filter.actionClass))
+   .slice(-limit).reverse();
+ }
 }

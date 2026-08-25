@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isTrustedSignalFresh, trustedSignalFreshness } from '../src/trusted-source-radar.js';
+import { isTrustedSignalFresh, trustedSignalFreshness, TRUSTED_SOURCES } from '../src/trusted-source-radar.js';
+
+test('radar includes FEBRABAN as a governed industry source',()=>{
+ const source=TRUSTED_SOURCES.find(item=>item.id==='febraban');
+ assert.equal(source?.authority,'industry-association');
+ assert.match(source?.url??'',/febraban\.org\.br/);
+});
 
 test('trusted source freshness rejects missing and stale publication dates',()=>{
  const now=Date.parse('2026-08-18T12:00:00Z');
