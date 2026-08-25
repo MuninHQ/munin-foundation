@@ -7,10 +7,13 @@ import {
 } from './intelligence-orchestration.js';
 import { OrchestrationRuntimeCore, OrchestrationRuntimeError } from './orchestration-runtime-core.js';
 import type { OrchestrationTrace } from './orchestration-trace.js';
+import { OrchestrationTraceStore, summarizeOrchestrationTraces } from './orchestration-trace-store.js';
+import { runMuninSecurityBench } from './agent-security-policy-evaluator.js';
 import { json, readJsonBody, requireText } from './http.js';
 
 const traces: OrchestrationTrace[] = [];
 const MAX_TRACES = 100;
+const traceStore = new OrchestrationTraceStore();
 
 function optionalMode(value: unknown): OrchestrationMode | undefined {
   if (value === undefined) return undefined;
@@ -39,11 +42,10 @@ function parseInput(body: Record<string, unknown>): OrchestrationInput {
   };
 }
 
-function rememberTrace(trace: OrchestrationTrace): void {
+async function rememberTrace(trace: OrchestrationTrace): Promise<void> {
   traces.push(trace);
-  if (traces.length > MAX_TRACES) {
-    traces.splice(0, traces.length - MAX_TRACES);
-  }
+  if (traces.length > MAX_TRACES) traces.splice(0, traces.length - MAX_TRACES);
+  try { await traceStore.append(trace); } catch { /* observability must never break execution */ }
 }
 
 export function recentOrchestrationTraces(): OrchestrationTrace[] {
@@ -54,24 +56,30 @@ export async function handleOrchestration(
   request: IncomingMessage,
   response: ServerResponse,
 ): Promise<void> {
-  if (request.method === 'OPTIONS') {
-    return json(request, response, 204, {});
-  }
-
+  if (request.method === 'OPTIONS') return json(request, response, 204, {});
   const url = new URL(request.url ?? '/', 'http://127.0.0.1');
 
   try {
     if (request.method === 'GET' && url.pathname === '/api/orchestration/traces') {
-      return json(request, response, 200, {
-        traces: recentOrchestrationTraces(),
-      });
+      const limit = Math.min(1000, Math.max(1, Number(url.searchParams.get('limit') ?? 100)));
+      const durable = await traceStore.list(Number.isFinite(limit) ? Math.floor(limit) : 100);
+      return json(request, response, 200, { traces: durable.length ? durable : recentOrchestrationTraces() });
+    }
+
+    if (request.method === 'GET' && url.pathname === '/api/orchestration/metrics') {
+      const durable = await traceStore.list(1000);
+      const source = durable.length ? durable : recentOrchestrationTraces();
+      return json(request, response, 200, { generatedAt: new Date().toISOString(), metrics: summarizeOrchestrationTraces(source) });
+    }
+
+    if (request.method === 'GET' && url.pathname === '/api/orchestration/security-bench') {
+      return json(request, response, 200, { generatedAt: new Date().toISOString(), report: await runMuninSecurityBench() });
     }
 
     if (request.method === 'POST' && url.pathname === '/api/orchestration/plan') {
       const body = await readJsonBody(request, 1_000_000);
       const input = parseInput(body);
       const plan = new IntelligenceOrchestrationPlanner().plan(input);
-
       return json(request, response, 200, { plan });
     }
 
@@ -79,22 +87,16 @@ export async function handleOrchestration(
       const body = await readJsonBody(request, 1_000_000);
       const input = parseInput(body);
       const result = await new OrchestrationRuntimeCore().run(input);
-      rememberTrace(result.trace);
-
+      await rememberTrace(result.trace);
       return json(request, response, 200, result);
     }
 
     return json(request, response, 404, { error: 'Not found' });
   } catch (error) {
     if (error instanceof OrchestrationRuntimeError) {
-      rememberTrace(error.trace);
-      return json(request, response, 503, {
-        error: error.message,
-        trace: error.trace,
-      });
+      await rememberTrace(error.trace);
+      return json(request, response, 503, { error: error.message, trace: error.trace });
     }
-    return json(request, response, 400, {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    return json(request, response, 400, { error: error instanceof Error ? error.message : String(error) });
   }
 }
