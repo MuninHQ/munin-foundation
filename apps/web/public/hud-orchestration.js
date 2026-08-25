@@ -11,25 +11,27 @@
 
   async function refresh() {
     try {
-      const [tracesPayload, metricsPayload, securityPayload] = await Promise.all([
+      const [tracesPayload, metricsPayload, securityPayload, sandboxPayload] = await Promise.all([
         request('/api/orchestration/traces?limit=20'),
         request('/api/orchestration/metrics'),
         request('/api/orchestration/security-bench'),
+        request('/api/orchestration/sandbox'),
       ]);
       const traces = tracesPayload.traces || [];
       const metrics = metricsPayload.metrics || {};
       const report = securityPayload.report || {};
+      const sandbox = sandboxPayload.sandbox || {};
       const latest = traces[0];
       const predictive = document.getElementById('hud-predictive');
       const panel = document.getElementById('hud-usage');
       if (predictive) predictive.textContent = metrics.runs
-        ? `Autonomia 24h · ${pct(metrics.completionRate)} concluído · ${pct(metrics.retryRate)} fallback/retry · security ${report.score ?? '—'}%.`
-        : `Orquestração pronta · security baseline ${report.score ?? '—'}%.`;
+        ? `Autonomia 24h · ${pct(metrics.completionRate)} concluído · ${pct(metrics.retryRate)} fallback/retry · security ${report.score ?? '—'}% · sandbox ${String(sandbox.strength || 'guarded').toUpperCase()}.`
+        : `Orquestração pronta · security baseline ${report.score ?? '—'}% · sandbox ${String(sandbox.strength || 'guarded').toUpperCase()}.`;
       if (panel) {
         const attempts = latest?.attempts || [];
         const lastProvider = latest?.selectedProviderId || attempts.at(-1)?.providerId || '—';
         const state = report.failed > 0 ? 'SECURITY HOLD' : latest ? (attempts.some(attempt => !attempt.ok) ? 'RECUPERADO' : 'NOMINAL') : 'IDLE';
-        panel.innerHTML = `<div class="hud-stat"><span>Runs 24h</span><b>${metrics.runs ?? 0}</b></div><div class="hud-stat"><span>Completion</span><b>${pct(metrics.completionRate)}</b></div><div class="hud-stat"><span>Fallbacks</span><b>${pct(metrics.retryRate)}</b></div><div class="hud-stat"><span>Median</span><b>${ms(metrics.medianDurationMs)}</b></div><div class="hud-stat"><span>Security bench</span><b>${report.passed ?? 0}/${report.total ?? 0}</b></div><div class="hud-stat"><span>Último provider</span><b>${lastProvider}</b></div><div class="hud-stat"><span>Estado</span><b>${state}</b></div>`;
+        panel.innerHTML = `<div class="hud-stat"><span>Runs 24h</span><b>${metrics.runs ?? 0}</b></div><div class="hud-stat"><span>Completion</span><b>${pct(metrics.completionRate)}</b></div><div class="hud-stat"><span>Fallbacks</span><b>${pct(metrics.retryRate)}</b></div><div class="hud-stat"><span>Median</span><b>${ms(metrics.medianDurationMs)}</b></div><div class="hud-stat"><span>Security bench</span><b>${report.passed ?? 0}/${report.total ?? 0}</b></div><div class="hud-stat"><span>Sandbox</span><b>${String(sandbox.strength || 'guarded').toUpperCase()} · ${sandbox.backend || 'native'}</b></div><div class="hud-stat"><span>Último provider</span><b>${lastProvider}</b></div><div class="hud-stat"><span>Estado</span><b>${state}</b></div>`;
       }
       const adaptive = document.getElementById('hud-adaptive');
       if (adaptive) adaptive.textContent = report.failed > 0 ? 'ADAPTIVE · SECURITY HOLD' : latest ? `ADAPTIVE · ${latest.route.toUpperCase()} · ${latest.selectedProviderId || 'LOCAL'}` : 'ADAPTIVE · READY';
