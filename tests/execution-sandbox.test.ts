@@ -22,13 +22,14 @@ test('guarded sandbox executes allowlisted binaries and strips secret environmen
   }
 });
 
-test('guarded sandbox rejects arbitrary executables and shell metacharacters', async () => {
+test('guarded sandbox rejects arbitrary executables while preserving literal arguments', async () => {
   const sandbox = new NativeGuardedSandbox();
   await assert.rejects(() => sandbox.run({ command: 'curl', args: ['https://example.com'], cwd: process.cwd() }), /blocked executable/i);
-  await assert.rejects(() => sandbox.run({ command: process.execPath, args: ['-e', 'console.log(1); console.log(2)'], cwd: process.cwd() }), /shell metacharacters/i);
+  const result = await sandbox.run({ command: process.execPath, args: ['-e', 'process.stdout.write("a;b")'], cwd: process.cwd() });
+  assert.equal(result.stdout, 'a;b');
 });
 
-test('default sandbox policy remains guarded and strict mode fails closed when hard isolation is unavailable', async () => {
+test('default sandbox policy remains guarded unless hard isolation is explicitly requested', async () => {
   const original = process.env.MUNIN_EXECUTION_SANDBOX;
   try {
     delete process.env.MUNIN_EXECUTION_SANDBOX;
