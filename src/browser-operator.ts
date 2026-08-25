@@ -1,4 +1,6 @@
+import { existsSync } from 'node:fs';
 import { execFile } from 'node:child_process';
+import path from 'node:path';
 import { promisify } from 'node:util';
 
 const execFileAsync=promisify(execFile);
@@ -22,9 +24,21 @@ export type BrowserBenchmarkSample={
 export type BrowserBenchmarkResult={backend:BrowserBackend;score:number;eligible:boolean;reasons:string[]};
 
 function selectedBackend():BrowserBackend{return process.env.MUNIN_BROWSER_BACKEND==='browser-use'?'browser-use':'playwright-cli'}
-function executable(backend:BrowserBackend){return backend==='playwright-cli'?(process.platform==='win32'?'playwright-cli.cmd':'playwright-cli'):(process.platform==='win32'?'browser-use.exe':'browser-use')}
+function executable(backend:BrowserBackend,platform:NodeJS.Platform=process.platform){return backend==='playwright-cli'?(platform==='win32'?'playwright-cli.cmd':'playwright-cli'):(platform==='win32'?'browser-use.exe':'browser-use')}
+function browserCommandEnv(){return {...process.env,NO_UPDATE_NOTIFIER:'1'}}
 
-export async function browserHealth(backend=selectedBackend()):Promise<BrowserHealth>{const command=executable(backend);try{const result=await execFileAsync(command,['--help'],{timeout:15_000,windowsHide:true,maxBuffer:1_000_000});return {backend,available:true,command,detail:String(result.stdout??'').slice(0,300)}}catch(error){return {backend,available:false,command,detail:error instanceof Error?error.message:String(error)}}}
+export type BrowserInvocation={command:string;argsPrefix:string[];displayCommand:string};
+export function resolveBrowserInvocation(backend:BrowserBackend,platform:NodeJS.Platform=process.platform,pathEnv:string|undefined=process.env.PATH,fileExists:(candidate:string)=>boolean=existsSync):BrowserInvocation{
+ const command=executable(backend,platform);
+ if(backend!=='playwright-cli'||platform!=='win32')return {command,argsPrefix:[],displayCommand:command};
+ for(const entry of (pathEnv??'').split(';').filter(Boolean)){
+  const script=path.win32.join(entry,'node_modules','@playwright','cli','playwright-cli.js');
+  if(fileExists(script))return {command:process.execPath,argsPrefix:[script],displayCommand:`${process.execPath} ${script}`};
+ }
+ return {command,argsPrefix:[],displayCommand:command};
+}
+
+export async function browserHealth(backend=selectedBackend()):Promise<BrowserHealth>{const invocation=resolveBrowserInvocation(backend);try{const result=await execFileAsync(invocation.command,[...invocation.argsPrefix,'--help'],{timeout:15_000,windowsHide:true,maxBuffer:1_000_000,env:browserCommandEnv()});return {backend,available:true,command:invocation.displayCommand,detail:String(result.stdout??'').slice(0,300)}}catch(error){return {backend,available:false,command:invocation.displayCommand,detail:error instanceof Error?error.message:String(error)}}}
 
 export function validateBrowserInspectionUrl(raw:string):string{
  if(!raw||raw.length>2048)throw new Error('Browser inspection URL must be between 1 and 2048 characters.');
@@ -37,15 +51,16 @@ export function validateBrowserInspectionUrl(raw:string):string{
 }
 
 export async function inspectBrowserReadOnly(rawUrl:string,backend:BrowserBackend='playwright-cli'):Promise<BrowserInspection>{
- const url=validateBrowserInspectionUrl(rawUrl);const command=executable(backend);
- if(backend!=='playwright-cli')return {backend,available:false,url,command,readOnly:true,detail:'Read-only inspection is promoted only for Playwright CLI.'};
+ const url=validateBrowserInspectionUrl(rawUrl);const invocation=resolveBrowserInvocation(backend);
+ if(backend!=='playwright-cli')return {backend,available:false,url,command:invocation.displayCommand,readOnly:true,detail:'Read-only inspection is promoted only for Playwright CLI.'};
  const session=`munin-ro-${process.pid}-${Date.now().toString(36)}`;
+ const args=(...values:string[])=>[...invocation.argsPrefix,...values];
  try{
-  const opened=await execFileAsync(command,[`-s=${session}`,'open',url],{timeout:45_000,windowsHide:true,maxBuffer:2_000_000});
-  const snapshot=await execFileAsync(command,[`-s=${session}`,'snapshot','--depth=6'],{timeout:30_000,windowsHide:true,maxBuffer:2_000_000});
-  return {backend,available:true,url,command,readOnly:true,snapshot:`${String(opened.stdout??'')}\n${String(snapshot.stdout??'')}`.trim().slice(0,120_000)};
- }catch(error){return {backend,available:false,url,command,readOnly:true,detail:error instanceof Error?error.message:String(error)}
- }finally{try{await execFileAsync(command,[`-s=${session}`,'close'],{timeout:10_000,windowsHide:true,maxBuffer:200_000})}catch{/* best-effort cleanup */}}
+  const opened=await execFileAsync(invocation.command,args(`-s=${session}`,'open',url),{timeout:45_000,windowsHide:true,maxBuffer:2_000_000,env:browserCommandEnv()});
+  const snapshot=await execFileAsync(invocation.command,args(`-s=${session}`,'snapshot','--depth=6'),{timeout:30_000,windowsHide:true,maxBuffer:2_000_000,env:browserCommandEnv()});
+  return {backend,available:true,url,command:invocation.displayCommand,readOnly:true,snapshot:`${String(opened.stdout??'')}\n${String(snapshot.stdout??'')}`.trim().slice(0,120_000)};
+ }catch(error){return {backend,available:false,url,command:invocation.displayCommand,readOnly:true,detail:error instanceof Error?error.message:String(error)}
+ }finally{try{await execFileAsync(invocation.command,args(`-s=${session}`,'close'),{timeout:10_000,windowsHide:true,maxBuffer:200_000,env:browserCommandEnv()})}catch{/* best-effort cleanup */}}
 }
 
 function inverseScore(value:number|undefined,ceiling:number){if(value===undefined||!Number.isFinite(value)||value<0)return 0;return Math.max(0,1-Math.min(value,ceiling)/ceiling)}

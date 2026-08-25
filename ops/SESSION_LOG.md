@@ -1,5 +1,36 @@
 # Munin Session Log
 
+## 2026-08-25 — Windows Playwright health recovery
+
+### Evidence
+
+- On the updated Windows host, the original `execFile('playwright-cli.cmd', ['--help'])` probe reproduced `spawn EINVAL`.
+- The installed npm shim resolved to `playwright-cli.cmd`; invoking its JavaScript entrypoint through `node.exe` succeeded only after disabling the optional npm update notifier with `NO_UPDATE_NOTIFIER=1`, preventing the CLI's reproducible Windows process assertion.
+- The governed local validation then passed with Playwright available, two read-only snapshots, the permission gate blocked, and `playwright-cli` recommended. The full suite passed with 542 tests and 0 failures.
+
+### Changes
+
+- On Windows, Playwright CLI now resolves to its installed JavaScript entrypoint and executes through `process.execPath`, avoiding direct `.cmd` execution.
+- Browser health, open, snapshot and close calls disable the optional CLI update check; no paid service or external inference was activated.
+- Added deterministic regression coverage for both the Windows entrypoint resolution and the safe `.cmd` fallback.
+
+### Engineering job investigation
+
+- The two persisted failed jobs were created on 2026-08-15 and 2026-08-16, both with `changedFiles: []`, no active queue/running state, and terminal provider/network failures. They are historical runtime records, not a currently reproduced engineering defect.
+- No new engineering mission was started because the current default ChatGPT-first runtime has no configured in-process provider and launching one could cross the explicit paid/provider boundary.
+
+## 2026-08-25 — Content Studio navigation recovery
+
+### Evidence
+
+- The full repository gate passed after recovery: core TypeScript build, Vite production build and 538 automated tests with 0 failures.
+- The built `dist-web/content-studio.html` was verified to resolve its Intelligence link to the existing `/intelligence.html` route.
+
+### Changes
+
+- Corrected the governed Content Studio header link from the nonexistent `/intelligence-studio.html` route to the existing Intelligence page.
+- No new page, framework, provider, paid service or external mutation was introduced.
+
 ## 2026-08-22 — Dedicated HUD mobile route
 
 - Replaced cache-sensitive responsive overrides with a new `/hud-mobile.html` entrypoint.
