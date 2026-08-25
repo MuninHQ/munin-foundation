@@ -6,32 +6,33 @@
     return data;
   });
 
-  function summarize(traces) {
-    const recent = traces.slice(0, 20);
-    const failedAttempts = recent.flatMap(trace => trace.attempts || []).filter(attempt => !attempt.ok).length;
-    const fallbacks = recent.filter(trace => (trace.attempts || []).length > 1).length;
-    const councils = recent.filter(trace => trace.route === 'council').length;
-    const direct = recent.filter(trace => trace.route === 'direct').length;
-    return { recent, failedAttempts, fallbacks, councils, direct, latest: recent[0] };
-  }
+  const pct = value => `${Math.round(Number(value || 0) * 100)}%`;
+  const ms = value => Number(value || 0) >= 1000 ? `${(Number(value) / 1000).toFixed(1)}s` : `${Math.round(Number(value || 0))}ms`;
 
   async function refresh() {
     try {
-      const payload = await request('/api/orchestration/traces');
-      const { recent, failedAttempts, fallbacks, councils, direct, latest } = summarize(payload.traces || []);
+      const [tracesPayload, metricsPayload, securityPayload] = await Promise.all([
+        request('/api/orchestration/traces?limit=20'),
+        request('/api/orchestration/metrics'),
+        request('/api/orchestration/security-bench'),
+      ]);
+      const traces = tracesPayload.traces || [];
+      const metrics = metricsPayload.metrics || {};
+      const report = securityPayload.report || {};
+      const latest = traces[0];
       const predictive = document.getElementById('hud-predictive');
       const panel = document.getElementById('hud-usage');
-      if (predictive) predictive.textContent = recent.length
-        ? `Orquestração nominal · ${fallbacks} fallback(s) · ${failedAttempts} tentativa(s) falharam.`
-        : 'Orquestração pronta; aguardando execuções.';
+      if (predictive) predictive.textContent = metrics.runs
+        ? `Autonomia 24h · ${pct(metrics.completionRate)} concluído · ${pct(metrics.retryRate)} fallback/retry · security ${report.score ?? '—'}%.`
+        : `Orquestração pronta · security baseline ${report.score ?? '—'}%.`;
       if (panel) {
         const attempts = latest?.attempts || [];
         const lastProvider = latest?.selectedProviderId || attempts.at(-1)?.providerId || '—';
-        const state = latest ? (attempts.some(attempt => !attempt.ok) ? 'RECUPERADO' : 'NOMINAL') : 'IDLE';
-        panel.innerHTML = `<div class="hud-stat"><span>Orchestrations</span><b>${recent.length}</b></div><div class="hud-stat"><span>Direct / Council</span><b>${direct} / ${councils}</b></div><div class="hud-stat"><span>Fallbacks</span><b>${fallbacks}</b></div><div class="hud-stat"><span>Último provider</span><b>${lastProvider}</b></div><div class="hud-stat"><span>Estado</span><b>${state}</b></div>`;
+        const state = report.failed > 0 ? 'SECURITY HOLD' : latest ? (attempts.some(attempt => !attempt.ok) ? 'RECUPERADO' : 'NOMINAL') : 'IDLE';
+        panel.innerHTML = `<div class="hud-stat"><span>Runs 24h</span><b>${metrics.runs ?? 0}</b></div><div class="hud-stat"><span>Completion</span><b>${pct(metrics.completionRate)}</b></div><div class="hud-stat"><span>Retry / fallback</span><b>${pct(metrics.retryRate)}</b></div><div class="hud-stat"><span>Median</span><b>${ms(metrics.medianDurationMs)}</b></div><div class="hud-stat"><span>Security bench</span><b>${report.passed ?? 0}/${report.total ?? 0}</b></div><div class="hud-stat"><span>Último provider</span><b>${lastProvider}</b></div><div class="hud-stat"><span>Estado</span><b>${state}</b></div>`;
       }
       const adaptive = document.getElementById('hud-adaptive');
-      if (adaptive && latest) adaptive.textContent = `ADAPTIVE · ${latest.route.toUpperCase()} · ${latest.selectedProviderId || 'LOCAL'}`;
+      if (adaptive) adaptive.textContent = report.failed > 0 ? 'ADAPTIVE · SECURITY HOLD' : latest ? `ADAPTIVE · ${latest.route.toUpperCase()} · ${latest.selectedProviderId || 'LOCAL'}` : 'ADAPTIVE · READY';
     } catch {
       const predictive = document.getElementById('hud-predictive');
       if (predictive) predictive.textContent = 'Observabilidade da orquestração indisponível.';
