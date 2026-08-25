@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#02070d" />
   <title>Munin — Adaptive Command HUD</title>
   <link rel="stylesheet" href="/munin.css" />
-  <link rel="stylesheet" href="/hud.css?v=20260824-jarvis3" />
+  <link rel="stylesheet" href="/hud.css?v=20260825-agentobs1" />
 </head>
 <body class="hud-body">
   <a class="hud-skip-link" href="#hud-command-input">Pular para o comando</a>
@@ -25,5 +25,5 @@
   <div id="hud-readout" class="hud-readout" aria-hidden="true"></div><div id="hud-toast" class="hud-toast" role="status" aria-live="polite"></div><div id="hud-reticle" class="hud-reticle" aria-hidden="true"><div></div><i></i></div><div id="hud-boot" class="hud-boot"><div><div class="boot-word">MUNIN</div><div id="hud-boot-lines" class="boot-lines"></div><div class="boot-bar"><i id="hud-boot-bar"></i></div></div></div>
   <script src="/munin-client.js"></script>
   <script>if(window.MuninClient?.request){const request=window.MuninClient.request.bind(window.MuninClient);window.MuninClient.request=(path,options={})=>{if(path!=='/api/chat')return request(path,options);let payload={};try{payload=JSON.parse(options.body||'{}')}catch{}return request('/api/assistant',{...options,headers:{'content-type':'application/json',...(options.headers||{})},body:JSON.stringify({command:payload.message||payload.command||''})})}}</script>
-  <script src="/hud.js?v=20260824-jarvis3"></script><script src="/hud-career.js?v=20260824-jarvis3"></script>
+  <script src="/hud.js?v=20260825-agentobs1"></script><script src="/hud-career.js?v=20260825-agentobs1"></script><script src="/hud-orchestration.js?v=20260825-agentobs1"></script>
 </body></html>
