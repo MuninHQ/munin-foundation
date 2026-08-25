@@ -9,6 +9,7 @@ import { OrchestrationRuntimeCore, OrchestrationRuntimeError } from './orchestra
 import type { OrchestrationTrace } from './orchestration-trace.js';
 import { OrchestrationTraceStore, summarizeOrchestrationTraces } from './orchestration-trace-store.js';
 import { runMuninSecurityBench } from './agent-security-policy-evaluator.js';
+import { executionSandboxStatus } from './execution-sandbox.js';
 import { json, readJsonBody, requireText } from './http.js';
 
 const traces: OrchestrationTrace[] = [];
@@ -74,6 +75,10 @@ export async function handleOrchestration(
 
     if (request.method === 'GET' && url.pathname === '/api/orchestration/security-bench') {
       return json(request, response, 200, { generatedAt: new Date().toISOString(), report: await runMuninSecurityBench() });
+    }
+
+    if (request.method === 'GET' && url.pathname === '/api/orchestration/sandbox') {
+      return json(request, response, 200, { generatedAt: new Date().toISOString(), sandbox: await executionSandboxStatus() });
     }
 
     if (request.method === 'POST' && url.pathname === '/api/orchestration/plan') {
