@@ -36,7 +36,6 @@ export interface ExecutionSandbox {
 
 const SAFE_NATIVE_EXECUTABLES = new Set(['node', 'node.exe', 'npm', 'npm.cmd', 'npx', 'npx.cmd', 'git', 'git.exe']);
 const FORBIDDEN_ENV = /(?:^|_)(?:TOKEN|SECRET|PASSWORD|PASSWD|API_KEY|PRIVATE_KEY|AUTHORIZATION)$/i;
-const SHELL_META = /[|;&<>`\r\n]/;
 
 function sanitizedEnv(input?: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const source = input ?? process.env;
@@ -52,6 +51,15 @@ function executableName(command: string): string {
   return path.basename(command).toLowerCase();
 }
 
+function containerExecutable(command: string): string {
+  const name = executableName(command);
+  if (name === 'node.exe') return 'node';
+  if (name === 'npm.cmd') return 'npm';
+  if (name === 'npx.cmd') return 'npx';
+  if (name === 'git.exe') return 'git';
+  return name;
+}
+
 export class NativeGuardedSandbox implements ExecutionSandbox {
   readonly status: ExecutionSandboxStatus = {
     backend: 'native-guarded',
@@ -63,10 +71,8 @@ export class NativeGuardedSandbox implements ExecutionSandbox {
   async run(input: SandboxCommand): Promise<SandboxCommandResult> {
     const name = executableName(input.command);
     if (!SAFE_NATIVE_EXECUTABLES.has(name)) throw new Error(`Sandbox blocked executable: ${name || input.command}`);
-    const args = input.args ?? [];
-    if (args.some(arg => SHELL_META.test(arg))) throw new Error('Sandbox blocked shell metacharacters in command arguments.');
     const startedAt = Date.now();
-    const { stdout, stderr } = await execFileAsync(input.command, args, {
+    const { stdout, stderr } = await execFileAsync(input.command, input.args ?? [], {
       cwd: input.cwd,
       timeout: input.timeoutMs ?? 120_000,
       env: sanitizedEnv(input.env),
@@ -110,8 +116,10 @@ export class DockerHardSandbox implements ExecutionSandbox {
   }
 
   async run(input: SandboxCommand): Promise<SandboxCommandResult> {
-    const args = input.args ?? [];
-    if (args.some(arg => SHELL_META.test(arg))) throw new Error('Sandbox blocked shell metacharacters in command arguments.');
+    const executable = containerExecutable(input.command);
+    if (!SAFE_NATIVE_EXECUTABLES.has(executable) && !['node', 'npm', 'npx', 'git'].includes(executable)) {
+      throw new Error(`Sandbox blocked executable: ${executable || input.command}`);
+    }
     const env = sanitizedEnv(input.env);
     const dockerArgs = [
       'run', '--rm', '--network', 'none', '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges',
@@ -122,7 +130,7 @@ export class DockerHardSandbox implements ExecutionSandbox {
     for (const [key, value] of Object.entries(env)) {
       if (value !== undefined && ['CI', 'NODE_ENV', 'TZ'].includes(key)) dockerArgs.push('--env', `${key}=${value}`);
     }
-    dockerArgs.push(this.options.image, input.command, ...args);
+    dockerArgs.push(this.options.image, executable, ...(input.args ?? []));
     const startedAt = Date.now();
     const { stdout, stderr } = await execFileAsync('docker', dockerArgs, {
       timeout: input.timeoutMs ?? 120_000,
