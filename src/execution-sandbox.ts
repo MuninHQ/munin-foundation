@@ -138,7 +138,8 @@ export interface ResolveSandboxOptions extends DockerSandboxOptions {
 }
 
 export async function resolveExecutionSandbox(options: ResolveSandboxOptions = {}): Promise<ExecutionSandbox> {
-  const policy = options.policy ?? (process.env.MUNIN_EXECUTION_SANDBOX === 'strict' ? 'strict' : process.env.MUNIN_EXECUTION_SANDBOX === 'guarded' ? 'guarded' : 'auto');
+  const configured = process.env.MUNIN_EXECUTION_SANDBOX;
+  const policy = options.policy ?? (configured === 'strict' ? 'strict' : configured === 'auto' ? 'auto' : 'guarded');
   if (policy !== 'guarded') {
     const docker = await DockerHardSandbox.detect(options);
     if (docker) return docker;
