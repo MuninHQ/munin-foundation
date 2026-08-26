@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { browserHealth, browserOperatorPolicy, recommendBrowserBackend, scoreBrowserBenchmark, validateBrowserInspectionUrl } from '../src/browser-operator.js';
+import { browserHealth, browserOperatorPolicy, recommendBrowserBackend, resolveBrowserInvocation, scoreBrowserBenchmark, validateBrowserInspectionUrl } from '../src/browser-operator.js';
 
 test('prefers Playwright CLI without requiring a paid cloud',()=>{
  const policy=browserOperatorPolicy();assert.equal(policy.preferred,'playwright-cli');assert.equal(policy.fallback,'browser-use');assert.equal(policy.cloudRequired,false);assert.equal(policy.paidDependencyRequired,false);assert.equal(policy.actionPolicyRequired,true);assert.equal(policy.benchmarkRequiredBeforePromotion,true);assert.deepEqual(policy.allowedActions,['health','inspect']);assert.equal(policy.inspectMode,'read-only-navigation-and-snapshot');
@@ -17,6 +17,22 @@ test('read-only browser inspection blocks unsafe URL classes and metadata endpoi
  assert.throws(()=>validateBrowserInspectionUrl('https://user:pass@example.com'),/embedded credentials/);
  assert.throws(()=>validateBrowserInspectionUrl('http://169.254.169.254/latest/meta-data'),/metadata endpoints/);
  assert.throws(()=>validateBrowserInspectionUrl('http://metadata.google.internal/computeMetadata/v1'),/metadata endpoints/);
+});
+
+test('Windows Playwright CLI resolves through node instead of executing the .cmd shim directly',()=>{
+ const bin='C:\\Users\\night\\AppData\\Roaming\\npm';
+ const script='C:\\Users\\night\\AppData\\Roaming\\npm\\node_modules\\@playwright\\cli\\playwright-cli.js';
+ const invocation=resolveBrowserInvocation('playwright-cli','win32',bin,candidate=>candidate===script);
+ assert.equal(invocation.command,process.execPath);
+ assert.deepEqual(invocation.argsPrefix,[script]);
+ assert.equal(invocation.displayCommand,`${process.execPath} ${script}`);
+});
+
+test('Windows Playwright resolution preserves the .cmd fallback when the node entrypoint is absent',()=>{
+ const invocation=resolveBrowserInvocation('playwright-cli','win32','C:\\Users\\night\\AppData\\Roaming\\npm',()=>false);
+ assert.equal(invocation.command,'playwright-cli.cmd');
+ assert.deepEqual(invocation.argsPrefix,[]);
+ assert.equal(invocation.displayCommand,'playwright-cli.cmd');
 });
 
 test('missing local browser backend degrades to health status instead of crashing',async()=>{
