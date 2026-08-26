@@ -45,3 +45,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 .hud-body.touch{cursor:auto}.hud-body.touch .hud-reticle,.hud-body.touch .hud-halo{display:none}.hud-body.touch button,.hud-body.touch a{cursor:pointer}
 @media(max-width:900px),(pointer:coarse) and (max-width:1100px){#hud-sphere-bg{display:none}.hud-panel{animation:none}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
+
+/* Usability pass: the HUD keeps its cinematic layer without fighting the operator. */
+.hud-body{cursor:auto}.hud-body button,.hud-body a,.hud-node,.hud-core-hit,.hud-top-actions button,.hud-command button{cursor:pointer}
+.hud-panel{border-color:rgba(73,202,237,.2);background:linear-gradient(145deg,rgba(4,18,28,.76),rgba(3,12,20,.7));box-shadow:inset 0 1px rgba(255,255,255,.025)}
+.hud-panel:after{content:"";position:absolute;right:9px;bottom:8px;width:9px;height:9px;border-right:1px solid rgba(53,200,232,.22);border-bottom:1px solid rgba(53,200,232,.22)}
+.hud-top{backdrop-filter:blur(14px)}.hud-command form:focus-within{border-color:var(--hud-bright);box-shadow:0 18px 50px rgba(0,2,6,.8),0 0 32px rgba(53,200,232,.2)}
+.hud-node.alert{border-color:rgba(232,196,107,.46)}
+@media(pointer:fine){.hud-reticle{display:none}.hud-halo{display:block}}
