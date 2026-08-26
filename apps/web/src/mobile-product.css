@@ -27,3 +27,22 @@ body .munin-gpt-launch{left:50%;transform:translateX(-50%);bottom:max(76px,calc(
 body .munin-host-launch{right:12px;bottom:max(76px,calc(env(safe-area-inset-bottom) + 64px))}
 body .munin-mail-panel,body .munin-gpt-panel,body .munin-host-panel{bottom:max(124px,calc(env(safe-area-inset-bottom) + 112px));max-height:68dvh;overflow:auto}
 @media(max-width:370px){.shell{padding-left:12px;padding-right:12px}.quick-grid{grid-template-columns:1fr}.quick-grid button{min-height:60px}.raven-nav button small{font-size:.5rem}body .munin-gpt-launch{font-size:0;padding:10px 13px}body .munin-gpt-launch:after{content:'GPT';font-size:10px}}
+
+/* One-hand command experience, visually aligned with the desktop core. */
+:root{--core-cyan:#67d8ff;--core-blue:#168bd2;--core-amber:#f2a94b}
+body{background:radial-gradient(circle at 50% -5%,rgba(25,139,202,.18),transparent 30%),linear-gradient(#030a12,#05090e 54%,#03070c);color:#edf8ff}
+.raven-shell:before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(rgba(103,216,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(103,216,255,.022) 1px,transparent 1px);background-size:38px 38px;mask-image:linear-gradient(#000,transparent 45%)}
+.raven-shell>header,.raven-shell>section{position:relative;z-index:1}
+header{padding-top:calc(16px + env(safe-area-inset-top));border-bottom:1px solid rgba(103,216,255,.08)}
+header h1{color:#f0f9ff}.eyebrow{color:#55bfe9;letter-spacing:.18em}.action-status{color:#628296}
+.status-card{border-color:rgba(103,216,255,.14);background:rgba(7,22,33,.72);box-shadow:inset 0 1px rgba(255,255,255,.025)}
+.status-card .status-dot{background:#6ce0a5;box-shadow:0 0 12px rgba(108,224,165,.55)}
+.priority-card{position:relative;overflow:hidden;border-color:rgba(103,216,255,.18);background:radial-gradient(circle at 92% 14%,rgba(57,190,236,.15),transparent 25%),linear-gradient(145deg,rgba(8,27,41,.96),rgba(5,15,24,.96));box-shadow:0 18px 45px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.03)}
+.priority-card:after{content:"M";position:absolute;right:18px;top:17px;width:42px;height:42px;display:grid;place-items:center;border:1px solid rgba(103,216,255,.28);border-radius:50%;color:rgba(157,232,255,.5);font:700 9px ui-monospace,monospace;box-shadow:0 0 22px rgba(59,188,234,.12),inset 0 0 14px rgba(59,188,234,.08)}
+.priority-card h2{max-width:82%;margin-top:12px}.progress{background:rgba(103,216,255,.09)}.progress span{background:linear-gradient(90deg,var(--core-blue),var(--core-cyan));box-shadow:0 0 10px rgba(103,216,255,.3)}
+.quick-grid button{border-color:rgba(103,216,255,.12);background:linear-gradient(145deg,rgba(8,24,36,.9),rgba(5,15,23,.94));box-shadow:inset 0 1px rgba(255,255,255,.02)}.quick-grid button:active{transform:scale(.97);border-color:rgba(103,216,255,.38)}.quick-grid button span{color:#dff8ff}.quick-grid button small{color:#5f7c8e}
+.conversation{border-color:rgba(103,216,255,.1);background:rgba(3,10,17,.54)}.bubble.munin{border-color:rgba(103,216,255,.12);background:rgba(8,23,35,.8)}.bubble.user{background:rgba(19,84,119,.34);border-color:rgba(103,216,255,.22)}
+.composer textarea{border-color:rgba(103,216,255,.18);background:rgba(4,14,22,.94)}.composer textarea:focus{border-color:rgba(103,216,255,.5);box-shadow:0 0 0 3px rgba(103,216,255,.08)}.composer button{background:linear-gradient(135deg,#126a9f,#168bd2);box-shadow:0 8px 24px rgba(22,139,210,.2)}
+.raven-nav{border-top-color:rgba(103,216,255,.17);background:rgba(3,9,15,.96);backdrop-filter:blur(20px)}.raven-nav button.active{color:var(--core-cyan);background:linear-gradient(180deg,rgba(103,216,255,.08),transparent)}.raven-nav button.active:before{content:"";position:absolute;top:0;width:24px;height:2px;border-radius:2px;background:var(--core-cyan);box-shadow:0 0 10px var(--core-cyan)}
+button:focus-visible,a:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--core-cyan);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
