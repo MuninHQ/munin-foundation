@@ -1,0 +1,7 @@
+export type ToolRisk='read'|'write'|'consequential';
+export interface ToolCall{tool:string;target?:string;input?:unknown;risk:ToolRisk;containsSecrets?:boolean;costUsd?:number}
+export interface ToolResult{output?:unknown;containsSecrets?:boolean;unexpectedSideEffect?:boolean;evidence?:string[]}
+export interface TripwireDecision{allow:boolean;reasons:string[]}
+export function preToolGuard(call:ToolCall):TripwireDecision{const reasons:string[]=[];if(call.containsSecrets)reasons.push('secret-bearing input');if((call.costUsd??0)>0)reasons.push('non-zero cost requires explicit approval');if(call.risk==='consequential')reasons.push('consequential action requires human approval');return {allow:reasons.length===0,reasons}}
+export function postToolGuard(result:ToolResult):TripwireDecision{const reasons:string[]=[];if(result.containsSecrets)reasons.push('secret-bearing output');if(result.unexpectedSideEffect)reasons.push('unexpected side effect');if(!result.evidence?.length)reasons.push('missing execution evidence');return {allow:reasons.length===0,reasons}}
+export async function executeWithTripwires<T extends ToolResult>(call:ToolCall,execute:()=>Promise<T>):Promise<T>{const before=preToolGuard(call);if(!before.allow)throw new Error(`Tool preflight blocked: ${before.reasons.join(', ')}`);const result=await execute();const after=postToolGuard(result);if(!after.allow)throw new Error(`Tool postflight blocked: ${after.reasons.join(', ')}`);return result}
