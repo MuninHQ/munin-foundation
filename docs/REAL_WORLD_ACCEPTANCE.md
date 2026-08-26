@@ -38,9 +38,9 @@ If the baseline changed since the latest validated SITREP, rerun the relevant de
 6. Preserve the zero-mandatory-cost and provider-portability constraints in `AGENTS.md`.
 7. Evidence containing private data should remain local/redacted. Record only sanitized outcomes in repository documentation.
 
-# Phase A — Prepare the Windows host
+## Phase A — Prepare the Windows host
 
-## A1. Reconcile repository
+### A1. Reconcile repository
 
 Confirm:
 
@@ -57,7 +57,7 @@ Pass when:
 - working tree is clean before acceptance changes;
 - `HEAD` and `origin/main` agree, unless an intentional tested local acceptance-fix commit is being prepared.
 
-## A2. Deterministic health
+### A2. Deterministic health
 
 Use the repository's current operator/build/doctor commands rather than inventing replacements. Confirm at minimum:
 
@@ -68,7 +68,7 @@ Use the repository's current operator/build/doctor commands rather than inventin
 
 Historical terminal jobs may remain visible as historical evidence. Do not classify them as a present failure without a current reproduction.
 
-## A3. Default-runtime provider boundary
+### A3. Default-runtime provider boundary
 
 Start Munin through the normal current operator path and verify on the real host that normal startup does **not** implicitly:
 
@@ -79,7 +79,7 @@ Start Munin through the normal current operator path and verify on the real host
 
 Pass when normal deterministic operation starts without those dependencies.
 
-# Phase B — Web ChatGPT Cockpit acceptance
+## Phase B — Web ChatGPT Cockpit acceptance
 
 On the target Windows host and actual browser session:
 
@@ -92,7 +92,7 @@ On the target Windows host and actual browser session:
 
 Pass when a real browser-session handoff succeeds with sanitized context and no credential leakage.
 
-# Phase C — iPhone Mobile ChatGPT Cockpit acceptance
+## Phase C — iPhone Mobile ChatGPT Cockpit acceptance
 
 On the target iPhone using the real Munin mobile entrypoint:
 
@@ -105,11 +105,11 @@ On the target iPhone using the real Munin mobile entrypoint:
 
 Pass when the mobile handoff works on-device without credential leakage or a broken return path.
 
-# Phase D — Career Shortcut end-to-end acceptance
+## Phase D — Career Shortcut end-to-end acceptance
 
 This is the primary real-world acceptance path.
 
-## D1. Install/configure the existing Shortcut contract
+### D1. Install/configure the existing Shortcut contract
 
 Use the currently documented/stable iOS Share Sheet/Shortcut contract for **Enviar vaga ao Munin**. Do not invent a parallel endpoint or duplicate Career intake path.
 
@@ -117,7 +117,7 @@ The human may be required to install/import the Shortcut and grant the minimum r
 
 Before the first real submission, verify the destination points to the currently running Munin mobile/API host and uses the existing supported authentication mechanism without exposing secrets in screenshots or Git.
 
-## D2. Real vacancy input
+### D2. Real vacancy input
 
 Using a real LinkedIn vacancy:
 
@@ -127,7 +127,7 @@ Using a real LinkedIn vacancy:
 4. allow the existing Career intake pipeline to process the payload;
 5. do not manually create a duplicate record to force success.
 
-## D3. Pipeline verification
+### D3. Pipeline verification
 
 Verify the real submission traverses the existing Career pipeline and results in the expected durable state. Evidence should establish, as applicable to the current implementation:
 
@@ -143,7 +143,7 @@ Verify the real submission traverses the existing Career pipeline and results in
 
 Repeat the same vacancy once only if needed to prove deduplication. A correct dedupe result must not create a second independent opportunity merely because the Shortcut was triggered twice.
 
-## D4. Failure handling
+### D4. Failure handling
 
 If submission fails, capture sanitized evidence and classify before changing code:
 
@@ -158,7 +158,7 @@ If submission fails, capture sanitized evidence and classify before changing cod
 
 Fix only reproducible Munin defects, then rerun the narrow failed path and the relevant deterministic tests.
 
-# Phase E — Mailbox boundary
+## Phase E — Mailbox boundary
 
 `Email Intelligence needs a mailbox connection` is not a code defect by itself.
 
@@ -166,7 +166,7 @@ Only proceed when the human chooses to connect/authorize a mailbox. Preserve the
 
 After authorization, verify the currently supported read-only email intelligence flow rather than expanding scope during acceptance.
 
-# Phase F — Explicitly non-critical / deferred
+## Phase F — Explicitly non-critical / deferred
 
 The following are outside the critical path for this milestone unless a separate objective promotes them:
 
@@ -178,7 +178,7 @@ The following are outside the critical path for this milestone unless a separate
 
 Do not block Career/iPhone/Windows acceptance on these items.
 
-# Evidence record
+## Evidence record
 
 For each attempted phase, record only sanitized evidence in `ops/SESSION_LOG.md` or the current canonical operational record:
 
@@ -193,7 +193,7 @@ For each attempted phase, record only sanitized evidence in `ops/SESSION_LOG.md`
 
 Do not commit screenshots containing private vacancy/user data solely as acceptance proof.
 
-# Completion criteria
+## Completion criteria
 
 The Real-World Acceptance milestone is complete when all critical items below are empirically passed:
 
@@ -209,7 +209,7 @@ The Real-World Acceptance milestone is complete when all critical items below ar
 
 Mailbox connection, MiniMax H3, exact brand assets and public LinkedIn publication are not required to close this milestone unless explicitly promoted into scope.
 
-# Agent execution contract
+## Agent execution contract
 
 An engineering agent should execute every safe machine-side step autonomously and stop only at a genuine human/device boundary. At that boundary, provide the human with the **single next concrete action** required, then use the returned evidence to continue the same acceptance run.
 
