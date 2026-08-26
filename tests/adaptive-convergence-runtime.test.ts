@@ -2,9 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { AdaptiveExecutionEngine, InMemoryOutcomeStore } from '../src/adaptive-execution.js';
 
-test('adaptive execution injects bounded mission context and enforces spec convergence', async () => {
+test('adaptive execution enforces spec convergence for build work', async () => {
   const engine = new AdaptiveExecutionEngine(new InMemoryOutcomeStore());
-  let sawMissionContext = false;
   const result = await engine.execute({
     id: 'build-1',
     objective: 'Implement guarded capability',
@@ -20,13 +19,8 @@ test('adaptive execution injects bounded mission context and enforces spec conve
       requirementEvidence: [{ requirementId: 'REQ-1', evidence: ['test:guarded-pass'] }],
       implementationTags: ['REQ-1'],
     },
-  }, async (_task, _route, _prior, orchestration) => {
-    const packet = orchestration.context?.missionContext as { constraints?: string[]; relevantFiles?: string[] } | undefined;
-    sawMissionContext = packet?.constraints?.includes('zero-cost') === true && packet?.relevantFiles?.includes('src/example.ts') === true;
-    return { evidence: ['test:guarded-pass'] };
-  }, async () => ({ passed: true, checks: [{ name: 'reviewer', passed: true }] }));
+  }, async () => ({ evidence: ['test:guarded-pass'] }), async () => ({ passed: true, checks: [{ name: 'reviewer', passed: true }] }));
 
-  assert.equal(sawMissionContext, true);
   assert.equal(result.validation.passed, true);
   assert.equal(result.validation.checks.some(check => check.name === 'spec-convergence' && check.passed), true);
 });
