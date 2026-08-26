@@ -45,11 +45,16 @@ const children = [];
 let shuttingDown = false;
 let restartWatcher;
 
+function displayExitCode(code) {
+  if (typeof code !== 'number') return 'unknown';
+  return platform() === 'win32' && code > 0x7fffffff ? code - 0x100000000 : code;
+}
+
 function run(command, args, label) {
   const child = spawn(command, args, { stdio: 'inherit', shell: platform() === 'win32', env: process.env });
   children.push(child);
   child.on('exit', code => {
-    if (!shuttingDown && code && code !== 0) console.error(`[Munin] ${label} exited with code ${code}. Other services will remain available.`);
+    if (!shuttingDown && code && code !== 0) console.error(`[Munin] ${label} exited with code ${displayExitCode(code)}. Other services will remain available.`);
   });
   return child;
 }
@@ -159,7 +164,10 @@ if (await apiHealthy()) {
   }
   await runToCompletion('npm', ['run', 'build:core'], 'TypeScript build');
   run('node', ['dist/src/server.js'], 'Munin API');
-  if (!(await waitFor(apiHealthy))) console.error(`[Munin] API did not become healthy on port ${API_PORT}.`);
+  if (!(await waitFor(apiHealthy))) {
+    console.error(`[Munin] API did not become healthy on port ${API_PORT}. The Web UI will not start without its API.`);
+    shutdown(1);
+  }
 }
 
 if (await portOpen(WEB_PORT)) console.log(`[Munin] Web UI already running at http://127.0.0.1:${WEB_PORT}; reusing it.`);
