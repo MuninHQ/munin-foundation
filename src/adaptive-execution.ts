@@ -1,5 +1,7 @@
 import { runtimePath } from './config.js';
 import { IntelligenceOrchestrationPlanner, type OrchestrationMode, type OrchestrationPlan } from './intelligence-orchestration.js';
+import { buildMissionContextPacket } from './mission-context-packet.js';
+import { evaluateSpecConvergence, type RequirementEvidence, type SpecContract } from './spec-convergence.js';
 import { readJsonFile, writeJsonAtomic } from './storage.js';
 
 export type ExecutionRole = 'orchestrator' | 'researcher' | 'builder' | 'reviewer';
@@ -57,6 +59,17 @@ function learnedOrchestrationMode(task: AdaptiveTask, prior: OutcomeRecord[]): {
   return { mode: 'auto', signals: ['Insufficient outcome evidence to override default orchestration policy.'] };
 }
 
+function textArray(value: unknown): string[] { return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0) : []; }
+function optionalSpec(value: unknown): SpecContract | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const spec = value as Partial<SpecContract>;
+  if (typeof spec.objective !== 'string' || !Array.isArray(spec.requirements)) return undefined;
+  return spec as SpecContract;
+}
+function requirementEvidence(value: unknown): RequirementEvidence[] {
+  return Array.isArray(value) ? value.filter((item): item is RequirementEvidence => Boolean(item && typeof item === 'object' && typeof (item as RequirementEvidence).requirementId === 'string' && Array.isArray((item as RequirementEvidence).evidence))) : [];
+}
+
 export class InMemoryOutcomeStore implements OutcomeStore {
   private readonly records: OutcomeRecord[] = [];
   async save(record: OutcomeRecord): Promise<void> { this.records.unshift(record); }
@@ -81,10 +94,25 @@ export class AdaptiveExecutionEngine {
     const route = this.router.route(task);
     const priorOutcomes = await this.store.findRelevant(task);
     const learned = learnedOrchestrationMode(task, priorOutcomes);
-    const orchestration = this.planner.plan({ objective: task.objective, capability: task.kind === 'strategy' ? 'strategy' : task.capability, risk: task.risk, mode: learned.mode, context: { ...task.context, executionRole: route.primary, reviewers: route.reviewers, priorOutcomeCount: priorOutcomes.length, learningSignals: learned.signals } });
+    const missionContext = buildMissionContextPacket({
+      objective: task.objective,
+      constraints: textArray(task.context?.constraints),
+      decisions: textArray(task.context?.decisions),
+      relevantFiles: textArray(task.context?.relevantFiles),
+      remainingTasks: textArray(task.context?.remainingTasks),
+      knownFailures: textArray(task.context?.knownFailures),
+      evidence: priorOutcomes.flatMap(item => item.evidence).slice(0, 12),
+    });
+    const orchestration = this.planner.plan({ objective: task.objective, capability: task.kind === 'strategy' ? 'strategy' : task.capability, risk: task.risk, mode: learned.mode, context: { ...task.context, missionContext, executionRole: route.primary, reviewers: route.reviewers, priorOutcomeCount: priorOutcomes.length, learningSignals: learned.signals } });
     orchestration.rationale.push(...learned.signals);
     const execution = await runner(task, route, priorOutcomes, orchestration); const evidence = execution.evidence ?? [];
-    await this.hooks.emit('validation:pre', { task, route, orchestration }); const validation = await validator(task, evidence); await this.hooks.emit('validation:post', { task, route, orchestration, validation });
+    await this.hooks.emit('validation:pre', { task, route, orchestration }); let validation = await validator(task, evidence);
+    const spec = optionalSpec(task.context?.specContract);
+    if (spec) {
+      const convergence = evaluateSpecConvergence(spec, requirementEvidence(task.context?.requirementEvidence), textArray(task.context?.implementationTags));
+      validation = { passed: validation.passed && convergence.pass, checks: [...validation.checks, { name: 'spec-convergence', passed: convergence.pass, evidence: `score=${convergence.score}; orphan=${convergence.orphanRequirements.join('|') || 'none'}; missing=${convergence.missingEvidence.join('|') || 'none'}; unscoped=${convergence.unscopedImplementation.join('|') || 'none'}` }] };
+    }
+    await this.hooks.emit('validation:post', { task, route, orchestration, validation });
     const status = validation.passed ? 'passed' : 'failed';
     const outcome: OutcomeRecord = { id: `outcome-${task.id}-${Date.now()}`, taskId: task.id, objective: task.objective, capability: task.capability, route, orchestration, status, evidence, lesson: execution.lesson ?? (validation.passed ? 'Execution validated successfully.' : 'Execution failed reviewer validation.'), tags: [task.capability, task.kind ?? 'inferred', status, `orchestration:${orchestration.route}`], createdAt: new Date().toISOString() };
     await this.store.save(outcome); await this.hooks.emit('task:post', { task, route, orchestration, outcome, validation }); await this.hooks.emit('session:end', { task, route, orchestration, outcome, validation });

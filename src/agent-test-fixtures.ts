@@ -1,0 +1,5 @@
+export interface ScriptedStep<T=unknown>{match?:string;result?:T;error?:string}
+export class ScriptedProvider<T=unknown>{private index=0;constructor(private readonly steps:ScriptedStep<T>[]){ }async run(input:string):Promise<T>{const step=this.steps[this.index++];if(!step)throw new Error('ScriptedProvider exhausted');if(step.match&&!input.includes(step.match))throw new Error(`Script mismatch: expected ${step.match}`);if(step.error)throw new Error(step.error);return step.result as T}}
+export class ScriptedTool<T=unknown>{calls:string[]=[];constructor(private readonly result:T){}async run(input:string):Promise<T>{this.calls.push(input);return this.result}}
+export class ScriptedSandbox{calls:string[]=[];async run(command:string):Promise<{stdout:string}>{this.calls.push(command);return {stdout:`ok:${command}`}}}
+export class ScriptedHumanApproval{requests:string[]=[];constructor(private readonly approved:boolean){}async request(reason:string):Promise<boolean>{this.requests.push(reason);return this.approved}}
