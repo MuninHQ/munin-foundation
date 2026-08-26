@@ -1,0 +1,4 @@
+export const AGENTIC_RISKS=['behavior-hijacking','tool-misuse','privilege-abuse','memory-poisoning','insecure-agent-communication','cascading-failures','secret-exfiltration','excessive-agency','verifier-sabotage','unsafe-code-execution'] as const;
+export type AgenticRisk=typeof AGENTIC_RISKS[number];
+export interface RiskScenario{id:string;risks:AgenticRisk[];passed:boolean}
+export function summarizeAgenticRiskCoverage(scenarios:RiskScenario[]){const covered=new Set<AgenticRisk>();const failed=new Set<AgenticRisk>();for(const scenario of scenarios)for(const risk of scenario.risks){covered.add(risk);if(!scenario.passed)failed.add(risk)}return {totalRisks:AGENTIC_RISKS.length,coveredRisks:covered.size,coveragePercent:Math.round((covered.size/AGENTIC_RISKS.length)*100),failedRisks:[...failed],uncoveredRisks:AGENTIC_RISKS.filter(r=>!covered.has(r))}}
