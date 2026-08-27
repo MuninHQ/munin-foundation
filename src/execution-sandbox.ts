@@ -75,10 +75,12 @@ export function resolveNativeInvocation(command: string, args: string[] = [], op
   const cliName = name.startsWith('npx') ? 'npx-cli.js' : 'npm-cli.js';
   const execPath = options.execPath ?? process.execPath;
   const npmExecPath = options.npmExecPath ?? process.env.npm_execpath;
+  const usesWindowsSeparators = [command, execPath, npmExecPath].some(value => value?.includes('\\'));
+  const pathApi = platform === 'win32' && usesWindowsSeparators ? path.win32 : path.posix;
   const candidates = [
-    npmExecPath ? path.join(path.dirname(npmExecPath), cliName) : undefined,
-    path.isAbsolute(command) ? path.join(path.dirname(command), 'node_modules', 'npm', 'bin', cliName) : undefined,
-    path.join(path.dirname(execPath), 'node_modules', 'npm', 'bin', cliName),
+    npmExecPath ? pathApi.join(pathApi.dirname(npmExecPath), cliName) : undefined,
+    pathApi.isAbsolute(command) ? pathApi.join(pathApi.dirname(command), 'node_modules', 'npm', 'bin', cliName) : undefined,
+    pathApi.join(pathApi.dirname(execPath), 'node_modules', 'npm', 'bin', cliName),
   ].filter((candidate): candidate is string => Boolean(candidate));
   const exists = options.exists ?? existsSync;
   const cliPath = candidates.find(exists);
