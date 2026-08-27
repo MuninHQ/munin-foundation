@@ -13,6 +13,11 @@ test('classifies interview invitation and links known job', () => {
   assert.equal(result.category,'interview_invite'); assert.equal(result.suggestedStatus,'interview'); assert.equal(result.linkedJobId,'job-b3'); assert.ok(result.confidence>0.9); assert.equal(result.attention,'career');
 });
 
+test('detects LinkedIn alert subject and extracts role/company', () => {
+  const result=classifyCareerEmail({subject:'Gerente de Produto Sênior na empresa Example Fintech',snippet:'Payments and product strategy',fromEmail:'jobalerts-noreply@linkedin.com'},[]);
+  assert.equal(result.category,'job_alert'); assert.equal(result.detectedRole,'Gerente de Produto Sênior'); assert.equal(result.detectedCompany,'Example Fintech'); assert.equal(result.confidence,.95);
+});
+
 test('detects explicit action outside career flow', () => {
   const result=classifyCareerEmail({subject:'Action required: please sign document',snippet:'Please sign by end of day.',fromEmail:'operations@example.com'},[]);
   assert.equal(result.category,'other'); assert.equal(result.needsAction,true); assert.equal(result.attention,'general_action'); assert.ok(result.actionReason);
