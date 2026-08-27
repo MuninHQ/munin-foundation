@@ -20,7 +20,7 @@
 
 - Core TypeScript build passed.
 - Vite production build passed.
-- Full suite passed: 576 tests, 0 failures.
+- Full suite passed: 577 tests, 0 failures.
 - Agent security benchmark passed: 12/12, score 100%.
 - Sandbox doctor reported `native-guarded` available; Docker hard isolation remains an empirical Windows-host promotion gate.
 - No new runtime dependency, paid service, provider lock-in or external write was introduced.

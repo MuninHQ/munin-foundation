@@ -53,6 +53,8 @@ export class JsonlAgentTelemetrySink implements AgentTelemetrySink {
 }
 
 export class AgentTelemetry {
+  private readonly pending = new Set<Promise<void>>();
+
   constructor(
     private readonly sink: AgentTelemetrySink,
     private readonly onError: (error: unknown) => void = () => undefined,
@@ -60,7 +62,26 @@ export class AgentTelemetry {
 
   emit(event: Omit<AgentTelemetryEvent, 'at'> & { at?: string }): void {
     const normalized = redactSecrets<AgentTelemetryEvent>({ ...event, at: event.at ?? new Date().toISOString() });
-    void this.sink.write(normalized).catch(this.onError);
+    const operation = this.sink.write(normalized);
+    this.pending.add(operation);
+    void operation.catch(this.onError).finally(() => this.pending.delete(operation));
+  }
+
+  async flush(timeoutMs = 1_000): Promise<void> {
+    if (!Number.isFinite(timeoutMs) || timeoutMs < 0) throw new Error('telemetry flush timeout must be non-negative');
+    const pending = [...this.pending];
+    if (!pending.length) return;
+    await new Promise<void>(resolveFlush => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolveFlush();
+      };
+      const timer = setTimeout(finish, timeoutMs);
+      void Promise.allSettled(pending).then(finish);
+    });
   }
 }
 

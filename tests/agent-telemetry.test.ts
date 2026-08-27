@@ -35,3 +35,18 @@ test('telemetry redacts secrets in strings, arrays and nested metadata', async (
   assert.match(serialized, /\[REDACTED\]/);
   assert.doesNotMatch(serialized, /super-secret-value|nested-secret|another-secret|basic-secret|url-secret/);
 });
+
+test('telemetry flush waits for local writes but remains bounded for a stalled collector', async () => {
+  let release: (() => void) | undefined;
+  const telemetry = new AgentTelemetry({ write: () => new Promise<void>(resolve => { release = resolve; }) });
+  telemetry.emit({ name: 'run.completed', runId: 'run-flush' });
+  const waiting = telemetry.flush(100);
+  release?.();
+  await waiting;
+
+  const stalled = new AgentTelemetry({ write: () => new Promise<void>(() => undefined) });
+  stalled.emit({ name: 'run.completed', runId: 'run-stalled' });
+  const startedAt = Date.now();
+  await stalled.flush(10);
+  assert.ok(Date.now() - startedAt < 100);
+});

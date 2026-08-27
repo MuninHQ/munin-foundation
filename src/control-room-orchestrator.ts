@@ -73,6 +73,7 @@ export class MuninControlRoomOrchestrator {
     const receipt = buildExecutionReceipt(result);
     telemetry.emit({ name: 'run.completed', runId: result.runId, outcome: result.status, evidence: result.trace.flatMap(item => item.evidence ?? []), metadata: { workType: result.workType, steps: result.trace.length, blocker: result.blocker } });
     try { await receiptStore.append(receipt); } catch { /* observability must never break objective execution */ }
+    await telemetry.flush();
     return result;
   }
 }
