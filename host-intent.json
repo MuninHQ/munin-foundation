@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "id": "content-studio-recovered-acceptance-20260824-2026",
-  "type": "run-acceptance",
-  "createdAt": "2026-08-24T20:26:50.000Z",
-  "expiresAt": "2026-08-24T20:34:50.000Z",
+  "id": "operator-deploy-main-20260827-230423",
+  "type": "deploy-main",
+  "createdAt": "2026-08-27T23:04:23.000Z",
+  "expiresAt": "2026-08-27T23:14:23.000Z",
   "repo": "MuninHQ/munin-foundation",
   "branch": "main"
 }
