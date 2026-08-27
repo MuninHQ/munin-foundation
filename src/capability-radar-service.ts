@@ -2,6 +2,7 @@ import { runtimePath } from './config.js';
 import { assessCapability, type CapabilityAssessment } from './capability-radar.js';
 import { discoverGitHubCapabilities, type DiscoveredCapability } from './capability-radar-github.js';
 import { collectDuplicationEvidence } from './capability-duplication.js';
+import { assessOpportunity, type OpportunityAssessment } from './opportunity-assessment.js';
 import { benchmarkCapabilityCandidate, type CapabilityBenchmarkResult } from './capability-promotion-benchmark.js';
 import { JsonCapabilityDecisionLog, type PersistedCapabilityDecision } from './json-capability-decision-log.js';
 import { ProjectMemoryStore } from './project-memory.js';
@@ -16,6 +17,7 @@ export interface CapabilityRadarRunOptions {
   root?: string;
   duplicationCollector?: typeof collectDuplicationEvidence;
   benchmark?: typeof benchmarkCapabilityCandidate;
+  opportunityAssessor?: typeof assessOpportunity;
 }
 
 export interface CapabilityRadarRunResult {
@@ -26,9 +28,13 @@ export interface CapabilityRadarRunResult {
   adopt: number;
   review: number;
   reject: number;
+  opportunityGo: number;
+  opportunityClarify: number;
+  opportunityKill: number;
   promoted: number;
   benchmarkHeld: number;
   decisions: PersistedCapabilityDecision[];
+  opportunities: OpportunityAssessment[];
   benchmarks: CapabilityBenchmarkResult[];
   skippedIds: string[];
 }
@@ -38,29 +44,52 @@ export async function runCapabilityRadar(options: CapabilityRadarRunOptions): Pr
   const log = options.log ?? new JsonCapabilityDecisionLog(runtimePath('capability-radar-decisions.json'));
   const memory = options.memory ?? new ProjectMemoryStore(runtimePath('project-memory.json'));
   const decisions: PersistedCapabilityDecision[] = [];
+  const opportunities: OpportunityAssessment[] = [];
   const benchmarks: CapabilityBenchmarkResult[] = [];
   const skippedIds: string[] = [];
-  const duplicationCollector=options.duplicationCollector??collectDuplicationEvidence;
-  const benchmark=options.benchmark??benchmarkCapabilityCandidate;
-  let promoted=0;
+  const duplicationCollector = options.duplicationCollector ?? collectDuplicationEvidence;
+  const benchmark = options.benchmark ?? benchmarkCapabilityCandidate;
+  const opportunityAssessor = options.opportunityAssessor ?? assessOpportunity;
+  let promoted = 0;
 
   for (const item of discovered) {
     if (!options.revisit && !(await log.shouldReassess(item.candidate.id))) {
       skippedIds.push(item.candidate.id);
       continue;
     }
-    const duplication=await duplicationCollector(item.candidate,options.root??process.cwd());
-    const enriched={...item.candidate,duplicationScore:duplication.score,evidence:[...(item.candidate.evidence??[]),...duplication.matches.map(match=>`Munin duplication match: ${match}`)]};
+    const duplication = await duplicationCollector(item.candidate, options.root ?? process.cwd());
+    const enriched = { ...item.candidate, duplicationScore: duplication.score, evidence: [...(item.candidate.evidence ?? []), ...duplication.matches.map(match => `Munin duplication match: ${match}`)] };
     const assessment: CapabilityAssessment = assessCapability(enriched);
     decisions.push(await log.record(assessment));
-    if(assessment.decision!=='adopt')continue;
-    const benchmarkResult=benchmark(enriched);benchmarks.push(benchmarkResult);
-    if(benchmarkResult.status!=='promote')continue;
+
+    const opportunity = opportunityAssessor({
+      id: enriched.id,
+      problem: `Evaluate ${enriched.name} as a Munin capability`,
+      evidence: enriched.evidence ?? [],
+      existingCapabilityOverlap: duplication.score,
+      expectedValue: assessment.score,
+      integrationCost: Math.max(0, 1 - (enriched.maintenanceScore ?? 0.5)),
+      securityImpact: Math.max(0, 1 - (enriched.securityScore ?? 0.5)),
+    });
+    opportunities.push(opportunity);
+
+    if (assessment.decision !== 'adopt' || opportunity.decision !== 'GO') continue;
+    const benchmarkResult = benchmark(enriched);
+    benchmarks.push(benchmarkResult);
+    if (benchmarkResult.status !== 'promote') continue;
     await memory.capture({
-      kind:'research',
-      title:`Capability radar · ${enriched.name}`,
-      content:[`Decision: ${assessment.decision}.`,`Assessment score: ${assessment.score}.`,`Promotion benchmark: ${benchmarkResult.score}.`,`Source: ${enriched.source}.`,`License: ${enriched.license??'unknown'}.`,...(enriched.evidence??[])].join('\n'),
-      project:'munin',source:enriched.source,observedAt:new Date().toISOString(),confidence:'confirmed',tags:['capability-radar','zero-cost','promotion'],relatedIssues:['#242'],
+      kind: 'research',
+      title: `Capability radar · ${enriched.name}`,
+      content: [
+        `Decision: ${assessment.decision}.`,
+        `Assessment score: ${assessment.score}.`,
+        `Opportunity gate: ${opportunity.decision} (${opportunity.score}).`,
+        `Promotion benchmark: ${benchmarkResult.score}.`,
+        `Source: ${enriched.source}.`,
+        `License: ${enriched.license ?? 'unknown'}.`,
+        ...(enriched.evidence ?? []),
+      ].join('\n'),
+      project: 'munin', source: enriched.source, observedAt: new Date().toISOString(), confidence: 'confirmed', tags: ['capability-radar', 'zero-cost', 'promotion'], relatedIssues: ['#242'],
     });
     promoted++;
   }
@@ -73,9 +102,12 @@ export async function runCapabilityRadar(options: CapabilityRadarRunOptions): Pr
     adopt: decisions.filter(item => item.decision === 'adopt').length,
     review: decisions.filter(item => item.decision === 'review').length,
     reject: decisions.filter(item => item.decision === 'reject').length,
+    opportunityGo: opportunities.filter(item => item.decision === 'GO').length,
+    opportunityClarify: opportunities.filter(item => item.decision === 'CLARIFY').length,
+    opportunityKill: opportunities.filter(item => item.decision === 'KILL').length,
     promoted,
-    benchmarkHeld:benchmarks.filter(item=>item.status==='hold').length,
-    decisions,benchmarks,skippedIds,
+    benchmarkHeld: benchmarks.filter(item => item.status === 'hold').length,
+    decisions, opportunities, benchmarks, skippedIds,
   };
 }
 
@@ -84,6 +116,7 @@ export function formatCapabilityRadarReport(result: CapabilityRadarRunResult): s
     `Capability Radar: ${result.query}`,
     `Discovered: ${result.discovered} · Assessed: ${result.assessed} · Skipped known: ${result.skipped}`,
     `Adopt: ${result.adopt} · Review: ${result.review} · Reject: ${result.reject}`,
+    `Opportunity: GO ${result.opportunityGo} · CLARIFY ${result.opportunityClarify} · KILL ${result.opportunityKill}`,
     `Promoted to Munin memory: ${result.promoted} · Benchmark held: ${result.benchmarkHeld}`,
   ];
   for (const decision of result.decisions) lines.push(`- ${decision.id}: ${decision.decision.toUpperCase()} (${decision.score}) — ${decision.reasons.join('; ')}`);
