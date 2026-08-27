@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {shouldPromoteCapability,type GatedCapabilityAssessment} from '../src/capability-opportunity-gate.js';
+const base={candidate:{id:'x',name:'x',source:'github'},capability:{id:'x',decision:'adopt' as const,score:.9,reasons:[]},opportunity:{id:'x',decision:'GO' as const,score:.9,reasons:[]}};
+test('promotion requires both adoption and opportunity GO',()=>{assert.equal(shouldPromoteCapability(base),true);const blocked:GatedCapabilityAssessment={...base,opportunity:{...base.opportunity,decision:'CLARIFY'}};assert.equal(shouldPromoteCapability(blocked),false)});
