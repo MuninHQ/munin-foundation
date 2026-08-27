@@ -4,7 +4,7 @@ Munin separates repository isolation from process isolation.
 
 ## Default mode: guarded
 
-`GitWorktreeExecutionWorkspace` always isolates repository mutations in a detached Git worktree. Commands are additionally routed through `NativeGuardedSandbox`, which uses `execFile` without a shell, allows only Node/npm/npx/Git executables, strips credential-shaped environment variables, bounds execution time and output, and records the sandbox backend/strength in workspace results.
+`GitWorktreeExecutionWorkspace` always isolates repository mutations in a detached Git worktree. Commands are additionally routed through `NativeGuardedSandbox`, which uses `execFile` without a shell, allows only Node/npm/npx/Git executables, strips credential-shaped environment variables, bounds execution time and output, and records the sandbox backend/strength in workspace results. On Windows, npm/npx shims resolve to validated JavaScript CLI entrypoints and execute through `node.exe`; no command shell is enabled.
 
 This is a safety boundary, but it is **not** hard operating-system isolation.
 

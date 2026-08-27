@@ -1,5 +1,7 @@
 import { appendFile, mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
+import { runtimePath } from './config.js';
+import { redactSecrets } from './secret-redaction.js';
 
 export type AgentTelemetryEventName =
   | 'run.started'
@@ -34,14 +36,19 @@ export interface AgentTelemetrySink {
 
 export class JsonlAgentTelemetrySink implements AgentTelemetrySink {
   readonly path: string;
+  private tail: Promise<void> = Promise.resolve();
 
-  constructor(path = 'runtime/telemetry/agent-events.jsonl') {
+  constructor(path = runtimePath('telemetry', 'agent-events.jsonl')) {
     this.path = resolve(path);
   }
 
-  async write(event: AgentTelemetryEvent): Promise<void> {
-    await mkdir(dirname(this.path), { recursive: true });
-    await appendFile(this.path, `${JSON.stringify(event)}\n`, 'utf8');
+  write(event: AgentTelemetryEvent): Promise<void> {
+    const operation = this.tail.then(async () => {
+      await mkdir(dirname(this.path), { recursive: true });
+      await appendFile(this.path, `${JSON.stringify(event)}\n`, 'utf8');
+    });
+    this.tail = operation.catch(() => undefined);
+    return operation;
   }
 }
 
@@ -52,7 +59,7 @@ export class AgentTelemetry {
   ) {}
 
   emit(event: Omit<AgentTelemetryEvent, 'at'> & { at?: string }): void {
-    const normalized: AgentTelemetryEvent = { ...event, at: event.at ?? new Date().toISOString() };
+    const normalized = redactSecrets<AgentTelemetryEvent>({ ...event, at: event.at ?? new Date().toISOString() });
     void this.sink.write(normalized).catch(this.onError);
   }
 }

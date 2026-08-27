@@ -15,9 +15,9 @@ This architecture adds four complementary seams without replacing Munin's existi
 
 `GitWorktreeExecutionWorkspace` creates a detached Git worktree in a temporary directory. Engineering agents can run commands and collect diffs there before any change is promoted to the canonical checkout.
 
-Phase 1 is **repository isolation**, not a complete OS security sandbox. A worktree prevents accidental direct mutation of the canonical checkout but does not stop a malicious process from accessing host resources available to the same user account.
+Repository isolation is combined with a process boundary. `NativeGuardedSandbox` is the compatibility default: it executes an allowlist without a command shell, strips credential-shaped environment values and bounds time/output. `DockerHardSandbox` is the optional strict backend with network disabled, capabilities dropped, a read-only root filesystem and resource limits.
 
-The next hardening step is to place `ExecutionWorkspace` behind a restricted process/container backend while keeping the same interface.
+Guarded mode is not complete operating-system isolation. Hard mode must fail closed when Docker is unavailable and must pass empirical validation on the actual Windows host before promotion as the default. See `EXECUTION-SANDBOX.md`.
 
 Expected engineering path:
 
@@ -55,7 +55,7 @@ Telemetry is fire-and-forget. Collector failure must never become an agent execu
 
 The default local sink can write JSONL. OpenTelemetry export can be added later without changing the agent contract.
 
-Sensitive prompt bodies, OAuth credentials, tokens and private message contents must not be emitted into telemetry.
+Sensitive prompt bodies, OAuth credentials, tokens and private message contents must not be emitted into telemetry. String and nested metadata redaction is applied before a sink receives an event.
 
 ## 4. Agent security bench
 
@@ -73,20 +73,21 @@ The benchmark runner accepts an evaluator so the same fixtures can test determin
 
 Security score is a regression signal, not proof of safety. Any escaped scenario involving secrets, irreversible actions or verification bypass should block promotion regardless of aggregate score.
 
-## Rollout
+## Rollout status
 
-### P0
+### Delivered
 
-- land the interfaces and tests in this change;
-- use isolated worktrees for autonomous engineering paths;
-- persist receipts for engineering runs;
-- begin emitting JSONL telemetry from observed orchestration.
+- isolated worktree and process-sandbox contracts with deterministic tests;
+- existing autonomous engineering worktree isolation preserved;
+- local JSONL telemetry and durable replay receipts on Control Room executions;
+- orchestration traces, metrics, security score and sandbox strength exposed to HUD/API;
+- deterministic security fixtures wired to Munin's native policy evaluator;
+- secret redaction across telemetry, receipts and provider traces.
 
-### P1
+### Evidence-gated follow-ons
 
-- expose autonomy metrics in Control Room/HUD;
-- wire the security fixtures into agent/provider evaluation;
-- add restricted process/container workspace backend;
+- make hard Docker isolation the default only after the actual host passes the strict suite;
+- evaluate real optional providers against the security fixtures before promotion;
 - add OpenTelemetry exporter if local metrics justify it.
 
 ## Non-goals

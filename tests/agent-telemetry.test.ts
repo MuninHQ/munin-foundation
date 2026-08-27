@@ -20,3 +20,18 @@ test('telemetry failures do not reject caller execution', async () => {
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(errors.length, 1);
 });
+
+test('telemetry redacts secrets in strings, arrays and nested metadata', async () => {
+  const sink = new MemoryAgentTelemetrySink();
+  const telemetry = new AgentTelemetry(sink);
+  telemetry.emit({
+    name: 'agent.failed',
+    runId: 'run-3',
+    evidence: ['Authorization: Bearer super-secret-value'],
+    metadata: { apiKey: 'nested-secret', nested: { error: 'refresh_token=another-secret Authorization: Basic basic-secret https://example.test?access_token=url-secret' } },
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  const serialized = JSON.stringify(sink.events[0]);
+  assert.match(serialized, /\[REDACTED\]/);
+  assert.doesNotMatch(serialized, /super-secret-value|nested-secret|another-secret|basic-secret|url-secret/);
+});

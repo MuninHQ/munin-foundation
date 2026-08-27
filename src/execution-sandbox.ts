@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
@@ -35,7 +36,7 @@ export interface ExecutionSandbox {
 }
 
 const SAFE_NATIVE_EXECUTABLES = new Set(['node', 'node.exe', 'npm', 'npm.cmd', 'npx', 'npx.cmd', 'git', 'git.exe']);
-const FORBIDDEN_ENV = /(?:^|_)(?:TOKEN|SECRET|PASSWORD|PASSWD|API_KEY|PRIVATE_KEY|AUTHORIZATION)$/i;
+const FORBIDDEN_ENV = /(?:^|_)(?:TOKEN|SECRET|PASSWORD|PASSWD|API_KEY|PRIVATE_KEY|AUTHORIZATION|CREDENTIAL|ACCESS_KEY|CLIENT_SECRET|REFRESH_TOKEN|SESSION_KEY)$/i;
 
 function sanitizedEnv(input?: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const source = input ?? process.env;
@@ -60,6 +61,31 @@ function containerExecutable(command: string): string {
   return name;
 }
 
+export interface NativeInvocationOptions {
+  platform?: NodeJS.Platform;
+  execPath?: string;
+  npmExecPath?: string;
+  exists?: (candidate: string) => boolean;
+}
+
+export function resolveNativeInvocation(command: string, args: string[] = [], options: NativeInvocationOptions = {}): { command: string; args: string[] } {
+  const platform = options.platform ?? process.platform;
+  const name = executableName(command);
+  if (platform !== 'win32' || !['npm', 'npm.cmd', 'npx', 'npx.cmd'].includes(name)) return { command, args };
+  const cliName = name.startsWith('npx') ? 'npx-cli.js' : 'npm-cli.js';
+  const execPath = options.execPath ?? process.execPath;
+  const npmExecPath = options.npmExecPath ?? process.env.npm_execpath;
+  const candidates = [
+    npmExecPath ? path.join(path.dirname(npmExecPath), cliName) : undefined,
+    path.isAbsolute(command) ? path.join(path.dirname(command), 'node_modules', 'npm', 'bin', cliName) : undefined,
+    path.join(path.dirname(execPath), 'node_modules', 'npm', 'bin', cliName),
+  ].filter((candidate): candidate is string => Boolean(candidate));
+  const exists = options.exists ?? existsSync;
+  const cliPath = candidates.find(exists);
+  if (!cliPath) throw new Error(`Sandbox cannot resolve ${name} safely on Windows: ${cliName} is unavailable.`);
+  return { command: execPath, args: [cliPath, ...args] };
+}
+
 export class NativeGuardedSandbox implements ExecutionSandbox {
   readonly status: ExecutionSandboxStatus = {
     backend: 'native-guarded',
@@ -71,8 +97,9 @@ export class NativeGuardedSandbox implements ExecutionSandbox {
   async run(input: SandboxCommand): Promise<SandboxCommandResult> {
     const name = executableName(input.command);
     if (!SAFE_NATIVE_EXECUTABLES.has(name)) throw new Error(`Sandbox blocked executable: ${name || input.command}`);
+    const invocation = resolveNativeInvocation(input.command, input.args ?? []);
     const startedAt = Date.now();
-    const { stdout, stderr } = await execFileAsync(input.command, input.args ?? [], {
+    const { stdout, stderr } = await execFileAsync(invocation.command, invocation.args, {
       cwd: input.cwd,
       timeout: input.timeoutMs ?? 120_000,
       env: sanitizedEnv(input.env),
@@ -157,6 +184,11 @@ export async function resolveExecutionSandbox(options: ResolveSandboxOptions = {
 }
 
 export async function executionSandboxStatus(): Promise<ExecutionSandboxStatus> {
-  const docker = await DockerHardSandbox.detect();
-  return docker?.status ?? new NativeGuardedSandbox().status;
+  const now = Date.now();
+  if (sandboxStatusCache && sandboxStatusCache.expiresAt > now) return sandboxStatusCache.value;
+  const value = DockerHardSandbox.detect().then(docker => docker?.status ?? new NativeGuardedSandbox().status);
+  sandboxStatusCache = { expiresAt: now + 60_000, value };
+  return value;
 }
+
+let sandboxStatusCache: { expiresAt: number; value: Promise<ExecutionSandboxStatus> } | undefined;

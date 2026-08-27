@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { NativeGuardedSandbox, resolveExecutionSandbox } from '../src/execution-sandbox.js';
+import { NativeGuardedSandbox, resolveExecutionSandbox, resolveNativeInvocation } from '../src/execution-sandbox.js';
 
 test('guarded sandbox executes allowlisted binaries and strips secret environment values', async () => {
   const cwd = await mkdtemp(join(tmpdir(), 'munin-sandbox-'));
@@ -39,4 +39,21 @@ test('default sandbox policy remains guarded unless hard isolation is explicitly
     if (original === undefined) delete process.env.MUNIN_EXECUTION_SANDBOX;
     else process.env.MUNIN_EXECUTION_SANDBOX = original;
   }
+});
+
+test('Windows npm shims are resolved through node without enabling a command shell', () => {
+  const npmCli = '/fake/node_modules/npm/bin/npm-cli.js';
+  const invocation = resolveNativeInvocation('npm.cmd', ['test', '--', '--watch=false'], {
+    platform: 'win32',
+    execPath: '/fake/node.exe',
+    npmExecPath: npmCli,
+    exists: candidate => candidate === npmCli,
+  });
+  assert.deepEqual(invocation, { command: '/fake/node.exe', args: [npmCli, 'test', '--', '--watch=false'] });
+  assert.throws(() => resolveNativeInvocation('npx.cmd', ['vite'], {
+    platform: 'win32',
+    execPath: '/fake/node.exe',
+    npmExecPath: npmCli,
+    exists: () => false,
+  }), /cannot resolve npx\.cmd safely on Windows/i);
 });

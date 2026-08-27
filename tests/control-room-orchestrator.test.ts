@@ -29,6 +29,10 @@ test('control room hydrates canonical state and completes safe product work', as
   const session = await readFile(path.join(root, 'ops/SESSION_LOG.md'), 'utf8');
   assert.match(session, /Multi-agent orchestration completed durable work/);
   assert.match(session, /Atualizar backlog e prioridade do produto/);
+  const receipts = await readFile(path.join(root, 'data/runtime/telemetry/execution-receipts.jsonl'), 'utf8');
+  const receipt = JSON.parse(receipts.trim());
+  assert.equal(receipt.runId, result.runId);
+  assert.equal(receipt.status, 'done');
 });
 
 test('control room rejects empty objectives before executing agents', async () => {

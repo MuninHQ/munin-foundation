@@ -8,6 +8,7 @@
 
   const pct = value => `${Math.round(Number(value || 0) * 100)}%`;
   const ms = value => Number(value || 0) >= 1000 ? `${(Number(value) / 1000).toFixed(1)}s` : `${Math.round(Number(value || 0))}ms`;
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 
   async function refresh() {
     try {
@@ -31,7 +32,7 @@
         const attempts = latest?.attempts || [];
         const lastProvider = latest?.selectedProviderId || attempts.at(-1)?.providerId || '—';
         const state = report.failed > 0 ? 'SECURITY HOLD' : latest ? (attempts.some(attempt => !attempt.ok) ? 'RECUPERADO' : 'NOMINAL') : 'IDLE';
-        panel.innerHTML = `<div class="hud-stat"><span>Runs 24h</span><b>${metrics.runs ?? 0}</b></div><div class="hud-stat"><span>Completion</span><b>${pct(metrics.completionRate)}</b></div><div class="hud-stat"><span>Fallbacks</span><b>${pct(metrics.retryRate)}</b></div><div class="hud-stat"><span>Median</span><b>${ms(metrics.medianDurationMs)}</b></div><div class="hud-stat"><span>Security bench</span><b>${report.passed ?? 0}/${report.total ?? 0}</b></div><div class="hud-stat"><span>Sandbox</span><b>${String(sandbox.strength || 'guarded').toUpperCase()} · ${sandbox.backend || 'native'}</b></div><div class="hud-stat"><span>Último provider</span><b>${lastProvider}</b></div><div class="hud-stat"><span>Estado</span><b>${state}</b></div>`;
+        panel.innerHTML = `<div class="hud-stat"><span>Runs 24h</span><b>${esc(metrics.runs ?? 0)}</b></div><div class="hud-stat"><span>Completion</span><b>${esc(pct(metrics.completionRate))}</b></div><div class="hud-stat"><span>Fallbacks</span><b>${esc(pct(metrics.retryRate))}</b></div><div class="hud-stat"><span>Median</span><b>${esc(ms(metrics.medianDurationMs))}</b></div><div class="hud-stat"><span>Security bench</span><b>${esc(report.passed ?? 0)}/${esc(report.total ?? 0)}</b></div><div class="hud-stat"><span>Sandbox</span><b>${esc(String(sandbox.strength || 'guarded').toUpperCase())} · ${esc(sandbox.backend || 'native')}</b></div><div class="hud-stat"><span>Último provider</span><b>${esc(lastProvider)}</b></div><div class="hud-stat"><span>Estado</span><b>${esc(state)}</b></div>`;
       }
       const adaptive = document.getElementById('hud-adaptive');
       if (adaptive) adaptive.textContent = report.failed > 0 ? 'ADAPTIVE · SECURITY HOLD' : latest ? `ADAPTIVE · ${latest.route.toUpperCase()} · ${latest.selectedProviderId || 'LOCAL'}` : 'ADAPTIVE · READY';

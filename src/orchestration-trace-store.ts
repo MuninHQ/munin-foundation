@@ -2,10 +2,10 @@ import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { runtimePath } from './config.js';
 import type { OrchestrationTrace } from './orchestration-trace.js';
+import { redactSecretText } from './secret-redaction.js';
 
-const secretPattern=/(authorization|bearer|api[_-]?key|password|passwd|secret|token)\s*[:=]\s*[^\s,;]+/gi;
-function sanitize(value:string|undefined):string|undefined{return value?.replace(secretPattern,'$1=[REDACTED]')}
-function sanitizeTrace(trace:OrchestrationTrace):OrchestrationTrace{return {...trace,attempts:trace.attempts.map(item=>({...item,error:sanitize(item.error)})),providerDecision:trace.providerDecision?{...trace.providerDecision,rejected:trace.providerDecision.rejected.map(item=>({...item,reason:sanitize(item.reason)??item.reason})),rationale:trace.providerDecision.rationale.map(item=>sanitize(item)??item)}:undefined}}
+function sanitize(value:string|undefined):string|undefined{return value===undefined?undefined:redactSecretText(value)}
+function sanitizeTrace(trace:OrchestrationTrace):OrchestrationTrace{return {...trace,attempts:trace.attempts.map(item=>({...item,providerId:redactSecretText(item.providerId),error:sanitize(item.error)})),selectedProviderId:sanitize(trace.selectedProviderId),providerDecision:trace.providerDecision?{...trace.providerDecision,selectedProviderId:sanitize(trace.providerDecision.selectedProviderId),consideredProviderIds:trace.providerDecision.consideredProviderIds.map(redactSecretText),rejected:trace.providerDecision.rejected.map(item=>({...item,providerId:redactSecretText(item.providerId),reason:sanitize(item.reason)??item.reason})),rationale:trace.providerDecision.rationale.map(item=>sanitize(item)??item)}:undefined}}
 
 export class OrchestrationTraceStore{
  constructor(private readonly file=runtimePath('orchestration-traces.jsonl')){}

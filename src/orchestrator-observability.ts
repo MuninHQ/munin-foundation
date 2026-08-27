@@ -10,10 +10,15 @@ import {
 
 export function instrumentAgentExecutors(executors: MuninAgentExecutors, telemetry: AgentTelemetry): MuninAgentExecutors {
   const instrumented: MuninAgentExecutors = {};
+  const startedRuns = new Set<string>();
 
   for (const [agentId, executor] of Object.entries(executors)) {
     if (!executor) continue;
     instrumented[agentId as keyof MuninAgentExecutors] = async context => {
+      if (!startedRuns.has(context.runId)) {
+        startedRuns.add(context.runId);
+        telemetry.emit({ name: 'run.started', runId: context.runId, metadata: { objective: context.objective, workType: context.workType } });
+      }
       const startedAt = Date.now();
       telemetry.emit({ name: 'agent.started', runId: context.runId, agentId, metadata: { cycle: context.cycle, workType: context.workType } });
       try {
@@ -55,7 +60,6 @@ export async function runObservedOrchestration(
   telemetry: AgentTelemetry,
   policy: Partial<OrchestratorPolicy> = {},
 ): Promise<{ result: OrchestratorRunResult; receipt: ExecutionReceipt }> {
-  telemetry.emit({ name: 'run.started', runId: 'pending', metadata: { objective } });
   const orchestrator = new MuninAgentOrchestrator(instrumentAgentExecutors(executors, telemetry), policy);
   const result = await orchestrator.run(objective, context);
   const receipt = buildExecutionReceipt(result);

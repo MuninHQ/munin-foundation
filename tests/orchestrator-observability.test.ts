@@ -21,6 +21,8 @@ test('observed orchestration emits agent events and returns an execution receipt
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(result.status, 'done');
   assert.equal(receipt.runId, result.runId);
+  assert.ok(sink.events.some(event => event.name === 'run.started' && event.runId === result.runId));
+  assert.ok(!sink.events.some(event => event.runId === 'pending'));
   assert.ok(sink.events.some(event => event.name === 'agent.started' && event.agentId === 'engineer'));
   assert.ok(sink.events.some(event => event.name === 'run.completed' && event.runId === result.runId));
 });
