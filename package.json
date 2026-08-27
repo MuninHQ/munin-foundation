@@ -43,6 +43,8 @@
     "runtime:capability:benchmark": "npm run build:core && node dist/src/runtime-capability-benchmark-cli.js",
     "video:benchmark": "npm run build:core && node dist/src/local-video-benchmark-cli.js",
     "autonomy:doctor": "npm run build:core && node dist/src/autonomy-readiness-cli.js",
+    "agent-security:bench": "npm run build:core && node dist/src/agent-security-bench-cli.js",
+    "sandbox:doctor": "npm run build:core && node dist/src/execution-sandbox-cli.js",
     "control-room:state": "npm run build:core && node dist/src/control-room-state-cli.js",
     "operator:sitrep": "npm run build:core && node dist/src/operator-sitrep-cli.js",
     "capability:radar": "npm run build:core && node dist/src/capability-radar-cli.js",
