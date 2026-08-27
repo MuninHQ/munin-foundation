@@ -31,12 +31,46 @@ Before changing agent behavior, inspect these seams first:
 
 For operational state, prefer the canonical Control Room state and durable session log rather than inventing parallel memory stores.
 
+## Engineering loop
+
+For implementation work, use this loop unless a narrower repository procedure overrides it:
+
+`inspect → state assumptions → define observable success → plan the smallest coherent change → edit → focused validation → broad validation → inspect diff → repair/retry → write back → handoff`
+
+The loop is evidence-bound:
+
+- Read the relevant implementation and tests before editing.
+- State material assumptions when they affect behavior, architecture, data, safety, cost or compatibility.
+- Translate the request into observable success criteria before changing code.
+- Prefer the simplest change that satisfies the objective. Avoid speculative features, premature abstractions and configurability that was not requested.
+- Keep the diff surgical. Every changed line must trace to the objective or to validation required by the objective.
+- Preserve unrelated code, comments, formatting and behavior. Record unrelated issues instead of silently expanding scope.
+- Add or update tests for behavior changes.
+- Run focused validation first, then the relevant broader build and tests.
+- Diagnose failures from evidence; do not hide, waive or reinterpret a failing validation to claim success.
+- Review the final diff after tests pass. A green suite is necessary but not sufficient.
+- Prefer reversible execution and continue autonomously until completion or a genuine human boundary.
+
+## Completion gate
+
+Do not declare a change complete from confidence language alone. Completion requires evidence for all applicable items:
+
+1. **Objective** — the requested behavior is explicitly satisfied.
+2. **Implementation** — the smallest coherent implementation exists in the intended architecture seam.
+3. **Validation** — focused tests plus the relevant broader build/test suite pass.
+4. **Diff integrity** — no unrelated refactor, formatting churn, dead code, hidden dependency or speculative feature was introduced.
+5. **Safety/cost** — approvals, secret handling, auditability, local-first behavior and zero-mandatory-cost constraints remain intact.
+6. **Repository state** — branch/commit/PR state is known and reported accurately.
+7. **Human boundary** — any remaining blocker genuinely requires an external credential, irreversible approval, inaccessible machine/device or other user-only action.
+
+When a check cannot be executed in the current environment, say exactly which evidence is missing. Never represent an unexecuted test, build, install or runtime validation as completed.
+
 ## Implementation discipline
 
 1. Read the relevant implementation and tests before editing.
 2. Make the smallest coherent change that produces a measurable capability gain.
 3. Add or update tests for behavior changes.
-4. Run `npm test` before declaring completion.
+4. Run `npm test` before declaring completion when the environment allows repository execution.
 5. Report changed files, test results, remaining blockers, and any new human setup required.
 6. Do not claim a local machine installation or runtime validation unless it was actually performed.
 
@@ -54,4 +88,4 @@ When Hermes operates in this repository:
 
 ## Definition of done
 
-A change is done only when the repository builds, tests pass, the behavior is auditable, and the change does not add a mandatory paid dependency.
+A change is done only when the repository builds, tests pass, the requested behavior is verified against observable criteria, the final diff has been reviewed, the behavior is auditable, and the change does not add a mandatory paid dependency.
