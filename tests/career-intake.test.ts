@@ -24,6 +24,7 @@ test('career intake normalizes a shared job and persists it once', async () => {
   assert.equal(first.job.role, 'Senior Product Manager');
   assert.ok(first.job.fitScore > 0);
   assert.ok(first.job.matchedSignals.includes('payments'));
+  assert.equal(first.job.description, input.text);
   assert.equal(second.added, false);
   assert.equal(second.duplicateOf, first.job.id);
   assert.equal((await store.load()).jobs.length, 1);
@@ -40,6 +41,7 @@ test('image intake uses an injected extractor without storing image bytes', asyn
   });
   assert.equal(result.added, true);
   assert.equal(result.job.company, 'Fintech X');
+  assert.equal(result.job.description, 'Principal Product Manager. Payments and Open Banking.');
   assert.ok(!JSON.stringify(result.job).includes(secretImage));
   assert.ok(!(await readFile(path.join(root,'memory-ledger.jsonl'),'utf8')).includes(secretImage));
   assert.ok(!(await readFile(path.join(root,'events.jsonl'),'utf8')).includes(secretImage));

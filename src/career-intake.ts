@@ -120,6 +120,7 @@ export async function ingestCareerItem(input: CareerIntakeInput, dependencies: C
     id: randomUUID(),
     company,
     role,
+    description: content.slice(0, 30_000),
     source: `career-intake:${input.source}`,
     link: input.url,
     status: 'discovered',

@@ -35,3 +35,5 @@ test('main workspace exposes Action Inbox and Radar command surfaces',async()=>{
 });
 
 test('shared workspace navigation exposes governed Manus Operator',async()=>{const nav=await readFile(join(publicDir,'munin-nav.js'),'utf8');const page=await readFile(join(web,'manus.html'),'utf8');assert.match(nav,/manus\.html/);assert.match(page,/\/api\/manus\/tasks/);assert.match(page,/Reserva máxima de créditos/);});
+
+test('Career Command exposes governed application packets without automatic submission',async()=>{const page=await readFile(join(web,'career-command.html'),'utf8');assert.match(page,/Candidaturas direcionadas/);assert.match(page,/\/api\/career-intelligence\/application-packet/);assert.match(page,/Envio automático: desativado/);});
