@@ -1,5 +1,30 @@
 # Munin Session Log
 
+## 2026-08-27 — Build all + GitHub momentum integration
+
+### Decisions
+
+- Reconciled the canonical repository with `origin/main` and integrated the queued agent safety/observability branch without replacing Munin's orchestrator.
+- Reviewed daily, weekly and monthly GitHub Trending through the zero-cost, duplication, privacy and evidence gates.
+- Adapted the useful `ai-job-search` workflow as native governed Career Application Packets; did not import LinkedIn guest scraping, mandatory Claude/Bun/LaTeX or automatic submission.
+- Retained Munin's current memory, browser and flow foundations instead of importing OpenViking, ai-memory, TencentDB Agent Memory, OpenHuman, Maka or Archify wholesale.
+
+### Changes
+
+- Career Intake now persists bounded role text and Career Command prepares ATS terms, governed evidence, CV prompts, a placeholder-safe cover-letter scaffold and interview preparation.
+- Integrated worktree isolation, guarded/strict sandbox backends, adversarial security bench, durable traces/metrics, HUD readiness, local telemetry and replay receipts.
+- Connected Control Room executions to secret-redacted JSONL telemetry and durable receipts while keeping observability failures non-fatal.
+- Hardened Windows npm/npx execution through validated CLI entrypoints, recursive credential redaction, sandbox-status caching and HUD HTML escaping.
+
+### Evidence
+
+- Core TypeScript build passed.
+- Vite production build passed.
+- Full suite passed: 576 tests, 0 failures.
+- Agent security benchmark passed: 12/12, score 100%.
+- Sandbox doctor reported `native-guarded` available; Docker hard isolation remains an empirical Windows-host promotion gate.
+- No new runtime dependency, paid service, provider lock-in or external write was introduced.
+
 ## 2026-08-25 — Windows Playwright health recovery
 
 ### Evidence

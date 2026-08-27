@@ -17,7 +17,7 @@
 
 > Repo-backed execution queue for Munin. Priorities are P0 highest to P3 lowest.
 >
-> Last updated: 2026-08-22
+> Last updated: 2026-08-27
 
 ## P0 — Execution foundation
 
@@ -53,6 +53,7 @@
 - [x] **Normalization and deduplication** — career inputs become `JobOpportunity` records with fit scoring, provenance, fingerprints, and duplicate prevention.
 - [x] **iOS contract** — `munin-career-intake-v1` capability discovery and Shortcuts/Share Sheet contract documented.
 - [x] **Native/share-sheet UX completion (repository side)** — web quick intake supports URL/text/paste/drop screenshots and analysis-before-commit; the iOS Shortcut/Share Sheet contract is fully documented in `docs/product/career-share-sheet.md`. Installation and device acceptance on the target iPhone remain empirical human/device validation, not missing repository code.
+- [x] **Governed Career Application Packets** — persist bounded role text and prepare ATS terms, governed profile evidence, CV prompts, a placeholder-safe cover letter and interview preparation; human review is mandatory and automatic submission remains disabled.
 
 ## P1 — Munin v0.1
 
@@ -99,10 +100,12 @@
 - [x] **AIP consolidation** — historical AIP RFC/SPEC/BUILD/ADR concepts are mapped into the canonical Munin v0.1 architecture in `docs/architecture/AIP_TO_MUNIN_V01_MAP.md`; AIP is no longer a parallel implementation backlog.
 - [x] Establish multi-agent roles only where responsibilities, independent QA, and durable-state write-back are explicit.
 - [x] **GitHub ecosystem scan — 2026-08-18 cycle** — current Playwright, Serena, MCP SDK, DeepSeek Harness, OpenAI Agents SDK, LangGraph and local-media candidates were compared in `docs/research/GITHUB_ECOSYSTEM_SCAN_2026-08-18.md`. No replacement materially justified migration risk today; future scans are trigger-based rather than a permanently open task.
+- [x] **GitHub ecosystem scan — 2026-08-27 cycle** — daily/weekly/monthly momentum was filtered through Munin's evidence, cost, privacy and duplication gates. Career packet and safety patterns were adapted natively; Archify remains a benchmark candidate and competing orchestrator/memory products were rejected. See `docs/research/GITHUB_ECOSYSTEM_SCAN_2026-08-27.md`.
 
 ## P2 — Hardening
 
 - [x] **Daily briefing intake — 2026-08-25** — mapped Agent Safety Gate to the existing Action Constitution, added bounded Audit Replay retrieval, promoted explicit `whyItMatters`/recommendation/impact fields in Action Inbox, added FEBRABAN to the trusted Radar and preserved two follow-on LinkedIn themes in Content Intelligence.
+- [x] **Agent safety, isolation and observability** — isolated workspaces, guarded/strict sandbox backends, adversarial policy benchmark, durable traces/metrics, local telemetry and replay receipts are integrated; Windows npm/npx and recursive secret-redaction regressions are covered.
 
 - [x] **Control Room cross-run continuity acceptance** — deterministic acceptance proves objective execution writes canonical state/session evidence and a fresh runtime rehydrates it.
 - [x] **Engineering end-to-end acceptance** — deterministic Control Room acceptance exercises production Product State, QA, Memory Curator and Operator boundaries while replacing only the external-mutating Engineer; it proves missing evidence triggers Engineer → QA recovery, corrected evidence passes QA, durable write-back occurs and the Operator closes healthy.

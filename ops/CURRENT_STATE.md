@@ -6,7 +6,7 @@ The workspace now uses one mobile navigation model (`Hoje`, `Inbox`, `Carreira`,
 
 > Canonical operational snapshot. Update after meaningful execution.
 >
-> Last updated: 2026-08-22
+> Last updated: 2026-08-27
 
 ## Current objective
 
@@ -36,6 +36,7 @@ In-process AI is optional. The default runtime does not probe, start or wait for
 - Cross-run Control Room continuity acceptance and engineering QA-recovery end-to-end acceptance.
 - Append-only Memory Ledger, governed/secret-safe ChatGPT historical project-memory promotion and mobile memory access.
 - Career Continuity Realm, Career Inbox/Intelligence, Career Mobile Intake, transient Vision parsing, normalization/deduplication, Career Quick Intake web UI and stable iOS Share Sheet/Shortcut contract.
+- Evidence-first Career Application Packets in Career Command: ATS extraction, governed profile evidence, CV/letter/interview preparation and explicit human review with automatic submission disabled.
 - Munin v0.1 product/build contract consolidated around bounded execution and durable continuity.
 - AIP architecture concepts consolidated into the canonical Munin v0.1 map; AIP is not a parallel implementation backlog.
 - LinkedIn Content Intelligence foundation, Trusted Source Radar freshness/provenance hardening, unbranded-by-default editorial policy and governed Publisher approval/manual-publication surface.
@@ -44,7 +45,7 @@ In-process AI is optional. The default runtime does not probe, start or wait for
 - OAuth token-at-rest hardening: auto-prefer macOS Keychain, Linux Secret Service or Windows CurrentUser DPAPI; fail-closed required-secure mode; legacy JSON migration; secrets never passed in Windows command-line arguments and only an encrypted DPAPI blob remains in the runtime directory.
 - Provider-neutral `media.local-video` capability with no automatic model downloads, explicit runner configuration and host benchmark CLI; MiniMax H3 evaluation recorded without making it a default dependency.
 - Remote/local Windows + Tailscale operator runbook including deterministic stale-port/UI recovery.
-- August 2026 GitHub ecosystem scan completed; future scans are trigger-based instead of a permanently open queue item.
+- August 18 and August 27 GitHub ecosystem scans completed; useful workflow/security patterns were adapted natively without importing a second orchestrator, memory core or unsafe LinkedIn scraper.
 - Munin Radar and unified Action Inbox: trusted regulatory-source changes, workspace actions and actionable career/email signals converge into explicit `Agora`, `Revisar`, `Executando`, `Concluído` and `Radar` lanes.
 - Connector Registry exposes enabled state, zero-cost policy, authentication mode, last check and health for trusted sources plus Gmail/Outlook without exposing credentials.
 - Mobile-first Radar and Action Inbox surfaces are available from shared navigation and command keyboard shortcuts.
@@ -55,6 +56,7 @@ In-process AI is optional. The default runtime does not probe, start or wait for
 - Successful or failed GitHub Host Inbox jobs now emit a redacted receipt to the dedicated `munin-host-outbox` branch. Deployment verification cleans only reproducible build output before and after the suite, preserving a clean-main invariant for later autonomous releases.
 - Web navigation hardening includes shared standalone navigation/styles, missing Intelligence page restoration, Career Quick Intake exposure and a navigation integrity test.
 - Unified operator workflow exposes `munin start`, `build`, `verify`, `ship`, `doctor` and `mobile-test`; the ship gate requires committed changes, passes the full test suite, pushes the mission branch and reuses one draft PR without automatic merge.
+- Agent safety/observability foundations are active: guarded or strict sandbox contracts, adversarial policy benchmark, durable orchestration traces, local secret-redacted telemetry and Control Room replay receipts, with sandbox/security state visible in the HUD.
 
 ## Executable backlog state
 
@@ -74,16 +76,18 @@ These observations/actions cannot be truthfully completed through repository edi
 1. On the target Windows host, pull/restart the current `main`, verify normal startup/core deterministic flows do not launch, probe or wait for Ollama, and exercise the Web ChatGPT Cockpit handoff once in the real browser session.
 2. On the target iPhone, exercise the Mobile ChatGPT Cockpit handoff once and confirm the handoff contains only the expected sanitized Munin snapshot and no mobile token.
 3. Install and validate the documented **Enviar vaga ao Munin** iOS Shortcut on the target iPhone using a real LinkedIn URL and screenshot; confirm no unwanted image is saved.
-4. If local MiniMax H3 is worth promoting, review/accept the current upstream model license, deliberately install the chosen backend/weights on the actual host and run `npm run video:benchmark`; retain another backend if quality/speed/storage are not acceptable.
-5. Supply exact AJ/Munin master assets where exact-asset composition is desired. LinkedIn editorial artwork remains unbranded when they are absent.
-6. Public LinkedIn publication remains a human action after Publisher approval/package preparation; Munin records the resulting URL rather than silently posting.
-7. Credentials, OAuth grants, 2FA, paid-service activation and irreversible consequential actions remain explicit human boundaries.
+4. On the target Windows host, exercise the guarded npm/npx sandbox path; promote Docker hard isolation only after `MUNIN_EXECUTION_SANDBOX=strict` passes the full suite on that host.
+5. If local MiniMax H3 is worth promoting, review/accept the current upstream model license, deliberately install the chosen backend/weights on the actual host and run `npm run video:benchmark`; retain another backend if quality/speed/storage are not acceptable.
+6. Supply exact AJ/Munin master assets where exact-asset composition is desired. LinkedIn editorial artwork remains unbranded when they are absent.
+7. Public LinkedIn publication remains a human action after Publisher approval/package preparation; Munin records the resulting URL rather than silently posting.
+8. Credentials, OAuth grants, 2FA, paid-service activation and irreversible consequential actions remain explicit human boundaries.
 
 ## Follow-on hardening opportunities (not v0.1 blockers)
 
 - If a supported first-party ChatGPT deep-link/action mechanism becomes available, replace the clipboard handoff with that mechanism without introducing API billing or credential leakage.
 - Expose additional ChatGPT-facing control surfaces only when they preserve the existing authorization and consequence boundaries.
 - Add richer optional-provider latency/retry observability if runtime evidence shows operator value.
+- Benchmark Archify only if exact architecture export/validation becomes a demonstrated Flow Viewer gap.
 - Promote Serena or another semantic backend only if the existing benchmark proves material improvement over native repository intelligence.
 - Expose a standards-compliant external MCP transport around the existing internal Munin MCP bridge if a real external client requires it.
 
