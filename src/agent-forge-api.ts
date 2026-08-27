@@ -50,7 +50,7 @@ function project(events: AgentTelemetryEvent[], now = Date.now()): AgentForgeIte
       updatedAt: at,
       durationMs: event.durationMs ?? previous?.durationMs,
       outcome: event.outcome ?? previous?.outcome,
-      evidenceCount: previous?.evidenceCount ?? 0 + (event.evidence?.length ?? 0),
+      evidenceCount: (previous?.evidenceCount ?? 0) + (event.evidence?.length ?? 0),
       lastEvent: event.name,
     });
   }
