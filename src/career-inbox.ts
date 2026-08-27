@@ -38,6 +38,15 @@ const generalActionPatterns: Array<[RegExp,string]> = [
 ];
 function normalize(value:string):string{return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function tokens(value:string):string[]{return normalize(value).split(/[^a-z0-9]+/).filter(t=>t.length>3&&!['para','with','from','your','vaga','position','application','entrevista','interview','analista','senior'].includes(t));}
+function alertIdentity(subject:string,fromEmail?:string):{role?:string;company?:string;isAlert:boolean}{
+  const from=normalize(fromEmail??'');
+  const linkedinAlert=from.includes('jobalerts-noreply@linkedin.com')||from.includes('jobs-noreply@linkedin.com');
+  const explicit=subject.match(/^(?:vaga de\s+)?(.+?)\s+na empresa\s+(.+?)(?:\s+-\s+contratando agora)?$/i);
+  if(explicit)return{role:explicit[1].trim(),company:explicit[2].trim(),isAlert:true};
+  const english=subject.match(/^(.+?)\s+at\s+(.+)$/i);
+  if(linkedinAlert&&english)return{role:english[1].trim(),company:english[2].trim(),isAlert:true};
+  return{isAlert:linkedinAlert};
+}
 function generalAction(text:string,category:CareerEmailCategory):{needsAction:boolean;actionReason?:string;attention:EmailAttention}{
   if(category!=='other')return{needsAction:!['rejection','application_confirmation','job_alert'].includes(category),attention:category==='job_alert'?'noise':'career'};
   if(noise.test(text))return{needsAction:false,attention:'noise'};
@@ -48,15 +57,16 @@ function generalAction(text:string,category:CareerEmailCategory):{needsAction:bo
 
 export function classifyCareerEmail(input: Pick<CareerEmail,'subject'|'snippet'|'fromEmail'>, jobs:JobOpportunity[]): Omit<CareerEmail,'id'|'provider'|'providerMessageId'|'threadId'|'fromName'|'receivedAt'|'handled'> {
   const text=`${input.subject}\n${input.snippet}\n${input.fromEmail??''}`;
+  const alert=alertIdentity(input.subject,input.fromEmail);
   const match=patterns.find(([,p])=>p.test(text));
-  let category:CareerEmailCategory=match?.[0]??'other';
+  let category:CareerEmailCategory=alert.isAlert?'job_alert':match?.[0]??'other';
   if(category==='other'&&noise.test(text)) category='other';
   const normalized=normalize(text); const subjectTokens=tokens(input.subject);
   const ranked=jobs.map(job=>{const company=normalize(job.company);const roleTokens=tokens(job.role);let score=0;if(company&&normalized.includes(company))score+=6;const hits=roleTokens.filter(t=>subjectTokens.includes(t)||normalized.includes(t)).length;score+=hits*1.5;if(roleTokens.length>=2&&hits>=Math.min(2,roleTokens.length))score+=2;return{job,score,hits};}).sort((a,b)=>b.score-a.score);
   const best=ranked[0]; const linked=best&&(best.score>=5||(best.hits>=2&&best.score>=4))?best.job:undefined;
-  const confidence=match?0.86:0.20;
+  const confidence=alert.isAlert?0.95:match?0.86:0.20;
   const attention=generalAction(text,category);
-  return {subject:input.subject,snippet:input.snippet,fromEmail:input.fromEmail,category,confidence:linked?Math.min(.99,confidence+.08):confidence,detectedCompany:linked?.company,detectedRole:linked?.role,suggestedStatus:match?.[2],suggestedAction:match?.[3],linkedJobId:linked?.id,...attention};
+  return {subject:input.subject,snippet:input.snippet,fromEmail:input.fromEmail,category,confidence:linked?Math.min(.99,confidence+.04):confidence,detectedCompany:linked?.company??alert.company,detectedRole:linked?.role??alert.role,suggestedStatus:match?.[2],suggestedAction:category==='job_alert'?'Review job alert':match?.[3],linkedJobId:linked?.id,...attention};
 }
 
 export class CareerInboxStore {
@@ -67,7 +77,6 @@ export class CareerInboxStore {
   async upsert(messages:CareerEmail[]):Promise<{added:number;duplicates:number}>{
     const state=await this.load(); const byKey=new Map(state.messages.map((m,i)=>[`${m.provider}:${m.providerMessageId}`,i])); let added=0,duplicates=0;
     for(const message of messages){const key=`${message.provider}:${message.providerMessageId}`;const idx=byKey.get(key);const isNoise=(message.category==='other'||message.category==='job_alert')&&!message.needsAction;if(idx!==undefined){const existing=state.messages[idx];state.messages[idx]={...message,id:existing.id,handled:existing.handled||isNoise,linkedActionId:existing.linkedActionId};duplicates++;continue;}state.messages.push({...message,handled:message.handled||isNoise});byKey.set(key,state.messages.length-1);added++;}
-    // Collapse repeated actionable messages from the same thread/process: newest remains actionable.
     const seen=new Set<string>();
     for(const m of [...state.messages].sort((a,b)=>new Date(b.receivedAt).getTime()-new Date(a.receivedAt).getTime())){if(m.handled)continue;const process=m.linkedJobId||m.threadId; if(!process)continue;const key=`${process}:${m.category}:${m.attention??''}`;if(seen.has(key))m.handled=true;else seen.add(key);}
     state.messages.sort((a,b)=>new Date(b.receivedAt).getTime()-new Date(a.receivedAt).getTime());state.syncedAt=new Date().toISOString();await this.save(state);return{added,duplicates};
