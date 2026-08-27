@@ -66,7 +66,7 @@ export function classifyCareerEmail(input: Pick<CareerEmail,'subject'|'snippet'|
   const best=ranked[0]; const linked=best&&(best.score>=5||(best.hits>=2&&best.score>=4))?best.job:undefined;
   const confidence=alert.isAlert?0.95:match?0.86:0.20;
   const attention=generalAction(text,category);
-  return {subject:input.subject,snippet:input.snippet,fromEmail:input.fromEmail,category,confidence:linked?Math.min(.99,confidence+.04):confidence,detectedCompany:linked?.company??alert.company,detectedRole:linked?.role??alert.role,suggestedStatus:match?.[2],suggestedAction:category==='job_alert'?'Review job alert':match?.[3],linkedJobId:linked?.id,...attention};
+  return {subject:input.subject,snippet:input.snippet,fromEmail:input.fromEmail,category,confidence:linked?Math.min(.99,confidence+.05):confidence,detectedCompany:linked?.company??alert.company,detectedRole:linked?.role??alert.role,suggestedStatus:match?.[2],suggestedAction:category==='job_alert'?'Review job alert':match?.[3],linkedJobId:linked?.id,...attention};
 }
 
 export class CareerInboxStore {
