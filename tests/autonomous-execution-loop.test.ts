@@ -74,3 +74,101 @@ test('autonomous loop validates objective and policy bounds', async () => {
   const loop = new AutonomousExecutionLoop(async () => ({ status: 'PASS' }));
   await assert.rejects(loop.run('  '), /Objective is required/);
 });
+
+test('completion contract requires an independent evaluator and fails closed when absent', async () => {
+  const loop = new AutonomousExecutionLoop(
+    async () => ({ status: 'PASS' }),
+    {},
+    { contract: { criteria: ['Tests pass and required behavior is evidenced.'] } },
+  );
+
+  const result = await loop.run('Ship guarded capability');
+  assert.equal(result.status, 'FAILED');
+  assert.match(result.blocker ?? '', /independent evaluator/i);
+});
+
+test('completion contract rejects COMPLETE without required evidence and continues', async () => {
+  let evaluations = 0;
+  const loop = new AutonomousExecutionLoop(
+    async () => ({ status: 'PASS' }),
+    { maxIterations: 2 },
+    {
+      contract: {
+        criteria: ['Behavior is verified externally.'],
+        minimumEvidenceItems: 2,
+      },
+      evaluator: async () => {
+        evaluations += 1;
+        return { decision: 'COMPLETE', evidence: ['only-one-proof'] };
+      },
+    },
+  );
+
+  const result = await loop.run('Prove completion');
+  assert.equal(result.status, 'LIMIT_REACHED');
+  assert.equal(evaluations, 2);
+  assert.equal(result.completionEvaluations?.length, 2);
+  assert.deepEqual(result.completionEvaluations?.map(item => item.decision), ['CONTINUE', 'CONTINUE']);
+  assert.match(result.completionEvaluations?.[0]?.summary ?? '', /Completion rejected/);
+});
+
+test('completion contract only completes when independent evaluator supplies enough evidence', async () => {
+  const loop = new AutonomousExecutionLoop(
+    async () => ({ status: 'PASS' }),
+    {},
+    {
+      contract: {
+        criteria: ['Outcome verified.', 'No unresolved blocker remains.'],
+        minimumEvidenceItems: 2,
+      },
+      evaluator: async context => ({
+        decision: 'COMPLETE',
+        summary: `Verified ${context.contract.criteria.length} completion criteria.`,
+        evidence: ['test-suite:pass', 'spec-convergence:pass'],
+      }),
+    },
+  );
+
+  const result = await loop.run('Complete with proof');
+  assert.equal(result.status, 'DONE');
+  assert.equal(result.iterations, 1);
+  assert.equal(result.completionEvaluations?.[0]?.decision, 'COMPLETE');
+  assert.deepEqual(result.completionEvaluations?.[0]?.evidence, ['test-suite:pass', 'spec-convergence:pass']);
+});
+
+test('completion evaluator exception fails closed rather than declaring DONE', async () => {
+  const loop = new AutonomousExecutionLoop(
+    async () => ({ status: 'PASS' }),
+    { maxIterations: 1 },
+    {
+      contract: { criteria: ['External evaluator confirms completion.'] },
+      evaluator: async () => {
+        throw new Error('grader offline');
+      },
+    },
+  );
+
+  const result = await loop.run('Do not self-certify');
+  assert.equal(result.status, 'LIMIT_REACHED');
+  assert.equal(result.completionEvaluations?.[0]?.decision, 'CONTINUE');
+  assert.match(result.completionEvaluations?.[0]?.summary ?? '', /failed closed/i);
+});
+
+test('completion evaluator can escalate a run into a human blocker', async () => {
+  const loop = new AutonomousExecutionLoop(
+    async () => ({ status: 'PASS' }),
+    {},
+    {
+      contract: { criteria: ['No approval-sensitive action remains.'] },
+      evaluator: async () => ({
+        decision: 'ESCALATE',
+        blocker: 'Publisher approval is required.',
+        evidence: ['publish-step:approval-gated'],
+      }),
+    },
+  );
+
+  const result = await loop.run('Prepare publication');
+  assert.equal(result.status, 'BLOCKED');
+  assert.equal(result.blocker, 'Publisher approval is required.');
+});
