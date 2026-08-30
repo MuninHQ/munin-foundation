@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {evaluateSpecDrift} from '../src/spec-drift-gate.js';
+const spec={objective:'x',requirements:[{id:'R1',text:'Do x',acceptanceCriteria:['proof']}]};const evidence=[{requirementId:'R1',evidence:['test passes']}];
+test('strict profile blocks unauthorized file changes',()=>{const r=evaluateSpecDrift({spec,evidence,implementationTags:['R1'],changedFiles:['src/a.ts','src/b.ts'],policy:{profile:'strict',allowedFiles:['src/a.ts']}});assert.equal(r.pass,false);assert.deepEqual(r.unauthorizedChanges,['src/b.ts'])});
+test('exploratory profile tolerates file drift but not forbidden effects',()=>{const r=evaluateSpecDrift({spec,evidence,implementationTags:['R1'],changedFiles:['scratch/x.ts'],observedEffects:['publish'],policy:{profile:'exploratory',allowedFiles:['src/**'],forbiddenEffects:['publish']}});assert.equal(r.pass,false);assert.deepEqual(r.forbiddenEffects,['publish'])});
