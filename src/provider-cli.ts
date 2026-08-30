@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { FccProvider } from './fcc-provider.js';
 import { OllamaProvider } from './ollama-provider.js';
 import { ProviderRegistry, defaultProviderProfiles, type ProviderPolicy } from './provider-policy.js';
 import type { ProviderRequest } from './providers.js';
@@ -21,7 +22,17 @@ function policyFromFlags(values: string[]): ProviderPolicy {
 if (command === 'list') {
   console.log(JSON.stringify(registry.list().map(({ provider, ...profile }) => ({ ...profile, providerId: provider.id })), null, 2));
 } else if (command === 'health') {
-  console.log(JSON.stringify(await new OllamaProvider().health(), null, 2));
+  const target = capability;
+  if (target === 'fcc') {
+    console.log(JSON.stringify(await new FccProvider().health(), null, 2));
+  } else if (target === 'all') {
+    console.log(JSON.stringify({
+      ollama: await new OllamaProvider().health(),
+      fcc: await new FccProvider().health(),
+    }, null, 2));
+  } else {
+    console.log(JSON.stringify(await new OllamaProvider().health(), null, 2));
+  }
 } else if (command === 'evaluate') {
   const request: ProviderRequest = {
     taskId: 'policy-preview',
@@ -34,5 +45,5 @@ if (command === 'list') {
   const selection = registry.select(request, policyFromFlags(flags));
   console.log(JSON.stringify(selection.decision, null, 2));
 } else {
-  console.log('Usage:\n  provider-policy list\n  provider-policy health\n  provider-policy evaluate <capability> [--allow-external] [--max-cost=N] [--max-latency=N] [--prefer=ollama-local]');
+  console.log('Usage:\n  provider-policy list\n  provider-policy health [ollama|fcc|all]\n  provider-policy evaluate <capability> [--allow-external] [--max-cost=N] [--max-latency=N] [--prefer=ollama-local,fcc-gateway]');
 }
