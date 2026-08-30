@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { FccProvider } from '../src/fcc-provider.js';
+import { defaultProviderProfiles } from '../src/provider-policy.js';
 import type { ProviderRequest } from '../src/providers.js';
 
 const request: ProviderRequest = {
@@ -46,6 +47,30 @@ test('FCC provider extracts nested response content', async () => {
   assert.equal(result.output, 'nested result');
 });
 
+test('FCC provider extracts output from Responses API event stream', async () => {
+  const stream = [
+    'event: response.output_text.delta',
+    'data: {"type":"response.output_text.delta","delta":"streamed "}',
+    '',
+    'event: response.output_text.delta',
+    'data: {"type":"response.output_text.delta","delta":"result"}',
+    '',
+    'event: response.completed',
+    'data: {"type":"response.completed","response":{"model":"open_router/openrouter/free"}}',
+    '',
+  ].join('\n');
+  const provider = new FccProvider({
+    fetchImpl: (async () => new Response(stream, {
+      status: 200,
+      headers: { 'content-type': 'text/event-stream' },
+    })) as typeof fetch,
+  });
+
+  const result = await provider.execute(request);
+  assert.equal(result.output, 'streamed result');
+  assert.equal(result.model, 'open_router/openrouter/free');
+});
+
 test('FCC health reports configured model availability', async () => {
   const provider = new FccProvider({
     model: 'open_router/openrouter/free',
@@ -56,4 +81,38 @@ test('FCC health reports configured model availability', async () => {
   const health = await provider.health();
   assert.equal(health.ready, true);
   assert.equal(health.models?.includes('open_router/openrouter/free'), true);
+});
+
+test('FCC stays disabled until cost is declared explicitly', () => {
+  const previousEnabled = process.env.MUNIN_FCC_ENABLED;
+  const previousCost = process.env.FCC_ESTIMATED_COST_PER_CALL;
+  process.env.MUNIN_FCC_ENABLED = '1';
+  delete process.env.FCC_ESTIMATED_COST_PER_CALL;
+
+  try {
+    const fcc = defaultProviderProfiles().find(profile => profile.id === 'fcc-gateway');
+    assert.equal(fcc?.enabled, false);
+  } finally {
+    if (previousEnabled === undefined) delete process.env.MUNIN_FCC_ENABLED;
+    else process.env.MUNIN_FCC_ENABLED = previousEnabled;
+    if (previousCost === undefined) delete process.env.FCC_ESTIMATED_COST_PER_CALL;
+    else process.env.FCC_ESTIMATED_COST_PER_CALL = previousCost;
+  }
+});
+
+test('FCC stays disabled when declared cost is invalid', () => {
+  const previousEnabled = process.env.MUNIN_FCC_ENABLED;
+  const previousCost = process.env.FCC_ESTIMATED_COST_PER_CALL;
+  process.env.MUNIN_FCC_ENABLED = '1';
+  process.env.FCC_ESTIMATED_COST_PER_CALL = 'not-a-number';
+
+  try {
+    const fcc = defaultProviderProfiles().find(profile => profile.id === 'fcc-gateway');
+    assert.equal(fcc?.enabled, false);
+  } finally {
+    if (previousEnabled === undefined) delete process.env.MUNIN_FCC_ENABLED;
+    else process.env.MUNIN_FCC_ENABLED = previousEnabled;
+    if (previousCost === undefined) delete process.env.FCC_ESTIMATED_COST_PER_CALL;
+    else process.env.FCC_ESTIMATED_COST_PER_CALL = previousCost;
+  }
 });

@@ -17,6 +17,13 @@ interface FccResponsePayload {
   usage?: Record<string, unknown>;
 }
 
+interface FccStreamEvent {
+  type?: string;
+  delta?: string;
+  response?: FccResponsePayload;
+  error?: { message?: string };
+}
+
 function cleanBaseUrl(value: string): string {
   return value.replace(/\/+$/, '');
 }
@@ -40,6 +47,25 @@ function extractOutput(payload: FccResponsePayload): string | undefined {
     .map(item => item.text ?? item.output_text)
     .filter((value): value is string => Boolean(value?.trim()));
   return parts.length ? parts.join('\n').trim() : undefined;
+}
+
+async function parseResponse(response: Response): Promise<FccResponsePayload> {
+  if (!response.headers.get('content-type')?.includes('text/event-stream')) {
+    return await response.json() as FccResponsePayload;
+  }
+
+  const deltas: string[] = [];
+  let completed: FccResponsePayload = {};
+  for (const line of (await response.text()).split(/\r?\n/)) {
+    if (!line.startsWith('data:')) continue;
+    const data = line.slice(5).trim();
+    if (!data || data === '[DONE]') continue;
+    const event = JSON.parse(data) as FccStreamEvent;
+    if (event.type === 'response.output_text.delta' && event.delta) deltas.push(event.delta);
+    if (event.type === 'response.completed' && event.response) completed = event.response;
+    if (event.type === 'response.failed') throw new Error(event.error?.message ?? 'FCC response stream failed');
+  }
+  return { ...completed, output_text: deltas.join('') || completed.output_text };
 }
 
 export class FccProvider implements ExecutionProvider {
@@ -73,7 +99,7 @@ export class FccProvider implements ExecutionProvider {
         signal: controller.signal,
       });
       if (!response.ok) throw new Error(`FCC request failed with HTTP ${response.status}`);
-      const payload = await response.json() as FccResponsePayload;
+      const payload = await parseResponse(response);
       const output = extractOutput(payload);
       if (!output) throw new Error('FCC returned an empty response');
       return {

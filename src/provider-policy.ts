@@ -46,6 +46,9 @@ export function defaultProviderProfiles(): ProviderProfile[] {
     new FccProvider({ timeoutMs: fccTimeoutMs }),
     new ProviderResilience({ timeoutMs: fccTimeoutMs, maxAttempts: 2, circuitFailureThreshold: 3, circuitResetMs: 30_000 }),
   );
+  const fccCostDeclared = process.env.FCC_ESTIMATED_COST_PER_CALL !== undefined;
+  const fccEstimatedCostPerCall = Number(process.env.FCC_ESTIMATED_COST_PER_CALL ?? 0);
+  const fccCostValid = Number.isFinite(fccEstimatedCostPerCall) && fccEstimatedCostPerCall >= 0;
   return [
     {
       id: deterministic.id,
@@ -70,9 +73,9 @@ export function defaultProviderProfiles(): ProviderProfile[] {
       provider: fcc,
       capabilities: ['research', 'write', 'code', 'review', 'strategy', 'execute', 'synthesis', 'council'],
       mode: 'external',
-      estimatedCostPerCall: Number(process.env.FCC_ESTIMATED_COST_PER_CALL ?? 0),
+      estimatedCostPerCall: fccEstimatedCostPerCall,
       estimatedLatencyMs: Number(process.env.FCC_ESTIMATED_LATENCY_MS ?? 8_000),
-      enabled: process.env.MUNIN_FCC_ENABLED === '1',
+      enabled: process.env.MUNIN_FCC_ENABLED === '1' && fccCostDeclared && fccCostValid,
     },
   ];
 }

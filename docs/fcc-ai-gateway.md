@@ -8,11 +8,12 @@ Munin can optionally route governed execution tasks through a locally running Fr
 
 FCC is treated as an **external** provider in Munin policy even though its proxy runs on localhost, because the selected model may be hosted by NVIDIA NIM, OpenRouter, Groq, Gemini, Kimi, or another remote provider.
 
-The integration uses FCC's OpenAI-compatible Responses API at `http://127.0.0.1:8082/v1/responses` by default.
+The integration uses FCC's streaming OpenAI-compatible Responses API at `http://127.0.0.1:8082/v1/responses` by default.
 
 ## Safety and cost policy
 
 - FCC is disabled by default (`MUNIN_FCC_ENABLED=0`).
+- Enabling FCC also requires an explicit, valid `FCC_ESTIMATED_COST_PER_CALL`; an omitted or invalid estimate keeps the provider disabled.
 - External routing still requires the caller to opt in with `--allow-external`.
 - `FCC_ESTIMATED_COST_PER_CALL` participates in Munin's existing cost guardrail.
 - Keep the estimate at `0` only when the configured FCC model/provider is genuinely free for the active account.
