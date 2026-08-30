@@ -83,6 +83,18 @@ test('FCC health reports configured model availability', async () => {
   assert.equal(health.models?.includes('open_router/openrouter/free'), true);
 });
 
+test('FCC health accepts the catalog namespace used for its default model', async () => {
+  const provider = new FccProvider({
+    model: 'nvidia_nim/nvidia/nemotron-3-super-120b-a12b',
+    fetchImpl: (async () => new Response(JSON.stringify({
+      data: [{ id: 'anthropic/nvidia_nim/nvidia/nemotron-3-super-120b-a12b' }],
+    }), { status: 200, headers: { 'content-type': 'application/json' } })) as typeof fetch,
+  });
+
+  const health = await provider.health();
+  assert.equal(health.ready, true);
+});
+
 test('FCC stays disabled until cost is declared explicitly', () => {
   const previousEnabled = process.env.MUNIN_FCC_ENABLED;
   const previousCost = process.env.FCC_ESTIMATED_COST_PER_CALL;

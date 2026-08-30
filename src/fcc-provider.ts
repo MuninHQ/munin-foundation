@@ -132,7 +132,8 @@ export class FccProvider implements ExecutionProvider {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const payload = await response.json() as { data?: Array<{ id?: string }> };
       const models = (payload.data ?? []).map(item => item.id).filter((id): id is string => Boolean(id));
-      return { ready: models.length === 0 || models.includes(this.model), model: this.model, baseUrl: this.baseUrl, models };
+      const modelAvailable = models.some(id => id === this.model || id.endsWith(`/${this.model}`));
+      return { ready: models.length === 0 || modelAvailable, model: this.model, baseUrl: this.baseUrl, models };
     } catch (error) {
       return { ready: false, model: this.model, baseUrl: this.baseUrl, error: error instanceof Error ? error.message : String(error) };
     }
