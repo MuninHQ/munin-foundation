@@ -12,6 +12,7 @@ import { executeAssistantCommand } from './assistant.js';
 import { clearAssistantMemory, loadAssistantMemory } from './assistant-memory.js';
 import { deleteLlmSettings, loadLlmSettings, publicLlmSettings, saveLlmSettings, type LlmProviderType } from './llm-settings.js';
 import { llmProviderStatus, testLlmProvider } from './llm-provider.js';
+import type { LlmReasoningMode } from './nemotron-profile.js';
 import { addLinkedInPost, createPostDraft, loadLinkedInContent, suggestLinkedInTopics, updateVisualProfile, type LinkedInPostStatus } from './linkedin-content.js';
 import { deleteImageSettings, loadImageSettings, publicImageSettings, saveImageSettings } from './image-settings.js';
 import { generateLinkedInImage, getGeneratedImage, imageProviderStatus, testImageProvider } from './image-provider.js';
@@ -50,7 +51,7 @@ if(request.method==='POST'&&url.pathname==='/api/assistant'){const input=await b
 if(request.method==='GET'&&url.pathname==='/api/assistant/history')return json(request,response,200,await loadAssistantMemory());
 if(request.method==='DELETE'&&url.pathname==='/api/assistant/history')return json(request,response,200,await clearAssistantMemory());
 if(request.method==='GET'&&url.pathname==='/api/settings/llm')return json(request,response,200,{settings:publicLlmSettings(await loadLlmSettings()),status:await llmProviderStatus()});
-if(request.method==='PUT'&&url.pathname==='/api/settings/llm'){const input=await body(request);const provider=input.provider==='anthropic'?'anthropic':input.provider==='openai-compatible'?'openai-compatible':undefined;const settings=await saveLlmSettings({enabled:typeof input.enabled==='boolean'?input.enabled:undefined,provider:provider as LlmProviderType|undefined,baseUrl:typeof input.baseUrl==='string'?input.baseUrl:undefined,apiKey:typeof input.apiKey==='string'?input.apiKey:undefined,model:typeof input.model==='string'?input.model:undefined});return json(request,response,200,{settings,status:await llmProviderStatus()});}
+if(request.method==='PUT'&&url.pathname==='/api/settings/llm'){const input=await body(request);const provider=input.provider==='anthropic'?'anthropic':input.provider==='openai-compatible'?'openai-compatible':undefined;const reasoningMode=input.reasoningMode==='off'||input.reasoningMode==='medium'||input.reasoningMode==='full'?input.reasoningMode:undefined;const settings=await saveLlmSettings({enabled:typeof input.enabled==='boolean'?input.enabled:undefined,provider:provider as LlmProviderType|undefined,baseUrl:typeof input.baseUrl==='string'?input.baseUrl:undefined,apiKey:typeof input.apiKey==='string'?input.apiKey:undefined,model:typeof input.model==='string'?input.model:undefined,reasoningMode:reasoningMode as LlmReasoningMode|undefined});return json(request,response,200,{settings,status:await llmProviderStatus()});}
 if(request.method==='DELETE'&&url.pathname==='/api/settings/llm'){const settings=await deleteLlmSettings();return json(request,response,200,{settings,status:await llmProviderStatus()});}
 if(request.method==='POST'&&url.pathname==='/api/settings/llm/test')return json(request,response,200,await testLlmProvider());
 if(request.method==='GET'&&url.pathname==='/api/settings/image')return json(request,response,200,{settings:publicImageSettings(await loadImageSettings()),status:await imageProviderStatus()});

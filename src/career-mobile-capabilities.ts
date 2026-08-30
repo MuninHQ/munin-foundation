@@ -15,9 +15,9 @@ export async function careerMobileCapabilities(){
     maxDecodedBytes:6_000_000,
     transport:'base64-transient',
     durableStorage:false,
-    visionReady:provider.enabled,
-    provider:provider.enabled?provider.provider:undefined,
-    model:provider.enabled?provider.model:undefined,
+    visionReady:provider.enabled&&provider.supportsVision!==false,
+    provider:provider.enabled&&provider.supportsVision!==false?provider.provider:undefined,
+    model:provider.enabled&&provider.supportsVision!==false?provider.model:undefined,
    },
   },
   shortcuts:{
