@@ -1,3 +1,4 @@
+import { FccProvider } from './fcc-provider.js';
 import { OllamaProvider } from './ollama-provider.js';
 import { DeterministicProvider, type ExecutionProvider, type ProviderRequest } from './providers.js';
 import { ProviderResilience, ResilientProvider } from './resilience.js';
@@ -40,6 +41,11 @@ export function defaultProviderProfiles(): ProviderProfile[] {
     new OllamaProvider({ timeoutMs: ollamaTimeoutMs }),
     new ProviderResilience({ timeoutMs: ollamaTimeoutMs, maxAttempts: 1, circuitFailureThreshold: 3, circuitResetMs: 30_000 }),
   );
+  const fccTimeoutMs = Number(process.env.FCC_TIMEOUT_MS ?? 120_000);
+  const fcc = new ResilientProvider(
+    new FccProvider({ timeoutMs: fccTimeoutMs }),
+    new ProviderResilience({ timeoutMs: fccTimeoutMs, maxAttempts: 2, circuitFailureThreshold: 3, circuitResetMs: 30_000 }),
+  );
   return [
     {
       id: deterministic.id,
@@ -58,6 +64,15 @@ export function defaultProviderProfiles(): ProviderProfile[] {
       estimatedCostPerCall: 0,
       estimatedLatencyMs: 30_000,
       enabled: process.env.MUNIN_OLLAMA_ENABLED !== '0',
+    },
+    {
+      id: fcc.id,
+      provider: fcc,
+      capabilities: ['research', 'write', 'code', 'review', 'strategy', 'execute', 'synthesis', 'council'],
+      mode: 'external',
+      estimatedCostPerCall: Number(process.env.FCC_ESTIMATED_COST_PER_CALL ?? 0),
+      estimatedLatencyMs: Number(process.env.FCC_ESTIMATED_LATENCY_MS ?? 8_000),
+      enabled: process.env.MUNIN_FCC_ENABLED === '1',
     },
   ];
 }
