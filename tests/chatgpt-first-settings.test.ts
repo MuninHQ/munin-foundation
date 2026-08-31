@@ -28,3 +28,11 @@ test('settings exposes a guarded Nemotron 3 Ultra preset',async()=>{
  assert.match(html,/text-only/);
  assert.match(html,/não tentará baixá-lo ou iniciá-lo neste PC/);
 });
+
+test('settings binds provider controls explicitly and shows mobile connection progress',async()=>{
+ const html=await source();
+ assert.match(html,/const ui=\{enabled:el\('enabled'\)/);
+ assert.match(html,/ui\.testProvider\.textContent='Testando conexão…'/);
+ assert.match(html,/ui\.testProvider\.addEventListener\('click'/);
+ assert.doesNotMatch(html,/onclick="testProvider\(\)"/);
+});

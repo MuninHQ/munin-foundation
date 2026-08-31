@@ -28,11 +28,11 @@
         <div id="status" class="status">DESATIVADO</div>
         <div class="toggle"><input id="enabled" type="checkbox"/><label for="enabled"><strong>Ativar provider opcional</strong><br><span class="hint">Pode gerar custo externo ou uso intensivo do hardware local, dependendo da configuração.</span></label></div>
         <div class="provider-shortcuts">
-          <button type="button" onclick="preset('openai')">OpenAI API</button>
-          <button type="button" onclick="preset('anthropic')">Claude API</button>
-          <button type="button" onclick="preset('gemini')">Gemini API</button>
-          <button type="button" data-provider="nemotron" onclick="preset('nemotron')">NVIDIA Nemotron 3 Ultra</button>
-          <button type="button" data-provider="ollama" onclick="preset('ollama')">Ollama local · opt-in</button>
+          <button type="button" data-preset="openai">OpenAI API</button>
+          <button type="button" data-preset="anthropic">Claude API</button>
+          <button type="button" data-preset="gemini">Gemini API</button>
+          <button type="button" data-provider="nemotron" data-preset="nemotron">NVIDIA Nemotron 3 Ultra</button>
+          <button type="button" data-provider="ollama" data-preset="ollama">Ollama local · opt-in</button>
         </div>
         <div id="presetHint" class="hint">Nenhum provider opcional selecionado.</div>
         <div class="grid" style="margin-top:18px">
@@ -42,7 +42,7 @@
           <div class="field full"><label>Base URL</label><input id="baseUrl" placeholder="https://api.exemplo.com/v1"/></div>
           <div class="field full"><label>API Key</label><input id="apiKey" type="password" placeholder="Cole uma nova chave apenas para alterar"/><div id="keyHint" class="hint"></div></div>
         </div>
-        <div class="buttons"><button class="primary" onclick="save()">Salvar configuração opcional</button><button onclick="testProvider()">Testar conexão</button><button class="danger" onclick="removeProvider()">Desativar e remover</button></div>
+        <div class="buttons"><button id="saveProvider" class="primary">Salvar configuração opcional</button><button id="testProvider">Testar conexão</button><button id="removeProvider" class="danger">Desativar e remover</button></div>
       </section>
 
       <section class="panel"><div class="eyebrow">GUARDRAILS</div><p class="warning">ChatGPT Plus/Pro não é tratado como crédito de API. OpenAI, Claude, Gemini e NVIDIA usam credenciais e cotas separadas. A API hospedada da NVIDIA pode operar sob cota de avaliação, mas não é assumida como gratuita ou ilimitada. O Nemotron 3 Ultra é text-only e exige no mínimo 4 GPUs de datacenter na variante NVFP4; o Munin não tentará baixá-lo ou iniciá-lo neste PC. Ollama permanece desativado por padrão e não será iniciado automaticamente pelo Munin.</p><p class="muted">Ao ativar um endpoint externo, o conteúdo das tarefas que usam IA pode sair do PC e seguir para esse serviço. Credenciais permanecem no armazenamento local de runtime e nunca entram no ChatGPT Operator Handoff.</p></section>
@@ -55,14 +55,20 @@
         nemotron:{provider:'openai-compatible',baseUrl:'https://integrate.api.nvidia.com/v1',model:'nvidia/nemotron-3-ultra-550b-a55b',key:'',reasoningMode:'medium',hint:'Nemotron 3 Ultra: endpoint NVIDIA externo, text-only, sob cota própria. Recomendado para planejamento, código, revisão e análise longa.'},
         ollama:{provider:'openai-compatible',baseUrl:'http://127.0.0.1:11434/v1',model:'qwen3:8b',key:'ollama',reasoningMode:'off',hint:'Ollama: opt-in explícito. Pode consumir bastante CPU/GPU/RAM e não é necessário no fluxo padrão.'}
       };
+      const el=id=>document.getElementById(id);
+      const ui={enabled:el('enabled'),provider:el('provider'),baseUrl:el('baseUrl'),model:el('model'),apiKey:el('apiKey'),reasoningMode:el('reasoningMode'),presetHint:el('presetHint'),keyHint:el('keyHint'),status:el('status'),saveProvider:el('saveProvider'),testProvider:el('testProvider'),removeProvider:el('removeProvider')};
       async function api(path,options){const r=await fetch(path,{headers:{'content-type':'application/json'},...options});const d=await r.json();if(!r.ok)throw new Error(d.error||'Falha');return d}
       function toast(t){const n=document.createElement('div');n.className='notice';n.textContent=t;document.body.appendChild(n);setTimeout(()=>n.remove(),4000)}
-      function preset(name){const p=presets[name];provider.value=p.provider;baseUrl.value=p.baseUrl;model.value=p.model;apiKey.value=p.key;reasoningMode.value=p.reasoningMode||'off';enabled.checked=true;presetHint.textContent=p.hint;toast(`${name.toUpperCase()} selecionado como opção avançada`)}
-      async function load(){try{const d=await api('/api/settings/llm');const s=d.settings;enabled.checked=s.enabled;provider.value=s.provider||'openai-compatible';baseUrl.value=s.baseUrl||'';model.value=s.model||'';reasoningMode.value=s.reasoningMode||'off';keyHint.textContent=s.hasApiKey?`Chave salva: ${s.apiKeyHint}`:'Nenhuma chave salva';status.className='status '+(d.status.enabled?'on':'');status.textContent=d.status.enabled?`OPCIONAL ATIVO · ${d.status.profile||d.status.provider} · ${d.status.model} · RACIOCÍNIO ${(d.status.reasoningMode||'off').toUpperCase()}`:'DESATIVADO · CHATGPT-FIRST'}catch(e){toast(e.message)}}
-      async function save(){try{const payload={enabled:enabled.checked,provider:provider.value,baseUrl:baseUrl.value,model:model.value,reasoningMode:reasoningMode.value};if(apiKey.value.trim())payload.apiKey=apiKey.value;await api('/api/settings/llm',{method:'PUT',body:JSON.stringify(payload)});apiKey.value='';toast('Configuração opcional salva');await load()}catch(e){toast(e.message)}}
-      async function testProvider(){try{const r=await api('/api/settings/llm/test',{method:'POST'});toast(`Conexão OK · ${r.provider} · ${r.model}`)}catch(e){toast(`Falha: ${e.message}`)}}
+      function preset(name){const p=presets[name];ui.provider.value=p.provider;ui.baseUrl.value=p.baseUrl;ui.model.value=p.model;ui.apiKey.value=p.key;ui.reasoningMode.value=p.reasoningMode||'off';ui.enabled.checked=true;ui.presetHint.textContent=p.hint;toast(`${name.toUpperCase()} selecionado como opção avançada`)}
+      async function load(){try{const d=await api('/api/settings/llm');const s=d.settings;ui.enabled.checked=s.enabled;ui.provider.value=s.provider||'openai-compatible';ui.baseUrl.value=s.baseUrl||'';ui.model.value=s.model||'';ui.reasoningMode.value=s.reasoningMode||'off';ui.keyHint.textContent=s.hasApiKey?`Chave salva: ${s.apiKeyHint}`:'Nenhuma chave salva';ui.status.className='status '+(d.status.enabled?'on':'');ui.status.textContent=d.status.enabled?`OPCIONAL ATIVO · ${d.status.profile||d.status.provider} · ${d.status.model} · RACIOCÍNIO ${(d.status.reasoningMode||'off').toUpperCase()}`:'DESATIVADO · CHATGPT-FIRST'}catch(e){toast(e.message)}}
+      async function save(){try{const payload={enabled:ui.enabled.checked,provider:ui.provider.value,baseUrl:ui.baseUrl.value,model:ui.model.value,reasoningMode:ui.reasoningMode.value};if(ui.apiKey.value.trim())payload.apiKey=ui.apiKey.value;await api('/api/settings/llm',{method:'PUT',body:JSON.stringify(payload)});ui.apiKey.value='';toast('Configuração opcional salva');await load()}catch(e){toast(e.message)}}
+      async function testProvider(){const label=ui.testProvider.textContent;ui.testProvider.disabled=true;ui.testProvider.textContent='Testando conexão…';toast('Testando conexão com o provider…');try{const r=await api('/api/settings/llm/test',{method:'POST'});toast(`Conexão OK · ${r.provider} · ${r.model}`)}catch(e){toast(`Falha: ${e.message}`)}finally{ui.testProvider.disabled=false;ui.testProvider.textContent=label}}
       async function removeProvider(){if(!confirm('Desativar e remover a configuração opcional de provider?'))return;try{await api('/api/settings/llm',{method:'DELETE'});toast('Provider opcional removido');await load()}catch(e){toast(e.message)}}
-      load();
+      document.querySelectorAll('[data-preset]').forEach(button=>button.addEventListener('click',()=>preset(button.dataset.preset)));
+      ui.saveProvider.addEventListener('click',()=>void save());
+      ui.testProvider.addEventListener('click',()=>void testProvider());
+      ui.removeProvider.addEventListener('click',()=>void removeProvider());
+      void load();
     </script>
   </body>
 </html>
