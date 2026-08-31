@@ -1,4 +1,5 @@
 import { loadLlmSettings } from './llm-settings.js';
+import { isNemotron3Ultra } from './nemotron-profile.js';
 import type { CareerIntakeExtractor, CareerIntakeInput } from './career-intake.js';
 
 function safeBase(url:string){return url.replace(/\/$/,'');}
@@ -26,6 +27,7 @@ const prompt='Extract the job vacancy from this screenshot. Return plain text on
 export class CareerVisionExtractor implements CareerIntakeExtractor {
  async extract(input:CareerIntakeInput):Promise<string>{
   const image=requireImage(input);const settings=await config();
+  if(isNemotron3Ultra(settings.model))throw new Error('CAREER_INTAKE_VISION_MODEL_TEXT_ONLY');
   if(settings.provider==='anthropic'){
    const response=await fetch(`${safeBase(settings.baseUrl)}/messages`,{method:'POST',headers:{'content-type':'application/json','x-api-key':settings.apiKey,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:settings.model,max_tokens:2200,temperature:0,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:image.mimeType,data:image.base64}},{type:'text',text:prompt}]}]}),signal:AbortSignal.timeout(Number(process.env.MUNIN_LLM_TIMEOUT_MS??180000))});
    if(!response.ok)throw new Error(`Career vision provider respondeu ${response.status}`);const payload=await response.json() as any;const text=Array.isArray(payload?.content)?payload.content.find((item:any)=>item?.type==='text')?.text:undefined;if(typeof text!=='string'||!text.trim())throw new Error('CAREER_INTAKE_VISION_EMPTY');return text.trim();

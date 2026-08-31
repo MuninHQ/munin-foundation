@@ -1,21 +1,24 @@
 import { loadAssistantMemory } from './assistant-memory.js';
 import { ContextStore } from './store.js';
 import { isLocalProviderUrl, loadLlmSettings, type LlmProviderType } from './llm-settings.js';
+import { applyKnownModelChatProfile, finalModelContent, knownLlmProfile, knownModelCapabilities, normalizeReasoningMode, type KnownLlmProfile, type LlmReasoningMode } from './nemotron-profile.js';
 import { RepoIntelligenceProvider, type RepoImpact } from './repo-intelligence.js';
 
-export type LlmProviderStatus={enabled:boolean;provider:LlmProviderType|'ollama-local'|'disabled';model?:string;baseUrl?:string;source?:'settings'|'environment'|'explicit-opt-in'};
+export type LlmProviderStatus={enabled:boolean;provider:LlmProviderType|'ollama-local'|'disabled';model?:string;baseUrl?:string;source?:'settings'|'environment'|'explicit-opt-in';profile?:KnownLlmProfile;reasoningMode?:LlmReasoningMode;deployment?:'local'|'external';supportsVision?:boolean;inputModalities?:string[]};
+export type LlmCompletionOptions={reasoningMode?:LlmReasoningMode};
 type Normalized={command?:string;reply?:string;confidence?:number};
-type ProviderConfig={provider:LlmProviderType;baseUrl:string;apiKey:string;model:string;source:'settings'|'environment'};
+type ProviderConfig={provider:LlmProviderType;baseUrl:string;apiKey:string;model:string;reasoningMode:LlmReasoningMode;source:'settings'|'environment'};
 type ProviderResult={payload:unknown;content?:string;provider:string;model:string;source:string};
 
 function usable(provider:LlmProviderType,baseUrl:string,apiKey:string,model:string){return Boolean(baseUrl&&model&&(apiKey||provider==='openai-compatible'&&isLocalProviderUrl(baseUrl)));}
 async function providerConfig():Promise<ProviderConfig|undefined>{
   const settings=await loadLlmSettings();
-  if(settings.enabled&&usable(settings.provider,settings.baseUrl,settings.apiKey,settings.model))return {provider:settings.provider,baseUrl:settings.baseUrl,apiKey:settings.apiKey,model:settings.model,source:'settings'};
+  if(settings.enabled&&usable(settings.provider,settings.baseUrl,settings.apiKey,settings.model))return {provider:settings.provider,baseUrl:settings.baseUrl,apiKey:settings.apiKey,model:settings.model,reasoningMode:settings.reasoningMode,source:'settings'};
   const baseUrl=process.env.MUNIN_LLM_BASE_URL?.trim()??'';
   const apiKey=process.env.MUNIN_LLM_API_KEY?.trim()??'';
   const model=process.env.MUNIN_LLM_MODEL?.trim()??'';
-  if(usable('openai-compatible',baseUrl,apiKey,model))return {provider:'openai-compatible',baseUrl,apiKey,model,source:'environment'};
+  const reasoningMode=normalizeReasoningMode(process.env.MUNIN_LLM_REASONING_MODE);
+  if(usable('openai-compatible',baseUrl,apiKey,model))return {provider:'openai-compatible',baseUrl,apiKey,model,reasoningMode,source:'environment'};
   return undefined;
 }
 function ollamaDefaults(){return {baseUrl:(process.env.OLLAMA_BASE_URL?.trim()||'http://127.0.0.1:11434').replace(/\/$/,''),model:process.env.OLLAMA_MODEL?.trim()||'qwen3:8b'}}
@@ -24,7 +27,7 @@ function externalIntelligenceRequired(){return new Error('External intelligence 
 
 export async function llmProviderStatus():Promise<LlmProviderStatus>{
   const config=await providerConfig();
-  if(config)return {enabled:true,provider:config.provider,model:config.model,baseUrl:config.baseUrl,source:config.source};
+  if(config){const capabilities=knownModelCapabilities(config.model);return {enabled:true,provider:config.provider,model:config.model,baseUrl:config.baseUrl,source:config.source,profile:knownLlmProfile(config.model),reasoningMode:config.reasoningMode,deployment:isLocalProviderUrl(config.baseUrl)?'local':'external',...capabilities};}
   if(!ollamaOptedIn())return {enabled:false,provider:'disabled'};
   const ollama=ollamaDefaults();
   try{const response=await fetch(`${ollama.baseUrl}/api/tags`,{signal:AbortSignal.timeout(1500)});if(response.ok){const payload=await response.json() as {models?:Array<{name?:string}>};const names=(payload.models??[]).map(item=>item.name).filter(Boolean) as string[];const model=names.includes(ollama.model)?ollama.model:names[0];if(model)return {enabled:true,provider:'ollama-local',model,baseUrl:ollama.baseUrl,source:'explicit-opt-in'}}}catch{/* explicitly enabled Ollama not available */}
@@ -38,7 +41,7 @@ function extractAnthropic(payload:any):string|undefined{return Array.isArray(pay
 const sleep=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
 function transient(error:unknown){const text=error instanceof Error?error.message:String(error);return /fetch failed|network|timeout|timed out|ECONN|ENOTFOUND|EAI_AGAIN|429|502|503|504/i.test(text)}
 
-async function callProvider(config:ProviderConfig,messages:{role:string;content:string}[],maxTokens=1200):Promise<ProviderResult>{
+async function callProvider(config:ProviderConfig,messages:{role:string;content:string}[],maxTokens=1200,options:LlmCompletionOptions={}):Promise<ProviderResult>{
   if(config.provider==='anthropic'){
     const system=messages.filter(x=>x.role==='system').map(x=>x.content).join('\n\n');
     const conversational=messages.filter(x=>x.role!=='system').map(x=>({role:x.role==='assistant'?'assistant':'user',content:x.content}));
@@ -47,9 +50,10 @@ async function callProvider(config:ProviderConfig,messages:{role:string;content:
     const payload=await response.json();return {payload,content:extractAnthropic(payload),provider:config.provider,model:config.model,source:config.source};
   }
   const headers:Record<string,string>={'content-type':'application/json'};if(config.apiKey)headers.authorization=`Bearer ${config.apiKey}`;
-  const response=await fetch(`${safeBase(config.baseUrl)}/chat/completions`,{method:'POST',headers,body:JSON.stringify({model:config.model,temperature:0,max_tokens:maxTokens,messages}),signal:AbortSignal.timeout(Number(process.env.MUNIN_LLM_TIMEOUT_MS??180000))});
+  const body=applyKnownModelChatProfile({model:config.model,temperature:0,max_tokens:maxTokens,messages},options.reasoningMode??config.reasoningMode);
+  const response=await fetch(`${safeBase(config.baseUrl)}/chat/completions`,{method:'POST',headers,body:JSON.stringify(body),signal:AbortSignal.timeout(Number(process.env.MUNIN_LLM_TIMEOUT_MS??180000))});
   if(!response.ok)throw new Error(`LLM provider respondeu ${response.status}`);
-  const payload=await response.json();return {payload,content:extractOpenAi(payload),provider:config.provider,model:config.model,source:config.source};
+  const payload=await response.json();const raw=extractOpenAi(payload);return {payload,content:typeof raw==='string'?finalModelContent(raw,config.model):undefined,provider:config.provider,model:config.model,source:config.source};
 }
 
 async function callOllama(messages:{role:string;content:string}[],maxTokens=1200):Promise<ProviderResult>{
@@ -62,13 +66,13 @@ async function callOllama(messages:{role:string;content:string}[],maxTokens=1200
  const payload=await response.json() as {response?:string;model?:string};return {payload,content:payload.response?.trim(),provider:'ollama-local',model:payload.model??model,source:'explicit-opt-in'};
 }
 
-async function callBestProvider(messages:{role:string;content:string}[],maxTokens:number){
+async function callBestProvider(messages:{role:string;content:string}[],maxTokens:number,options:LlmCompletionOptions={}){
  const config=await providerConfig();
  if(!config){if(ollamaOptedIn())return callOllama(messages,maxTokens);throw externalIntelligenceRequired()}
  let primaryError:unknown;
  const retries=Math.max(0,Number(process.env.MUNIN_LLM_RETRIES??2));
  for(let attempt=0;attempt<=retries;attempt++){
-  try{return await callProvider(config,messages,maxTokens)}catch(error){primaryError=error;if(attempt>=retries||!transient(error))break;await sleep(500*(2**attempt))}
+  try{return await callProvider(config,messages,maxTokens,options)}catch(error){primaryError=error;if(attempt>=retries||!transient(error))break;await sleep(500*(2**attempt))}
  }
  if(!ollamaOptedIn())throw primaryError;
  try{return await callOllama(messages,maxTokens)}catch(localError){const primary=primaryError instanceof Error?primaryError.message:String(primaryError);const local=localError instanceof Error?localError.message:String(localError);throw new Error(`Provider principal indisponível após retries (${primary}); fallback Ollama explicitamente habilitado também indisponível (${local}).`)}
@@ -86,15 +90,15 @@ async function engineeringAwareUser(system:string,user:string){
  try{const impact=await new RepoIntelligenceProvider(process.cwd()).impact(objective);return `${user}\n\n${formatEngineeringRepoContext(impact)}\n\nUse indexed evidence only as a relevance hint. Verify consequential conclusions against repository files before editing.`}catch{return user}
 }
 
-export async function completeWithLlm(system:string,user:string,maxTokens=4000):Promise<string>{
+export async function completeWithLlm(system:string,user:string,maxTokens=4000,options:LlmCompletionOptions={}):Promise<string>{
   const enrichedUser=await engineeringAwareUser(system,user);
-  const result=await callBestProvider([{role:'system',content:system},{role:'user',content:enrichedUser}],maxTokens);
+  const result=await callBestProvider([{role:'system',content:system},{role:'user',content:enrichedUser}],maxTokens,options);
   if(!result.content)throw new Error('Provider respondeu sem conteúdo.');
   return result.content;
 }
 
 export async function testLlmProvider():Promise<{ok:true;provider:string;model:string;source:string;message:string}>{
-  const result=await callBestProvider([{role:'system',content:'Responda somente com OK.'},{role:'user',content:'Teste de conexão do Munin.'}],100);
+  const result=await callBestProvider([{role:'system',content:'Responda somente com OK.'},{role:'user',content:'Teste de conexão do Munin.'}],100,{reasoningMode:'off'});
   if(!result.content)throw new Error('Provider respondeu sem conteúdo.');
   return {ok:true,provider:result.provider,model:result.model,source:result.source,message:result.content.trim().slice(0,120)};
 }
@@ -103,5 +107,5 @@ export async function normalizeWithLlm(userCommand:string):Promise<Normalized|un
   const memory=await loadAssistantMemory();const state=await new ContextStore().load();
   const context={lastEntity:memory.lastEntity,recentTurns:memory.turns.slice(-8),jobs:state.jobs.slice(-20).map(x=>({id:x.id,company:x.company,role:x.role,status:x.status,nextAction:x.nextAction})),projects:state.projects.slice(-20).map(x=>({id:x.id,name:x.name,status:x.status,priority:x.priority})),research:state.research.slice(-15).map(x=>({id:x.id,question:x.question,status:x.status}))};
   const system='Você é o interpretador do Munin. Converta pedidos livres em UM comando seguro suportado pelo executor local. Nunca invente IDs nem execute ações. Responda SOMENTE JSON. Formato: {"command":"...","confidence":0.0} ou, se for apenas conversa sem ação possível, {"reply":"...","confidence":0.0}. Comandos aceitos incluem: gerar SITREP; prioridades de hoje; buscar <termo>; mais detalhes; criar ação: <texto> P0|P1|P2; criar projeto: <nome> P0|P1|P2; registrar vaga <cargo> na <empresa>; criar pesquisa: <pergunta>; criar follow-up P0|P1|P2; marcar como entrevista|aplicada|oferta|rejeitada|fechada. Preserve a intenção do usuário e use o contexto fornecido.';
-  try{const result=await callBestProvider([{role:'system',content:system},{role:'user',content:`Contexto Munin:\n${JSON.stringify(context)}\n\nPedido:\n${userCommand}`}],800);if(!result.content)return undefined;return parseJson(result.content)}catch{return undefined}
+  try{const result=await callBestProvider([{role:'system',content:system},{role:'user',content:`Contexto Munin:\n${JSON.stringify(context)}\n\nPedido:\n${userCommand}`}],800,{reasoningMode:'off'});if(!result.content)return undefined;return parseJson(result.content)}catch{return undefined}
 }

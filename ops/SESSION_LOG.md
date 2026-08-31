@@ -1,5 +1,29 @@
 # Munin Session Log
 
+## 2026-08-30 — NVIDIA Nemotron 3 Ultra optional provider
+
+### Decision
+
+- Integrated Nemotron 3 Ultra through the existing OpenAI-compatible provider seam instead of adding a second orchestrator or attempting an unsupported consumer-PC deployment.
+- Kept ChatGPT-first, deterministic-local and Ollama behavior unchanged by default; NVIDIA activation and credentials remain explicit.
+- Treated the hosted NVIDIA trial as quota-bound external inference, not as guaranteed free or unlimited infrastructure.
+
+### Changes
+
+- Added the official hosted endpoint/model preset, explicit `off`/`medium`/`full` reasoning control and model-profile visibility.
+- Added request tuning for the official Nemotron chat template and stripped private/incomplete reasoning traces before downstream parsing or display.
+- Marked the model text-only so Career screenshot intake does not waste quota or advertise false vision readiness.
+- Documented hardware reality, privacy/cost boundaries, Windows setup and promotion criteria without downloading weights or adding dependencies.
+
+### Evidence
+
+- Focused Nemotron/settings/mobile tests passed: 9/9.
+- Core TypeScript build passed.
+- Vite production build passed.
+- Full suite passed: 623 tests, 0 failures.
+- Agent security benchmark passed: 12/12, score 100%.
+- No live NVIDIA call was made because no user credential was available in this environment.
+
 ## 2026-08-27 — Build all + GitHub momentum integration
 
 ### Decisions
