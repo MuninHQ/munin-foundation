@@ -66,6 +66,20 @@ Each outcome records:
 
 Relevant prior outcomes are retrieved before orchestration planning and execution. This creates a bounded outcome-learning loop without a vector database or paid infrastructure.
 
+## Adaptive relevance and operator feedback
+
+Relevant outcomes are ranked deterministically before learned routing. The final score is:
+
+`weightedScore = lexicalScore * (0.5 ^ (ageDays / 30)) * feedbackMultiplier`
+
+The named 30-day half-life means an otherwise identical 30-day-old outcome has a time weight of `0.5`. Future timestamps are clamped to age zero; invalid timestamps are excluded. The feedback multiplier is `1.25` for `helpful`, `1.0` for `neutral` or absent feedback, and `0.25` for `harmful` feedback. Ties resolve by newer valid creation time and then stable outcome ID. The ranked result remains capped at five records.
+
+Feedback is a replaceable, validated record on one outcome. Schema-v1 `adaptive-outcomes.json` state loads without data loss; the next successful save or feedback mutation persists schema version 2. Mutations use the existing atomic JSON writer and emit the local `adaptive.outcome.feedback.updated` event with the outcome ID and rating only. The event deliberately omits the feedback reason.
+
+The local mutation endpoint is `POST /api/adaptive/outcomes/:outcomeId/feedback`. Its “existing API authentication” is the same constant-time bearer check used by mobile routes: it requires `Authorization: Bearer <MUNIN_MOBILE_TOKEN>`. It validates a bounded request and does not start execution, call a provider, or perform an external action.
+
+Relevance metadata is exposed to the adaptive engine to explain ranking, but feedback reasons never enter mission context, provider prompts, routing rationale, events, or Git-tracked data. Feedback cannot change risk or reviewer authority, `localOnly`, `maxCostPerCall`, provider preference, or any other policy, cost, or provider authority.
+
 ## SITREP visibility
 
 SITREP reads adaptive metadata from recent `action.executed` events and exposes a dedicated `Adaptive execution` section. For each execution it shows whether reviewer validation passed, the execution-role route, and the persistent outcome-memory identifier.
@@ -94,6 +108,5 @@ Hooks are sequential and deterministic by design.
 
 ## Next increment
 
-1. Add explicit failure categories and reviewer feedback to improve learning quality.
+1. Add explicit failure categories to improve learning quality.
 2. Track actual provider execution outcomes (Ollama vs deterministic fallback) before allowing provider-order learning.
-3. Add recency/decay so old failures do not permanently dominate route selection.

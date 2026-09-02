@@ -6,7 +6,7 @@ The workspace now uses one mobile navigation model (`Hoje`, `Inbox`, `Carreira`,
 
 > Canonical operational snapshot. Update after meaningful execution.
 >
-> Last updated: 2026-08-27
+> Last updated: 2026-09-02
 
 ## Current objective
 
@@ -26,6 +26,7 @@ In-process AI is optional. The default runtime does not probe, start or wait for
 
 ## Completed foundations and integrations
 
+- Adaptive execution now ranks up to five relevant outcomes with deterministic lexical relevance, a 30-day decay half-life, and bounded operator feedback; schema-v2 outcome persistence, redacted feedback-mutation events, and the `MUNIN_MOBILE_TOKEN`-authorized local feedback endpoint are delivered without changing safety, review, zero-cost, local-only, or provider authority.
 - Control Room protocol, canonical backlog/state/session files and bounded `PLAN → BUILD → TEST → VERIFY → FIX` loop.
 - Multi-agent supervisor, production specialist adapters, CLI/API orchestration entrypoints and real-blocker classification.
 - Skill-aware autonomous engineering, governed read-only Playwright verification, provider capability seams, recovery, leases/fencing/outbox and optional provider support.

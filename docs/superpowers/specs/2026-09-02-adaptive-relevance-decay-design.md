@@ -2,13 +2,13 @@
 
 ## Status
 
-Approved in chat on 2026-09-02 for specification. Implementation still requires review of this written design.
+Implemented and repository-verified on 2026-09-02 (`npm test`: 640 passing tests).
 
 ## Repository baseline and reconciliation
 
-This design is based on `origin/main` at `e80dc8c`. The sanitized operator snapshot contained zero projects, four planned P1 email actions, and one applied B3 job. That runtime snapshot describes current private operational data; it does not replace repository architecture or backlog state.
+This design is based on `origin/main` at `e80dc8c`. Runtime snapshots are private operational data and do not replace repository architecture or backlog state.
 
-The repository already contains adaptive outcome retrieval, learned direct-versus-council routing, durable JSON outcome storage, and Agent Session Analytics foundations. `docs/architecture/adaptive-execution.md` explicitly identifies recency/decay as the next increment. The requested device-sync API, performance analytics pilot, and A/B validation are separate follow-on subprojects and are not implemented by this design.
+The repository already contains adaptive outcome retrieval, learned direct-versus-council routing, durable JSON outcome storage, and Agent Session Analytics foundations. This increment delivers recency/decay and bounded operator feedback. The requested device-sync API, performance analytics pilot, and A/B validation are separate follow-on subprojects and are not implemented by this design.
 
 ## Objective
 
@@ -135,7 +135,7 @@ Response returns the sanitized updated outcome. The endpoint uses existing API a
 - Feedback cannot modify task risk, reviewer requirements, orchestration safety rules, provider preferences, `localOnly`, or `maxCostPerCall`.
 - High-risk, strategy, and review tasks retain authoritative routing regardless of learned evidence.
 - The feature runs deterministically without Ollama or an OpenAI API key.
-- Feedback reasons containing credential-shaped or secret-bearing text are rejected before persistence; accepted reasons are stored exactly after whitespace trimming.
+- Feedback reasons containing credential-shaped or secret-bearing text are rejected before persistence; accepted reasons are stored exactly after whitespace trimming, remain runtime-only, and never enter mission context, provider prompts, event payloads, or Git.
 - API errors must not reveal runtime file paths or unrelated outcome contents.
 
 ## Testing strategy
