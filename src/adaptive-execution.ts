@@ -62,7 +62,7 @@ export class TaskRouter {
   }
 }
 
-function learnedOrchestrationMode(task: AdaptiveTask, prior: OutcomeRecord[]): { mode: OrchestrationMode; signals: string[] } {
+function learnedOrchestrationMode(task: AdaptiveTask, prior: RankedOutcome[]): { mode: OrchestrationMode; signals: string[] } {
   if (task.risk === 'high' || task.kind === 'strategy' || task.kind === 'review') return { mode: 'auto', signals: ['Safety policy keeps high-risk/strategy/review routing authoritative.'] };
   const routed = prior.filter(item => item.orchestration);
   const directPassed = routed.filter(item => item.orchestration?.route === 'direct' && item.status === 'passed').length;
@@ -72,6 +72,11 @@ function learnedOrchestrationMode(task: AdaptiveTask, prior: OutcomeRecord[]): {
   if (directPassed >= 2 && directFailed === 0) return { mode: 'direct', signals: [`Reused direct route after ${directPassed} relevant validated outcomes.`] };
   if (councilPassed >= 2 && directPassed === 0) return { mode: 'council', signals: [`Reused council route after ${councilPassed} relevant validated outcomes.`] };
   return { mode: 'auto', signals: ['Insufficient outcome evidence to override default orchestration policy.'] };
+}
+
+function weightedRelevanceSignals(prior: RankedOutcome[]): string[] {
+  const weightingAffectedEvidence = prior.some(item => item.relevance.timeWeight < 1 || item.relevance.feedbackMultiplier !== 1);
+  return weightingAffectedEvidence ? ['Weighted relevance prioritized current operator-trusted evidence.'] : [];
 }
 
 function textArray(value: unknown): string[] { return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0) : []; }
@@ -148,16 +153,17 @@ export class JsonOutcomeStore implements OutcomeStore {
   }
 }
 
-export interface ExecuteResult { task: AdaptiveTask; route: ExecutionRoute; orchestration: OrchestrationPlan; priorOutcomes: OutcomeRecord[]; validation: ValidationResult; outcome: OutcomeRecord; }
+export interface ExecuteResult { task: AdaptiveTask; route: ExecutionRoute; orchestration: OrchestrationPlan; priorOutcomes: RankedOutcome[]; validation: ValidationResult; outcome: OutcomeRecord; }
 
 export class AdaptiveExecutionEngine {
   constructor(private readonly store: OutcomeStore = new JsonOutcomeStore(), private readonly hooks: LifecycleHooks = new LifecycleHooks(), private readonly router: TaskRouter = new TaskRouter(), private readonly planner: IntelligenceOrchestrationPlanner = new IntelligenceOrchestrationPlanner()) {}
 
-  async execute(task: AdaptiveTask, runner: (task: AdaptiveTask, route: ExecutionRoute, prior: OutcomeRecord[], orchestration: OrchestrationPlan) => Promise<{ evidence?: string[]; lesson?: string }>, validator: (task: AdaptiveTask, evidence: string[]) => Promise<ValidationResult>): Promise<ExecuteResult> {
+  async execute(task: AdaptiveTask, runner: (task: AdaptiveTask, route: ExecutionRoute, prior: RankedOutcome[], orchestration: OrchestrationPlan) => Promise<{ evidence?: string[]; lesson?: string }>, validator: (task: AdaptiveTask, evidence: string[]) => Promise<ValidationResult>): Promise<ExecuteResult> {
     await this.hooks.emit('session:start', { task }); await this.hooks.emit('task:pre', { task });
     const route = this.router.route(task);
-    const priorOutcomes = await this.store.findRelevant(task);
+    const priorOutcomes = (await this.store.findRelevant(task)).slice(0, 5);
     const learned = learnedOrchestrationMode(task, priorOutcomes);
+    const learningSignals = [...learned.signals, ...weightedRelevanceSignals(priorOutcomes)];
     const missionContext = buildMissionContextPacket({
       objective: task.objective,
       constraints: textArray(task.context?.constraints),
@@ -167,8 +173,8 @@ export class AdaptiveExecutionEngine {
       knownFailures: textArray(task.context?.knownFailures),
       evidence: priorOutcomes.flatMap(item => item.evidence).slice(0, 12),
     });
-    const orchestration = this.planner.plan({ objective: task.objective, capability: task.kind === 'strategy' ? 'strategy' : task.capability, risk: task.risk, mode: learned.mode, context: { ...task.context, missionContext, executionRole: route.primary, reviewers: route.reviewers, priorOutcomeCount: priorOutcomes.length, learningSignals: learned.signals } });
-    orchestration.rationale.push(...learned.signals);
+    const orchestration = this.planner.plan({ objective: task.objective, capability: task.kind === 'strategy' ? 'strategy' : task.capability, risk: task.risk, mode: learned.mode, context: { ...task.context, missionContext, executionRole: route.primary, reviewers: route.reviewers, priorOutcomeCount: priorOutcomes.length, learningSignals } });
+    orchestration.rationale.push(...learningSignals);
     const execution = await runner(task, route, priorOutcomes, orchestration); const evidence = execution.evidence ?? [];
     await this.hooks.emit('validation:pre', { task, route, orchestration }); let validation = await validator(task, evidence);
     const spec = optionalSpec(task.context?.specContract);
