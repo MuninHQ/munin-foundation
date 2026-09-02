@@ -103,6 +103,8 @@ test('weighted top-five evidence excludes stale or harmful failures from learned
     async (_task, _route, prior, orchestration) => {
       assert.deepEqual(prior.map(item => item.id), ['success-1', 'success-2', 'success-3', 'success-4', 'success-5']);
       assert.deepEqual(prior[0].relevance, { lexicalScore: 5, ageDays: 0, timeWeight: 1, feedbackMultiplier: 1.25, weightedScore: 6.25 });
+      assert.deepEqual(prior[0].feedback, { rating: 'helpful', createdAt: rankingNow.toISOString() });
+      assert.ok(prior.every(item => !('reason' in (item.feedback ?? {}))));
       assert.equal(orchestration.route, 'direct');
       return { evidence: [`route:${orchestration.route}`] };
     },
@@ -111,12 +113,15 @@ test('weighted top-five evidence excludes stale or harmful failures from learned
 
   assert.equal(learned.orchestration.route, 'direct');
   assert.deepEqual(learned.priorOutcomes[0].relevance, { lexicalScore: 5, ageDays: 0, timeWeight: 1, feedbackMultiplier: 1.25, weightedScore: 6.25 });
+  assert.deepEqual(learned.priorOutcomes[0].feedback, { rating: 'helpful', createdAt: rankingNow.toISOString() });
+  assert.ok(learned.priorOutcomes.every(item => !('reason' in (item.feedback ?? {}))));
   assert.ok(learned.orchestration.rationale.includes('Weighted relevance prioritized current operator-trusted evidence.'));
   assert.ok(learned.orchestration.rationale.every(item => !item.includes(feedbackReason)));
   const missionContext = planner.context?.missionContext as MissionContextPacket;
   assert.deepEqual(missionContext.evidence, ['evidence:success-1', 'evidence:success-2', 'evidence:success-3', 'evidence:success-4', 'evidence:success-5']);
   assert.ok(!missionContext.evidence.includes('evidence:failure-old'));
   assert.ok(!missionContext.evidence.includes('evidence:failure-harmful'));
+  assert.ok(!JSON.stringify(planner.context).includes(feedbackReason));
 });
 
 test('high-risk strategy work invokes council while preserving orchestrator and reviewer roles', async () => {
@@ -127,10 +132,11 @@ test('high-risk strategy work invokes council while preserving orchestrator and 
   await store.save(rankedRoutingOutcome('helpful-direct-2', rankingNow.toISOString(), 'passed', { rating: 'helpful', reason: feedbackReason, createdAt: rankingNow.toISOString() }, highRiskMatch));
   const result = await new AdaptiveExecutionEngine(store).execute(
     { id: 'bridge-2', objective: 'Decide architecture', capability: 'architecture', kind: 'strategy', risk: 'high' },
-    async (_task, route, _prior, orchestration) => { assert.equal(route.primary, 'orchestrator'); assert.deepEqual(route.reviewers, ['reviewer']); return { evidence: [`council:${orchestration.route}`] }; },
+    async (_task, route, prior, orchestration) => { assert.equal(route.primary, 'orchestrator'); assert.deepEqual(route.reviewers, ['reviewer']); assert.ok(prior.every(item => !('reason' in (item.feedback ?? {})))); return { evidence: [`council:${orchestration.route}`] }; },
     async () => ({ passed: true, checks: [{ name: 'independent-review', passed: true }] }),
   );
   assert.deepEqual(result.priorOutcomes.map(item => item.id), ['helpful-direct-1', 'helpful-direct-2']);
+  assert.ok(result.priorOutcomes.every(item => !('reason' in (item.feedback ?? {}))));
   assert.equal(result.orchestration.route, 'council'); assert.deepEqual(result.route.reviewers, ['reviewer']); assert.equal(result.orchestration.localOnly, true); assert.equal(result.orchestration.maxCostPerCall, 0); assert.deepEqual(result.orchestration.providerPreference, ['ollama-local', 'deterministic-local']);
   assert.ok(result.orchestration.rationale.some(item => item.includes('Safety policy')));
   assert.ok(result.orchestration.rationale.every(item => !item.includes(feedbackReason)));

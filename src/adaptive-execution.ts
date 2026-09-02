@@ -153,15 +153,23 @@ export class JsonOutcomeStore implements OutcomeStore {
   }
 }
 
-export interface ExecuteResult { task: AdaptiveTask; route: ExecutionRoute; orchestration: OrchestrationPlan; priorOutcomes: RankedOutcome[]; validation: ValidationResult; outcome: OutcomeRecord; }
+export type RedactedRankedOutcome = Omit<RankedOutcome, 'feedback'> & { feedback?: Omit<OutcomeFeedback, 'reason'> };
+export interface ExecuteResult { task: AdaptiveTask; route: ExecutionRoute; orchestration: OrchestrationPlan; priorOutcomes: RedactedRankedOutcome[]; validation: ValidationResult; outcome: OutcomeRecord; }
+
+function redactRankedOutcomes(records: RankedOutcome[]): RedactedRankedOutcome[] {
+  return records.map(({ feedback, ...record }) => feedback
+    ? { ...record, feedback: { rating: feedback.rating, createdAt: feedback.createdAt } }
+    : record,
+  );
+}
 
 export class AdaptiveExecutionEngine {
   constructor(private readonly store: OutcomeStore = new JsonOutcomeStore(), private readonly hooks: LifecycleHooks = new LifecycleHooks(), private readonly router: TaskRouter = new TaskRouter(), private readonly planner: IntelligenceOrchestrationPlanner = new IntelligenceOrchestrationPlanner()) {}
 
-  async execute(task: AdaptiveTask, runner: (task: AdaptiveTask, route: ExecutionRoute, prior: RankedOutcome[], orchestration: OrchestrationPlan) => Promise<{ evidence?: string[]; lesson?: string }>, validator: (task: AdaptiveTask, evidence: string[]) => Promise<ValidationResult>): Promise<ExecuteResult> {
+  async execute(task: AdaptiveTask, runner: (task: AdaptiveTask, route: ExecutionRoute, prior: RedactedRankedOutcome[], orchestration: OrchestrationPlan) => Promise<{ evidence?: string[]; lesson?: string }>, validator: (task: AdaptiveTask, evidence: string[]) => Promise<ValidationResult>): Promise<ExecuteResult> {
     await this.hooks.emit('session:start', { task }); await this.hooks.emit('task:pre', { task });
     const route = this.router.route(task);
-    const priorOutcomes = (await this.store.findRelevant(task)).slice(0, 5);
+    const priorOutcomes = redactRankedOutcomes((await this.store.findRelevant(task)).slice(0, 5));
     const learned = learnedOrchestrationMode(task, priorOutcomes);
     const learningSignals = [...learned.signals, ...weightedRelevanceSignals(priorOutcomes)];
     const missionContext = buildMissionContextPacket({
