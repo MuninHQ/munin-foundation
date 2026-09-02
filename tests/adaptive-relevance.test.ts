@@ -130,3 +130,39 @@ test('rejects invalid feedback input and invalid clocks', () => {
   assert.throws(() => validateOutcomeFeedback({ rating: 'helpful' }, new Date('invalid')));
   assert.throws(() => rankRelevantOutcomes([], task, new Date('invalid')));
 });
+
+test('rejects every credential-shaped reason while accepting benign security prose', async t => {
+  const credentialCases: Array<[string, string]> = [
+    ['client secret assignment', 'client_secret=synthetic-client-secret'],
+    ['access token assignment', 'access_token=synthetic-access-token'],
+    ['refresh token assignment', 'refresh token: synthetic-refresh-token'],
+    ['Authorization Basic credentials', 'Authorization: Basic dXNlcjpwYXNz'],
+    ['bearer token', 'Bearer syntheticBearerToken12345'],
+    ['standalone JWT', 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzeW50aGV0aWMifQ.c2lnbmF0dXJlMTIzNDU2'],
+    ['provider token', 'ghp_abcdefghijklmnopqrstuvwxyz123456'],
+    ['PEM private key', '-----BEGIN PRIVATE KEY-----'],
+    ['password assignment', 'password=synthetic-password'],
+    ['OTP code', 'OTP: 123456'],
+    ['2FA code', '2FA: 654321'],
+  ];
+
+  for (const [name, reason] of credentialCases) await t.test(name, () => {
+    assert.throws(
+      () => validateOutcomeFeedback({ rating: 'helpful', reason }, now),
+      error => error instanceof Error
+        && error.name === 'OutcomeFeedbackValidationError'
+        && error.message === 'Invalid outcome feedback.'
+        && !error.message.includes(reason),
+    );
+  });
+
+  const benignReasons = [
+    'Rotate client secrets and access tokens according to policy.',
+    'Authorization supports Basic and Bearer schemes without storing credentials.',
+    'The password assignment section deliberately omits values.',
+    'Two-factor authentication is enabled for operators.',
+  ];
+  for (const reason of benignReasons) {
+    assert.equal(validateOutcomeFeedback({ rating: 'neutral', reason }, now).reason, reason);
+  }
+});

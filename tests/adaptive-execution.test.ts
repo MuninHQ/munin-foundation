@@ -115,7 +115,7 @@ test('weighted top-five evidence excludes stale or harmful failures from learned
   assert.deepEqual(learned.priorOutcomes[0].relevance, { lexicalScore: 5, ageDays: 0, timeWeight: 1, feedbackMultiplier: 1.25, weightedScore: 6.25 });
   assert.deepEqual(learned.priorOutcomes[0].feedback, { rating: 'helpful', createdAt: rankingNow.toISOString() });
   assert.ok(learned.priorOutcomes.every(item => !('reason' in (item.feedback ?? {}))));
-  assert.ok(learned.orchestration.rationale.includes('Weighted relevance prioritized current operator-trusted evidence.'));
+  assert.ok(learned.orchestration.rationale.includes('Weighted relevance applied time decay or explicit feedback.'));
   assert.ok(learned.orchestration.rationale.every(item => !item.includes(feedbackReason)));
   const missionContext = planner.context?.missionContext as MissionContextPacket;
   assert.deepEqual(missionContext.evidence, ['evidence:success-1', 'evidence:success-2', 'evidence:success-3', 'evidence:success-4', 'evidence:success-5']);
@@ -140,6 +140,45 @@ test('high-risk strategy work invokes council while preserving orchestrator and 
   assert.equal(result.orchestration.route, 'council'); assert.deepEqual(result.route.reviewers, ['reviewer']); assert.equal(result.orchestration.localOnly, true); assert.equal(result.orchestration.maxCostPerCall, 0); assert.deepEqual(result.orchestration.providerPreference, ['ollama-local', 'deterministic-local']);
   assert.ok(result.orchestration.rationale.some(item => item.includes('Safety policy')));
   assert.ok(result.orchestration.rationale.every(item => !item.includes(feedbackReason)));
+});
+
+test('explicit and inferred strategy or review kinds stay authoritative over favorable direct history', async t => {
+  const cases: Array<{
+    name: string;
+    task: AdaptiveTask;
+    primary: 'orchestrator' | 'reviewer';
+    reviewers: Array<'reviewer'>;
+    capability: 'strategy' | 'review';
+  }> = [
+    { name: 'explicit strategy', task: { id: 'explicit-strategy', objective: 'Choose provider direction', capability: 'provider', kind: 'strategy', risk: 'medium' }, primary: 'orchestrator', reviewers: ['reviewer'], capability: 'strategy' },
+    { name: 'inferred strategy', task: { id: 'inferred-strategy', objective: 'Decide provider architecture', capability: 'provider', risk: 'medium' }, primary: 'orchestrator', reviewers: ['reviewer'], capability: 'strategy' },
+    { name: 'explicit review', task: { id: 'explicit-review', objective: 'Assess provider result', capability: 'provider', kind: 'review', risk: 'medium' }, primary: 'reviewer', reviewers: [], capability: 'review' },
+    { name: 'inferred review', task: { id: 'inferred-review', objective: 'Review provider result', capability: 'provider', risk: 'medium' }, primary: 'reviewer', reviewers: [], capability: 'review' },
+  ];
+
+  for (const scenario of cases) await t.test(scenario.name, async () => {
+      const store = new FixedNowOutcomeStore();
+      await store.save(rankedRoutingOutcome(`${scenario.name}-direct-1`, rankingNow.toISOString(), 'passed'));
+      await store.save(rankedRoutingOutcome(`${scenario.name}-direct-2`, rankingNow.toISOString(), 'passed'));
+
+      const result = await new AdaptiveExecutionEngine(store).execute(
+        scenario.task,
+        async (_task, route, prior, orchestration) => {
+          assert.equal(route.primary, scenario.primary);
+          assert.deepEqual(route.reviewers, scenario.reviewers);
+          assert.equal(prior.length, 2);
+          return { evidence: [`route:${orchestration.route}`] };
+        },
+        async () => ({ passed: true, checks: [{ name: 'governed-kind', passed: true }] }),
+      );
+
+      assert.equal(result.orchestration.capability, scenario.capability);
+      assert.equal(result.orchestration.route, 'council');
+      assert.equal(result.orchestration.localOnly, true);
+      assert.equal(result.orchestration.maxCostPerCall, 0);
+      assert.deepEqual(result.orchestration.providerPreference, ['ollama-local', 'deterministic-local']);
+      assert.ok(result.orchestration.rationale.some(item => item.includes('Safety policy')));
+    });
 });
 
 test('reviewer gate rejects a false-success completion', async () => {

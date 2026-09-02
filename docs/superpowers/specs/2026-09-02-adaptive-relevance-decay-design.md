@@ -111,7 +111,7 @@ The execution result exposes this metadata alongside each prior outcome, and orc
 
 `adaptive-outcomes.json` advances from schema version 1 to version 2. Loading version 1 treats every record as having no feedback, then writes version 2 on the next successful mutation. Existing outcome fields and the 500-record retention limit remain unchanged.
 
-Writes continue through `writeJsonAtomic`. A feedback update must load, validate, replace one matching record, and atomically persist the complete bounded state. Failed validation performs no write.
+Writes continue through `writeJsonAtomic`. A feedback update must load, validate, replace one matching record, and atomically persist the complete bounded state. Failed validation performs no write. Same-file mutations are serialized within the process. The schema-v2 state also carries a reason-free pending-audit outbox so temporary event-log failures can be replayed idempotently without turning an already committed feedback update into an API failure.
 
 ## Local API
 

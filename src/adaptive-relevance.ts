@@ -1,4 +1,4 @@
-import { sensitiveHistoricalContent } from './chatgpt-memory-promotion.js';
+import { sensitiveTextClasses } from './secret-redaction.js';
 import type { AdaptiveTask, OutcomeRecord } from './adaptive-execution.js';
 
 export const OUTCOME_HALF_LIFE_DAYS = 30;
@@ -13,6 +13,23 @@ export type RankedOutcome = OutcomeRecord & { relevance: OutcomeRelevance };
 
 export class OutcomeFeedbackValidationError extends Error {
   constructor() { super('Invalid outcome feedback.'); this.name = 'OutcomeFeedbackValidationError'; }
+}
+
+function validRating(value: unknown): value is OutcomeFeedbackRating {
+  return value === 'helpful' || value === 'neutral' || value === 'harmful';
+}
+
+function safeReason(value: unknown): value is string | undefined {
+  return value === undefined || (typeof value === 'string' && value.length <= MAX_REASON_LENGTH && sensitiveTextClasses(value).length === 0);
+}
+
+export function isOutcomeFeedback(value: unknown): value is OutcomeFeedback {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const candidate = value as { rating?: unknown; reason?: unknown; createdAt?: unknown };
+  return validRating(candidate.rating)
+    && safeReason(candidate.reason)
+    && typeof candidate.createdAt === 'string'
+    && Number.isFinite(Date.parse(candidate.createdAt));
 }
 
 function validDate(now: Date): number {
@@ -38,10 +55,9 @@ export function validateOutcomeFeedback(input: unknown, now: Date): OutcomeFeedb
   const createdAt = new Date(validDate(now)).toISOString();
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new OutcomeFeedbackValidationError();
   const candidate = input as { rating?: unknown; reason?: unknown };
-  if (candidate.rating !== 'helpful' && candidate.rating !== 'neutral' && candidate.rating !== 'harmful') throw new OutcomeFeedbackValidationError();
-  if (candidate.reason !== undefined && typeof candidate.reason !== 'string') throw new OutcomeFeedbackValidationError();
+  if (!validRating(candidate.rating) || (candidate.reason !== undefined && typeof candidate.reason !== 'string')) throw new OutcomeFeedbackValidationError();
   const reason = candidate.reason?.trim();
-  if (reason && (reason.length > MAX_REASON_LENGTH || sensitiveHistoricalContent(reason).length > 0)) throw new OutcomeFeedbackValidationError();
+  if (!safeReason(reason)) throw new OutcomeFeedbackValidationError();
   return reason ? { rating: candidate.rating, reason, createdAt } : { rating: candidate.rating, createdAt };
 }
 
