@@ -1,5 +1,7 @@
 # OriginKit HUD Evaluation
 
+**Status:** proposed visual backlog; this document does not ship an implementation.
+
 ## Decision
 
 **ADAPT / EXPERIMENT** — use OriginKit as a visual-pattern and component-source library for the Munin HUD, not as a mandatory runtime dependency.
@@ -12,7 +14,7 @@ The current HUD is plain HTML/CSS/JavaScript with existing canvas layers (`hud-s
 
 ## Architecture gate
 
-- Do not add React/Next.js/Framer solely for OriginKit.
+- Do not migrate the dedicated HUD to React/Next.js or add new UI dependencies solely for OriginKit.
 - Do not make the OriginKit MCP or API key a Munin startup dependency.
 - Never commit an OriginKit API key.
 - Prefer adapting visual algorithms/patterns to the existing HUD stack.
@@ -55,4 +57,4 @@ Phase 2 may fetch selected source components using OriginKit's free API key only
 
 ## Source
 
-OriginKit public plugin repository (`vellum-ai/originkit`). Its documentation describes a free catalog of 250+ animated components, key-free browsing, and a free API key for source fetches with a daily limit. This evaluation treats OriginKit as an optional design/component source rather than part of Munin core infrastructure.
+OriginKit public plugin repository (`vellum-ai/originkit`). Its documentation describes a catalog of animated components, key-free browsing, and a free API key for source fetches with a daily limit. This evaluation treats OriginKit as an optional design/component source rather than part of Munin core infrastructure.
