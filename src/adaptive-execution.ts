@@ -2,7 +2,23 @@ import { runtimePath } from './config.js';
 import { IntelligenceOrchestrationPlanner, type OrchestrationMode, type OrchestrationPlan } from './intelligence-orchestration.js';
 import { buildMissionContextPacket } from './mission-context-packet.js';
 import { evaluateSpecConvergence, type RequirementEvidence, type SpecContract } from './spec-convergence.js';
+import {
+  OutcomeFeedbackValidationError,
+  rankRelevantOutcomes,
+  validateOutcomeFeedback,
+  type OutcomeFeedback,
+  type RankedOutcome,
+} from './adaptive-relevance.js';
 import { readJsonFile, writeJsonAtomic } from './storage.js';
+import { ContextStore } from './store.js';
+
+export {
+  OutcomeFeedbackValidationError,
+  type OutcomeFeedback,
+  type OutcomeFeedbackRating,
+  type OutcomeRelevance,
+  type RankedOutcome,
+} from './adaptive-relevance.js';
 
 export type ExecutionRole = 'orchestrator' | 'researcher' | 'builder' | 'reviewer';
 export type TaskKind = 'research' | 'build' | 'review' | 'strategy' | 'general';
@@ -11,8 +27,12 @@ export type ExecutionStatus = 'planned' | 'running' | 'passed' | 'failed';
 export interface AdaptiveTask { id: string; objective: string; capability: string; kind?: TaskKind; risk?: 'low' | 'medium' | 'high'; context?: Record<string, unknown>; }
 export interface ExecutionRoute { primary: ExecutionRole; reviewers: ExecutionRole[]; rationale: string[]; }
 export interface ValidationResult { passed: boolean; checks: { name: string; passed: boolean; evidence?: string }[]; }
-export interface OutcomeRecord { id: string; taskId: string; objective: string; capability: string; route: ExecutionRoute; orchestration?: OrchestrationPlan; status: 'passed' | 'failed'; evidence: string[]; lesson: string; tags: string[]; createdAt: string; }
-export interface OutcomeStore { save(record: OutcomeRecord): Promise<void>; findRelevant(task: AdaptiveTask): Promise<OutcomeRecord[]>; }
+export interface OutcomeRecord { id: string; taskId: string; objective: string; capability: string; route: ExecutionRoute; orchestration?: OrchestrationPlan; status: 'passed' | 'failed'; evidence: string[]; lesson: string; tags: string[]; createdAt: string; feedback?: OutcomeFeedback; }
+export interface OutcomeStore {
+  save(record: OutcomeRecord): Promise<void>;
+  findRelevant(task: AdaptiveTask, now?: Date): Promise<RankedOutcome[]>;
+  recordFeedback(outcomeId: string, input: unknown, now?: Date): Promise<OutcomeRecord>;
+}
 export type LifecycleEvent = 'session:start' | 'task:pre' | 'task:post' | 'validation:pre' | 'validation:post' | 'session:end';
 export interface LifecycleHookContext { task?: AdaptiveTask; route?: ExecutionRoute; orchestration?: OrchestrationPlan; outcome?: OutcomeRecord; validation?: ValidationResult; }
 export type LifecycleHook = (event: LifecycleEvent, context: LifecycleHookContext) => Promise<void> | void;
@@ -42,11 +62,6 @@ export class TaskRouter {
   }
 }
 
-function scoreOutcomes(records: OutcomeRecord[], task: AdaptiveTask): OutcomeRecord[] {
-  const terms = `${task.capability} ${task.objective}`.toLowerCase().split(/\s+/).filter(x => x.length > 2);
-  return records.map(record => { const haystack = `${record.capability} ${record.objective} ${record.tags.join(' ')} ${record.lesson}`.toLowerCase(); return { record, score: terms.reduce((sum, term) => sum + (haystack.includes(term) ? 1 : 0), 0) }; }).filter(item => item.score > 0).sort((a, b) => b.score - a.score).map(item => item.record).slice(0, 5);
-}
-
 function learnedOrchestrationMode(task: AdaptiveTask, prior: OutcomeRecord[]): { mode: OrchestrationMode; signals: string[] } {
   if (task.risk === 'high' || task.kind === 'strategy' || task.kind === 'review') return { mode: 'auto', signals: ['Safety policy keeps high-risk/strategy/review routing authoritative.'] };
   const routed = prior.filter(item => item.orchestration);
@@ -73,15 +88,64 @@ function requirementEvidence(value: unknown): RequirementEvidence[] {
 export class InMemoryOutcomeStore implements OutcomeStore {
   private readonly records: OutcomeRecord[] = [];
   async save(record: OutcomeRecord): Promise<void> { this.records.unshift(record); }
-  async findRelevant(task: AdaptiveTask): Promise<OutcomeRecord[]> { return scoreOutcomes(this.records, task); }
+  async findRelevant(task: AdaptiveTask, now = new Date()): Promise<RankedOutcome[]> { return rankRelevantOutcomes(this.records, task, now); }
+  async recordFeedback(outcomeId: string, input: unknown, now = new Date()): Promise<OutcomeRecord> {
+    const feedback = validateOutcomeFeedback(input, now);
+    const index = this.records.findIndex(record => record.id === outcomeId);
+    if (index < 0) throw new OutcomeNotFoundError();
+    const updated = { ...this.records[index], feedback };
+    this.records[index] = updated;
+    return updated;
+  }
 }
 
-type OutcomeState = { schemaVersion: 1; records: OutcomeRecord[]; updatedAt: string };
+export class OutcomeNotFoundError extends Error {
+  constructor() { super('Outcome not found.'); this.name = 'OutcomeNotFoundError'; }
+}
+
+type StoredOutcomeState = { schemaVersion: 1 | 2; records: OutcomeRecord[]; updatedAt: string };
+type OutcomeState = { schemaVersion: 2; records: OutcomeRecord[]; updatedAt: string };
 export class JsonOutcomeStore implements OutcomeStore {
-  constructor(private readonly file = runtimePath('adaptive-outcomes.json')) {}
-  private async load(): Promise<OutcomeState> { return readJsonFile<OutcomeState>(this.file, () => ({ schemaVersion: 1, records: [], updatedAt: new Date(0).toISOString() })); }
-  async save(record: OutcomeRecord): Promise<void> { const state = await this.load(); const records = [record, ...state.records.filter(item => item.id !== record.id)].slice(0, 500); await writeJsonAtomic(this.file, { schemaVersion: 1, records, updatedAt: new Date().toISOString() } satisfies OutcomeState); }
-  async findRelevant(task: AdaptiveTask): Promise<OutcomeRecord[]> { return scoreOutcomes((await this.load()).records, task); }
+  private readonly eventStore: ContextStore;
+
+  constructor(
+    private readonly file = runtimePath('adaptive-outcomes.json'),
+    dependencies: { eventStore?: ContextStore } = {},
+  ) {
+    this.eventStore = dependencies.eventStore ?? new ContextStore();
+  }
+
+  private async load(): Promise<OutcomeState> {
+    const state = await readJsonFile<StoredOutcomeState>(this.file, () => ({ schemaVersion: 1, records: [], updatedAt: new Date(0).toISOString() }));
+    return {
+      schemaVersion: 2,
+      records: Array.isArray(state.records) ? state.records.slice(0, 500) : [],
+      updatedAt: typeof state.updatedAt === 'string' ? state.updatedAt : new Date(0).toISOString(),
+    };
+  }
+
+  async save(record: OutcomeRecord): Promise<void> {
+    const state = await this.load();
+    const records = [record, ...state.records.filter(item => item.id !== record.id)].slice(0, 500);
+    await writeJsonAtomic(this.file, { schemaVersion: 2, records, updatedAt: new Date().toISOString() } satisfies OutcomeState);
+  }
+
+  async findRelevant(task: AdaptiveTask, now = new Date()): Promise<RankedOutcome[]> {
+    return rankRelevantOutcomes((await this.load()).records, task, now);
+  }
+
+  async recordFeedback(outcomeId: string, input: unknown, now = new Date()): Promise<OutcomeRecord> {
+    const feedback = validateOutcomeFeedback(input, now);
+    const state = await this.load();
+    const index = state.records.findIndex(record => record.id === outcomeId);
+    if (index < 0) throw new OutcomeNotFoundError();
+    const updated = { ...state.records[index], feedback };
+    const records = [...state.records].slice(0, 500);
+    records[index] = updated;
+    await writeJsonAtomic(this.file, { schemaVersion: 2, records, updatedAt: now.toISOString() } satisfies OutcomeState);
+    await this.eventStore.event('adaptive.outcome.feedback.updated', 'system', outcomeId, { rating: feedback.rating });
+    return updated;
+  }
 }
 
 export interface ExecuteResult { task: AdaptiveTask; route: ExecutionRoute; orchestration: OrchestrationPlan; priorOutcomes: OutcomeRecord[]; validation: ValidationResult; outcome: OutcomeRecord; }
