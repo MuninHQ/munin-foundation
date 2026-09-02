@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import {
   JsonOutcomeStore,
+  OutcomeFeedbackAuditBackpressureError,
   OutcomeFeedbackValidationError,
   OutcomeNotFoundError,
   type OutcomeStore,
@@ -51,6 +52,9 @@ export function createAdaptiveFeedbackHandler(store: OutcomeStore = new JsonOutc
       }
       if (error instanceof OutcomeNotFoundError) {
         return json(request, response, 404, { error: 'Outcome not found', code: 'ADAPTIVE_OUTCOME_NOT_FOUND' });
+      }
+      if (error instanceof OutcomeFeedbackAuditBackpressureError) {
+        return json(request, response, 503, { error: 'Adaptive feedback audit is temporarily unavailable', code: 'ADAPTIVE_FEEDBACK_AUDIT_BACKPRESSURE' });
       }
       return json(request, response, 500, { error: 'Internal server error', code: 'INTERNAL_ERROR' });
     }

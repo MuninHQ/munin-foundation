@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
   JsonOutcomeStore,
+  OutcomeFeedbackAuditBackpressureError,
   type OutcomeStore,
   type OutcomeRecord,
 } from '../src/adaptive-execution.js';
@@ -207,6 +208,25 @@ test('unexpected store errors return a generic 500 without leaking private detai
     assert.equal(response.text.includes(privateError), false);
     assert.equal(response.text.includes('stack'), false);
   }, failingStore);
+});
+
+test('audit backpressure returns retryable 503 without exposing internal details', async () => {
+  const backpressuredStore: OutcomeStore = {
+    async save() {},
+    async findRelevant() { return []; },
+    async recordFeedback() { throw new OutcomeFeedbackAuditBackpressureError(); },
+  };
+  await withApi(async ({ request }) => {
+    const response = await request('/api/adaptive/outcomes/target/feedback', {
+      authorization: `Bearer ${token}`,
+      body: JSON.stringify({ rating: 'harmful' }),
+    });
+    assert.equal(response.status, 503);
+    assert.deepEqual(JSON.parse(response.text), {
+      error: 'Adaptive feedback audit is temporarily unavailable',
+      code: 'ADAPTIVE_FEEDBACK_AUDIT_BACKPRESSURE',
+    });
+  }, backpressuredStore);
 });
 
 function rootPathFragment(file: string): string {

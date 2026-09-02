@@ -6,6 +6,7 @@ import path from 'node:path';
 import {
   InMemoryOutcomeStore,
   JsonOutcomeStore,
+  OutcomeFeedbackAuditBackpressureError,
   OutcomeFeedbackValidationError,
   OutcomeNotFoundError,
   type OutcomeRecord,
@@ -54,6 +55,12 @@ class FailOnceContextStore extends ContextStore {
     this.attempts += 1;
     if (this.attempts === 1) throw new Error('synthetic audit failure');
     return super.event(type, entityType, entityId, payload);
+  }
+}
+
+class FailAlwaysContextStore extends ContextStore {
+  override async event(): Promise<MuninEvent> {
+    throw new Error('synthetic persistent audit failure');
   }
 }
 
@@ -249,6 +256,7 @@ test('unsupported or malformed outcome state fails closed without rewriting byte
     ['pending audit id', `${JSON.stringify({ schemaVersion: 2, records: [complete], updatedAt: firstFeedbackAt.toISOString(), pendingAudits: [{ id: 7, outcomeId: 'valid', rating: 'helpful' }] })}\n`],
     ['pending audit outcome', `${JSON.stringify({ schemaVersion: 2, records: [complete], updatedAt: firstFeedbackAt.toISOString(), pendingAudits: [{ id: 'audit', outcomeId: null, rating: 'helpful' }] })}\n`],
     ['pending audit rating', `${JSON.stringify({ schemaVersion: 2, records: [complete], updatedAt: firstFeedbackAt.toISOString(), pendingAudits: [{ id: 'audit', outcomeId: 'valid', rating: 'trusted' }] })}\n`],
+    ['oversized pending audit queue', `${JSON.stringify({ schemaVersion: 2, records: [complete], updatedAt: firstFeedbackAt.toISOString(), pendingAudits: Array.from({ length: 101 }, (_, index) => ({ id: `audit-${index}`, outcomeId: 'valid', rating: 'helpful' })) })}\n`],
     ['invalid JSON', '{"schemaVersion":2'],
     ...invalidRecordCases.map(([name, record]) => [name, `${JSON.stringify({ schemaVersion: 2, records: [record], updatedAt: firstFeedbackAt.toISOString() })}\n`] as [string, string]),
     ['invalid orchestration createdAt', `${JSON.stringify({ schemaVersion: 2, records: [{ ...complete, orchestration: { ...complete.orchestration, createdAt: 'not-a-date' } }], updatedAt: firstFeedbackAt.toISOString() })}\n`],
@@ -324,6 +332,28 @@ test('committed feedback survives audit failure and replays its reason-free even
     assert.equal(delivered[0].payload.rating, 'harmful');
     const cleared = JSON.parse(await readFile(outcomeFile, 'utf8')) as { pendingAudits?: unknown[] };
     assert.deepEqual(cleared.pendingAudits, []);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('persistent audit failure applies bounded backpressure before feedback can become unauditable', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'munin-adaptive-audit-backpressure-'));
+  const outcomeFile = path.join(root, 'adaptive-outcomes.json');
+  const store = new JsonOutcomeStore(outcomeFile, { eventStore: new FailAlwaysContextStore(path.join(root, 'context')) });
+  try {
+    await store.save(outcome('target'));
+    for (let index = 0; index < 100; index += 1) {
+      await store.recordFeedback('target', { rating: index % 2 ? 'helpful' : 'neutral' }, firstFeedbackAt);
+    }
+    const atCapacity = await readFile(outcomeFile);
+    const state = JSON.parse(atCapacity.toString('utf8')) as { pendingAudits: unknown[]; records: OutcomeRecord[] };
+    assert.equal(state.pendingAudits.length, 100);
+    assert.equal(state.records[0].feedback?.rating, 'helpful');
+
+    await assert.rejects(
+      () => store.recordFeedback('target', { rating: 'harmful' }, secondFeedbackAt),
+      OutcomeFeedbackAuditBackpressureError,
+    );
+    assert.deepEqual(await readFile(outcomeFile), atCapacity);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 

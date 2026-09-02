@@ -116,8 +116,13 @@ export class OutcomeStateValidationError extends Error {
   constructor() { super('Invalid outcome state.'); this.name = 'OutcomeStateValidationError'; }
 }
 
+export class OutcomeFeedbackAuditBackpressureError extends Error {
+  constructor() { super('Adaptive feedback audit queue is at capacity.'); this.name = 'OutcomeFeedbackAuditBackpressureError'; }
+}
+
 type PendingFeedbackAudit = { id: string; outcomeId: string; rating: OutcomeFeedback['rating'] };
 type OutcomeState = { schemaVersion: 2; records: OutcomeRecord[]; updatedAt: string; pendingAudits: PendingFeedbackAudit[] };
+const maxPendingFeedbackAudits = 100;
 
 const outcomeMutationQueues = new Map<string, Promise<void>>();
 
@@ -213,6 +218,7 @@ function parseOutcomeState(value: unknown): OutcomeState {
   let pendingAudits: PendingFeedbackAudit[] = [];
   if (schemaVersion === 2 && state.pendingAudits !== undefined) {
     if (!Array.isArray(state.pendingAudits)) throw new OutcomeStateValidationError();
+    if (state.pendingAudits.length > maxPendingFeedbackAudits) throw new OutcomeStateValidationError();
     pendingAudits = state.pendingAudits.map(value => {
       const audit = stateObject(value);
       if (audit.rating !== 'helpful' && audit.rating !== 'neutral' && audit.rating !== 'harmful') throw new OutcomeStateValidationError();
@@ -286,6 +292,7 @@ export class JsonOutcomeStore implements OutcomeStore {
       const state = await this.flushPendingAudits(await this.load());
       const index = state.records.findIndex(record => record.id === outcomeId);
       if (index < 0) throw new OutcomeNotFoundError();
+      if (state.pendingAudits.length >= maxPendingFeedbackAudits) throw new OutcomeFeedbackAuditBackpressureError();
       const updated = { ...state.records[index], feedback };
       const records = [...state.records].slice(0, 500);
       records[index] = updated;
