@@ -16,10 +16,17 @@ function corsHeaders(request: IncomingMessage): Record<string, string> {
   if (!origin || !allowedWebOrigins().includes(origin)) return {};
   return {
     'access-control-allow-origin': origin,
-    'access-control-allow-headers': 'content-type',
+    'access-control-allow-headers': 'content-type, authorization',
     'access-control-allow-methods': 'GET,POST,PATCH,PUT,DELETE,OPTIONS',
     vary: 'origin',
   };
+}
+
+export class JsonBodyValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'JsonBodyValidationError';
+  }
 }
 
 /** Send a JSON response with the local CORS policy applied. */
@@ -52,12 +59,17 @@ export async function readJsonBody(request: IncomingMessage, maxBytes = MAX_BODY
   for await (const chunk of request) {
     const value = Buffer.from(chunk);
     size += value.length;
-    if (size > maxBytes) throw new Error('Payload too large');
+    if (size > maxBytes) throw new JsonBodyValidationError('Payload too large');
     chunks.push(value);
   }
   if (!chunks.length) return {};
-  const parsed = JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown;
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('JSON object body required');
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown;
+  } catch {
+    throw new JsonBodyValidationError('Invalid JSON body');
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new JsonBodyValidationError('JSON object body required');
   return parsed as Record<string, unknown>;
 }
 

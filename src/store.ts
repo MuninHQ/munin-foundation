@@ -39,8 +39,11 @@ export class ContextStore {
     return { projects: state.projects ?? [], decisions: state.decisions ?? [], actions: state.actions ?? [], jobs: state.jobs ?? [], research: state.research ?? [], goals: state.goals ?? [], relations: state.relations ?? [] };
   }
   async save(state: MuninState): Promise<void> { await this.ensure(); await writeJsonAtomic(this.statePath(), state); }
-  async event(type: string, entityType: MuninEvent['entityType'], entityId: string, payload: Record<string, unknown> = {}): Promise<MuninEvent> {
-    await this.ensure(); const event: MuninEvent = { id: randomUUID(), type, entityType, entityId, timestamp: new Date().toISOString(), payload }; await appendFile(this.eventsPath(), JSON.stringify(event) + '\n', 'utf8');
+  async event(type: string, entityType: MuninEvent['entityType'], entityId: string, payload: Record<string, unknown> = {}, eventId: string = randomUUID()): Promise<MuninEvent> {
+    await this.ensure();
+    const existing = (await this.events()).find(item => item.id === eventId);
+    if (existing) return existing;
+    const event: MuninEvent = { id: eventId, type, entityType, entityId, timestamp: new Date().toISOString(), payload }; await appendFile(this.eventsPath(), JSON.stringify(event) + '\n', 'utf8');
     const kind=ledgerKind(type);if(kind){const projectId=eventProjectId(entityType,entityId,payload);await new MemoryLedger(this.root).append({kind,scope:projectId?'project':'local',source:`event:${type}`,summary:eventSummary(type,entityId,payload),projectId,entityId,occurredAt:event.timestamp,payload:{eventId:event.id,eventType:type,entityType,...payload}});}
     return event;
   }

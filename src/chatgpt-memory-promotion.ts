@@ -1,5 +1,6 @@
 import { ContinuityMemoryStore, type MemoryInput } from './continuity-memory.js';
 import { MemoryLedger } from './memory-ledger.js';
+import { sensitiveTextClasses } from './secret-redaction.js';
 
 export type ChatGptPromotionDecision={record:MemoryInput;accepted:boolean;reasons:string[]};
 export type ChatGptPromotionReport={reviewed:number;accepted:number;rejected:number;continuity:{added:number;updated:number;superseded:number;total:number};ledgerAdded:number;decisions:ChatGptPromotionDecision[]};
@@ -14,17 +15,8 @@ const PROJECT_MARKERS=[
   'munin','control room','orchestrator','autonomous execution','memory ledger','career mobile intake','career inbox','career intelligence','lovable','muninhq','munin-foundation','aip','andre intelligence platform',
 ];
 const EXCLUDED_PERSONAL_KINDS=new Set(['identity','preference']);
-const SENSITIVE_PATTERNS:[label:string,pattern:RegExp][]=[
-  ['private-key',/-----begin (?:rsa |ec |openssh )?private key-----/i],
-  ['api-key',/\b(?:api[_ -]?key|access[_ -]?key|secret[_ -]?key)\b\s*[:=]\s*\S{8,}/i],
-  ['bearer-token',/\bbearer\s+[a-z0-9._~+\/-]{12,}={0,2}\b/i],
-  ['provider-token',/\b(?:sk-[a-z0-9_-]{12,}|gh[pousr]_[a-z0-9]{20,})\b/i],
-  ['password',/\b(?:password|senha)\b\s*[:=]\s*\S{4,}/i],
-  ['otp',/\b(?:otp|2fa|verification code|código de verificação|codigo de verificacao)\b\s*[:=]?\s*\d{4,10}\b/i],
-];
-
 function normalized(value:string){return value.toLocaleLowerCase().replace(/\s+/g,' ').trim();}
-export function sensitiveHistoricalContent(value:string){return SENSITIVE_PATTERNS.filter(([,pattern])=>pattern.test(value)).map(([label])=>label);}
+export function sensitiveHistoricalContent(value:string){return sensitiveTextClasses(value);}
 
 export function reviewChatGptRecordForProject(record:MemoryInput):ChatGptPromotionDecision{
   const reasons:string[]=[];

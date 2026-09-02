@@ -17,7 +17,7 @@
 
 > Repo-backed execution queue for Munin. Priorities are P0 highest to P3 lowest.
 >
-> Last updated: 2026-08-27
+> Last updated: 2026-09-02
 
 ## P0 — Execution foundation
 
@@ -97,6 +97,7 @@
 
 ## P1 — Architecture and research
 
+- [x] **Adaptive relevance decay and bounded outcome feedback** — relevant outcomes now use deterministic lexical, 30-day time-decay, and bounded operator-feedback weighting; schema-v1 outcome storage migrates on successful write to schema-v2, mutation audit events redact feedback reasons, and the local feedback API uses the existing `MUNIN_MOBILE_TOKEN` bearer authorization. Safety, reviewer, zero-cost, local-only, and provider authority are unchanged.
 - [x] **AIP consolidation** — historical AIP RFC/SPEC/BUILD/ADR concepts are mapped into the canonical Munin v0.1 architecture in `docs/architecture/AIP_TO_MUNIN_V01_MAP.md`; AIP is no longer a parallel implementation backlog.
 - [x] Establish multi-agent roles only where responsibilities, independent QA, and durable-state write-back are explicit.
 - [x] **GitHub ecosystem scan — 2026-08-18 cycle** — current Playwright, Serena, MCP SDK, DeepSeek Harness, OpenAI Agents SDK, LangGraph and local-media candidates were compared in `docs/research/GITHUB_ECOSYSTEM_SCAN_2026-08-18.md`. No replacement materially justified migration risk today; future scans are trigger-based rather than a permanently open task.
