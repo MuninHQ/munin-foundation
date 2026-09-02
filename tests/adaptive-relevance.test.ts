@@ -78,24 +78,37 @@ test('orders by descending weighted score', () => {
   assert.deepEqual(ranked.map(item => item.id), ['higher-score', 'lower-score']);
 });
 
-test('orders equal scores by descending valid creation time then ascending stable id', () => {
+test('orders equal weighted scores by descending valid creation time', () => {
   const ranked = rankRelevantOutcomes([
-    outcome('z-id', '2026-09-01T00:00:00.000Z'),
-    outcome('a-id', '2026-09-01T00:00:00.000Z'),
-    outcome('newer', '2026-09-02T00:00:00.000Z'),
+    outcome('older-full-match', '2026-08-03T00:00:00.000Z'),
+    outcome('newer-partial-match', now.toISOString(), { objective: 'Unrelated work', capability: 'provider', tags: [], lesson: '' }),
   ], task, now);
 
-  assert.deepEqual(ranked.map(item => item.id), ['newer', 'a-id', 'z-id']);
+  assert.equal(ranked[0].relevance.weightedScore, ranked[1].relevance.weightedScore);
+  assert.deepEqual(ranked.map(item => item.id), ['newer-partial-match', 'older-full-match']);
 });
 
-test('excludes zero lexical matches and returns at most five records', () => {
-  const matching = Array.from({ length: 6 }, (_, index) => outcome(`match-${index}`, now.toISOString()));
-  const irrelevant = outcome('irrelevant', now.toISOString(), { objective: 'Write garden journal', capability: 'gardening', tags: ['plants'], lesson: 'No provider details.' });
+test('orders equal scores and creation times by ascending stable id', () => {
+  const ranked = rankRelevantOutcomes([
+    outcome('z-id', now.toISOString()),
+    outcome('a-id', now.toISOString()),
+  ], task, now);
 
-  const ranked = rankRelevantOutcomes([...matching, irrelevant], task, now);
+  assert.deepEqual(ranked.map(item => item.id), ['a-id', 'z-id']);
+});
+
+test('excludes zero lexical matches', () => {
+  const irrelevant = outcome('irrelevant', now.toISOString(), { objective: 'Write garden journal', capability: 'gardening', tags: ['plants'], lesson: 'No matching terms.' });
+
+  assert.deepEqual(rankRelevantOutcomes([irrelevant], task, now), []);
+});
+
+test('returns at most five lexical matches', () => {
+  const matching = Array.from({ length: 6 }, (_, index) => outcome(`match-${index}`, now.toISOString()));
+
+  const ranked = rankRelevantOutcomes(matching, task, now);
 
   assert.equal(ranked.length, 5);
-  assert.equal(ranked.some(item => item.id === 'irrelevant'), false);
 });
 
 test('normalizes feedback reasons without retaining empty text', () => {
@@ -109,6 +122,11 @@ test('normalizes feedback reasons without retaining empty text', () => {
 test('rejects invalid feedback input and invalid clocks', () => {
   assert.throws(() => validateOutcomeFeedback({ rating: 'unknown' }, now));
   assert.throws(() => validateOutcomeFeedback({ rating: 'helpful', reason: 'x'.repeat(501) }, now));
+  const credentialShapedReason = ['Bearer ', 'abcdefgh', 'ijklmnop', '1234'].join('');
+  assert.throws(
+    () => validateOutcomeFeedback({ rating: 'helpful', reason: credentialShapedReason }, now),
+    error => error instanceof Error && !error.message.includes(credentialShapedReason),
+  );
   assert.throws(() => validateOutcomeFeedback({ rating: 'helpful' }, new Date('invalid')));
   assert.throws(() => rankRelevantOutcomes([], task, new Date('invalid')));
 });
