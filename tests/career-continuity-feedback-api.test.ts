@@ -6,6 +6,7 @@ import type { CareerContinuityFeedback, CareerContinuityFeedbackInput } from '..
 
 const token='test-career-continuity-token';
 type ApiResponse={status:number;headers:Record<string,string|string[]|undefined>;text:string};
+const feedbackPath='/api/mobile/career/feedback';
 
 async function withApi(
   run:(context:{request:(pathname:string,options?:{method?:string;authorization?:string;body?:string;origin?:string})=>Promise<ApiResponse>;recorded:CareerContinuityFeedbackInput[]})=>Promise<void>,
@@ -16,7 +17,8 @@ async function withApi(
     recorded.push(input);
     return{id:'feedback-test',...input,createdAt:'2026-09-02T22:00:00.000Z'};
   });
-  const server=createServer((request,response)=>void createCareerContinuityFeedbackHandler(recorder)(request,response));
+  const handler=createCareerContinuityFeedbackHandler(recorder);
+  const server=createServer((request,response)=>void handler(request,response));
   const previousToken=process.env.MUNIN_MOBILE_TOKEN;
   const previousWebPort=process.env.MUNIN_WEB_PORT;
   process.env.MUNIN_MOBILE_TOKEN=token;
@@ -44,7 +46,7 @@ async function withApi(
 test('career continuity feedback requires mobile bearer authorization',async()=>{
   await withApi(async({request,recorded})=>{
     for(const authorization of [undefined,'Bearer wrong-token']){
-      const response=await request('/api/career/continuity/feedback',{authorization,body:JSON.stringify({jobId:'b3-digital-assets',verdict:'correct'})});
+      const response=await request(feedbackPath,{authorization,body:JSON.stringify({jobId:'b3-digital-assets',verdict:'correct'})});
       assert.equal(response.status,401);
       assert.deepEqual(JSON.parse(response.text),{error:'Unauthorized',code:'MOBILE_AUTH_REQUIRED'});
     }
@@ -54,7 +56,7 @@ test('career continuity feedback requires mobile bearer authorization',async()=>
 
 test('OPTIONS is unauthenticated and keeps local bearer CORS support',async()=>{
   await withApi(async({request})=>{
-    const response=await request('/api/career/continuity/feedback',{method:'OPTIONS',origin:'http://127.0.0.1:5173'});
+    const response=await request(feedbackPath,{method:'OPTIONS',origin:'http://127.0.0.1:5173'});
     assert.equal(response.status,204);
     assert.equal(response.headers['access-control-allow-origin'],'http://127.0.0.1:5173');
     assert.equal(response.headers['access-control-allow-headers'],'content-type, authorization');
@@ -63,7 +65,7 @@ test('OPTIONS is unauthenticated and keeps local bearer CORS support',async()=>{
 
 test('valid human judgment is normalized and recorded exactly once',async()=>{
   await withApi(async({request,recorded})=>{
-    const response=await request('/api/career/continuity/feedback',{
+    const response=await request(feedbackPath,{
       authorization:`Bearer ${token}`,
       body:JSON.stringify({jobId:'  b3-digital-assets  ',verdict:'needs_correction',note:'  Follow-up timing was wrong  '}),
     });
@@ -85,7 +87,7 @@ test('invalid, oversized, extra-field, and secret-bearing feedback is rejected w
       {verdict:'correct',synthetic:true},
     ];
     for(const body of rejected){
-      const response=await request('/api/career/continuity/feedback',{authorization:`Bearer ${token}`,body:JSON.stringify(body)});
+      const response=await request(feedbackPath,{authorization:`Bearer ${token}`,body:JSON.stringify(body)});
       assert.equal(response.status,400);
       assert.deepEqual(JSON.parse(response.text),{error:'Invalid career continuity feedback',code:'CAREER_CONTINUITY_FEEDBACK_INVALID'});
       assert.equal(response.text.includes(privateSecret),false);
@@ -96,9 +98,9 @@ test('invalid, oversized, extra-field, and secret-bearing feedback is rejected w
 
 test('oversized JSON, wrong methods, and wrong routes do not reach the recorder',async()=>{
   await withApi(async({request,recorded})=>{
-    const oversized=await request('/api/career/continuity/feedback',{authorization:`Bearer ${token}`,body:JSON.stringify({verdict:'correct',note:'x'.repeat(2_100)})});
+    const oversized=await request(feedbackPath,{authorization:`Bearer ${token}`,body:JSON.stringify({verdict:'correct',note:'x'.repeat(2_100)})});
     assert.equal(oversized.status,400);
-    for(const [pathname,method] of [['/api/career/continuity/feedback','GET'],['/api/career/continuity','POST'],['/api/career/continuity/feedback/extra','POST']] as const){
+    for(const [pathname,method] of [[feedbackPath,'GET'],['/api/mobile/career','POST'],['/api/mobile/career/feedback/extra','POST']] as const){
       const response=await request(pathname,{method,authorization:`Bearer ${token}`,body:method==='POST'?JSON.stringify({verdict:'correct'}):undefined});
       assert.equal(response.status,404);
     }
@@ -109,7 +111,7 @@ test('oversized JSON, wrong methods, and wrong routes do not reach the recorder'
 test('unexpected recorder failures return a generic 500 without leaking details',async()=>{
   const privateError='C:\\Users\\private\\career-feedback.json Bearer private-token-value';
   await withApi(async({request})=>{
-    const response=await request('/api/career/continuity/feedback',{authorization:`Bearer ${token}`,body:JSON.stringify({verdict:'correct'})});
+    const response=await request(feedbackPath,{authorization:`Bearer ${token}`,body:JSON.stringify({verdict:'correct'})});
     assert.equal(response.status,500);
     assert.deepEqual(JSON.parse(response.text),{error:'Internal server error',code:'INTERNAL_ERROR'});
     assert.equal(response.text.includes(privateError),false);
