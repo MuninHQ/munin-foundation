@@ -13,7 +13,7 @@ import { redactSecrets } from './secret-redaction.js';
 type FeedbackRecorder=(input:CareerContinuityFeedbackInput)=>Promise<CareerContinuityFeedback>;
 
 function isFeedbackRoute(request:IncomingMessage):boolean{
-  try{return new URL(request.url??'/','http://127.0.0.1').pathname==='/api/career/continuity/feedback'}catch{return false}
+  try{return new URL(request.url??'/','http://127.0.0.1').pathname==='/api/mobile/career/feedback'}catch{return false}
 }
 
 const routeNotFound=(request:IncomingMessage,response:ServerResponse):void=>json(
