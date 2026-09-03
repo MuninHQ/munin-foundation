@@ -3,7 +3,8 @@ import { mobileAuthorized } from './mobile-api.js';
 import { CareerInboxStore } from './career-inbox.js';
 import { buildCareerBrief, buildCareerProcesses } from './career-intelligence.js';
 import { auditCareerContinuity } from './career-continuity-audit.js';
-import { careerContinuityMetrics, recordCareerContinuityFeedback } from './career-continuity-validation.js';
+import { careerContinuityMetrics } from './career-continuity-validation.js';
+import { handleCareerContinuityFeedbackApi } from './career-continuity-feedback-api.js';
 import { ingestCareerItem, type CareerIntakeInput } from './career-intake.js';
 import { CareerVisionExtractor } from './career-vision-extractor.js';
 import { careerMobileCapabilities } from './career-mobile-capabilities.js';
@@ -43,12 +44,13 @@ function careerIntakeFromBody(body:Record<string,unknown>):CareerIntakeInput {
 }
 
 export async function handleCareerMobileApi(request:IncomingMessage,response:ServerResponse):Promise<void>{
+ const url=new URL(request.url??'/','http://localhost');
+ if(url.pathname==='/api/mobile/career/feedback')return handleCareerContinuityFeedbackApi(request,response);
  if(request.method==='OPTIONS')return json(request,response,204,{});if(!mobileAuthorized(request))return json(request,response,401,{error:'Unauthorized',code:'MOBILE_AUTH_REQUIRED'});
- const url=new URL(request.url??'/','http://localhost');try{
+ try{
   if(request.method==='GET'&&url.pathname==='/api/mobile/career')return json(request,response,200,await mobileCareerSnapshot());
   if(request.method==='GET'&&url.pathname==='/api/mobile/career/capabilities')return json(request,response,200,await careerMobileCapabilities());
   if(request.method==='POST'&&url.pathname==='/api/mobile/career/intake'){const body=await readJsonBody(request,8_000_000);const input=careerIntakeFromBody(body);const extractor=input.source==='screenshot'||input.source==='image'?new CareerVisionExtractor():undefined;const result=await ingestCareerItem(input,{extractor});return json(request,response,result.added?201:200,result);}
-  if(request.method==='POST'&&url.pathname==='/api/mobile/career/feedback'){const body=await readJsonBody(request,20_000);const verdict=body.verdict==='correct'?'correct':body.verdict==='needs_correction'?'needs_correction':undefined;if(!verdict)return json(request,response,400,{error:'verdict must be correct or needs_correction'});const item=await recordCareerContinuityFeedback({jobId:typeof body.jobId==='string'?body.jobId:undefined,verdict,note:typeof body.note==='string'?body.note:undefined});return json(request,response,200,{item,validation:await careerContinuityMetrics()});}
   return json(request,response,404,{error:'Career mobile route not found'});
  }catch(error){return json(request,response,400,{error:error instanceof Error?error.message:String(error)})}
 }
