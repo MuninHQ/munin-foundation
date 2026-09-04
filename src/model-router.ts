@@ -22,8 +22,14 @@ export type ModelRoute = {
 };
 
 const routeContext = new AsyncLocalStorage<ModelRoute>();
-
 function clamp(value: number) { return Math.max(0, Math.min(10, Math.round(value))); }
+
+export function premiumProviderFromEnv(env: NodeJS.ProcessEnv = process.env) {
+  const baseUrl = env.MUNIN_PREMIUM_LLM_BASE_URL?.trim() ?? '';
+  const apiKey = env.MUNIN_PREMIUM_LLM_API_KEY?.trim() ?? '';
+  const model = env.MUNIN_PREMIUM_LLM_MODEL?.trim() ?? '';
+  return { configured: Boolean(baseUrl && model && apiKey), baseUrl, apiKey, model };
+}
 
 export function premiumBudgetFromEnv(env: NodeJS.ProcessEnv = process.env): PremiumBudgetState {
   const raw = env.MUNIN_PREMIUM_AVAILABLE?.trim().toLowerCase();
@@ -33,7 +39,7 @@ export function premiumBudgetFromEnv(env: NodeJS.ProcessEnv = process.env): Prem
   return { available: 'unknown', source: 'unavailable', resetAt, reason: 'No trustworthy premium-credit telemetry is configured.' };
 }
 
-export function routeModel(signals: RoutingSignals, budget = premiumBudgetFromEnv()): ModelRoute {
+export function routeModel(signals: RoutingSignals, budget = premiumBudgetFromEnv(), premiumConfigured = premiumProviderFromEnv().configured): ModelRoute {
   const impact = clamp(signals.impact);
   const complexity = clamp(signals.complexity);
   const toolUse = clamp(signals.toolUse);
@@ -42,15 +48,9 @@ export function routeModel(signals: RoutingSignals, budget = premiumBudgetFromEn
   const justified = impact >= 7 && complexity >= 7 && (toolUse >= 6 || autonomy >= 7) && risk <= 8;
   if (!justified) return { tier: 'economy', premiumAllowed: false, budget, reason: 'Economy route is sufficient for this workload.' };
   if (budget.available !== true) return { tier: 'economy', premiumAllowed: false, budget, reason: budget.reason ?? 'Premium budget is not explicitly available.' };
+  if (!premiumConfigured) return { tier: 'economy', premiumAllowed: false, budget, reason: 'Premium work is justified, but no premium provider is configured for autonomous Munin execution.' };
   return { tier: 'premium', premiumAllowed: true, budget, reason: 'High-impact, high-complexity autonomous workload justifies premium execution.' };
 }
 
 export function currentModelRoute(): ModelRoute | undefined { return routeContext.getStore(); }
 export async function withModelRoute<T>(route: ModelRoute, operation: () => Promise<T>): Promise<T> { return routeContext.run(route, operation); }
-
-export function premiumProviderFromEnv(env: NodeJS.ProcessEnv = process.env) {
-  const baseUrl = env.MUNIN_PREMIUM_LLM_BASE_URL?.trim() ?? '';
-  const apiKey = env.MUNIN_PREMIUM_LLM_API_KEY?.trim() ?? '';
-  const model = env.MUNIN_PREMIUM_LLM_MODEL?.trim() ?? '';
-  return { configured: Boolean(baseUrl && model && apiKey), baseUrl, apiKey, model };
-}
