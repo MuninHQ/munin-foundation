@@ -92,6 +92,7 @@ export class ExecutiveBuildAllRuntime {
       summary: verifySummary,
     });
 
+    const changedFiles = [...new Set(result.engineering?.taskResults.flatMap(item => item.changedFiles ?? []) ?? [])];
     let rememberStatus: ExecutiveLifecycleEvent['status'] = 'completed';
     let rememberSummary = 'Outcome committed to Second Brain.';
     try {
@@ -100,7 +101,7 @@ export class ExecutiveBuildAllRuntime {
         project: 'munin',
         summary: verifySummary,
         decisions: [`Model route: ${route.tier}. ${route.reason}`],
-        changed: result.engineering?.changedFiles,
+        changed: changedFiles,
         nextSteps: result.status === 'DONE' ? [] : [result.blocker ?? 'Resume from the durable executive checkpoint.'],
         failed: result.status === 'FAILED' ? [result.blocker ?? verifySummary] : [],
         tags: ['executive', 'build-all', result.status.toLowerCase()],
