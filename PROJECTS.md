@@ -290,6 +290,30 @@ Publish three videos in one format and assess retention, click-through rate, pro
 
 ---
 
+## P2 — Munin Viral Engine
+
+### Objective
+
+Close the content loop from trend discovery to measured learning while keeping research, production, publishing, and analytics governed and auditable.
+
+### Product decision
+
+The Viral Engine is an orchestration layer over existing Munin capabilities. It reuses Trusted Source Radar, YT-LAB, Content Studio, Agent Forge, and optional local production adapters instead of duplicating them.
+
+### Constraints
+
+- Zero mandatory cost and provider-neutral handoffs.
+- Separate durable state under `data/runtime/viral-engine`.
+- Explicit evidence review before production.
+- Explicit human approval before production and manual-only publication.
+- No invented analytics or automatic claim that virality has been achieved.
+
+### Current milestone
+
+Run the first Raven discovery cycle, review one top-ranked opportunity, queue one Forge production handoff, and feed its comparable-age metrics to Odin.
+
+---
+
 ## P2 — Neo Interface
 
 ### Objective
