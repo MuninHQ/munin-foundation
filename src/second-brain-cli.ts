@@ -1,4 +1,5 @@
 import { commitAfterTask, recallBeforeTask, secondBrainStatus } from './second-brain.js';
+import { secondBrainDaily } from './second-brain-daily.js';
 
 function value(args: string[], flag: string): string | undefined {
   const index = args.indexOf(flag);
@@ -16,6 +17,11 @@ async function main() {
 
   if (command === 'status') {
     console.log(JSON.stringify(await secondBrainStatus(), null, 2));
+    return;
+  }
+
+  if (command === 'daily') {
+    console.log(JSON.stringify(await secondBrainDaily(), null, 2));
     return;
   }
 
