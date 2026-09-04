@@ -84,7 +84,7 @@ export class BuildAllWaveRuntime {
     }
 
     const execution = await executeParallelAgentWaves(wavePlan, this.taskRunner);
-    if (execution.status === 'BLOCKED') {
+    if (execution.status === 'blocked') {
       return {
         objective,
         status: 'BLOCKED',
@@ -93,7 +93,7 @@ export class BuildAllWaveRuntime {
         blocker: execution.blocker ?? 'BUILD ALL task execution blocked.',
       };
     }
-    if (execution.status === 'FAILED') {
+    if (execution.status === 'failed') {
       return {
         objective,
         status: 'FAILED',
