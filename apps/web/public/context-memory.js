@@ -6,9 +6,47 @@
   const $ = id => document.getElementById(id);
   const scopeClass = scope => scope === 'public-professional' ? 'public' : scope === 'sensitive-private' ? 'sensitive' : 'private';
 
+  function renderTimeline(items) {
+    $('timeline').innerHTML = items?.length
+      ? items.map(item => `<div class="event"><span class="event-dot"></span><div><b>${esc(item.title)}</b><div class="meta">${esc(new Date(item.at).toLocaleString())}</div><div class="muted" style="margin-top:4px">${esc(item.summary).replace(/\n/g,'<br>')}</div></div></div>`).join('')
+      : '<p class="muted">A timeline será preenchida automaticamente conforme tarefas usarem o protocolo PRE-TASK / POST-TASK.</p>';
+  }
+
+  async function loadCore() {
+    try {
+      const core = await request('/api/second-brain/status');
+      $('coreOnline').textContent = core.online ? 'MEMORY ONLINE' : 'MEMORY OFFLINE';
+      const vault = core.vault;
+      $('coreMeta').textContent = vault.exists
+        ? `Local-first · R$ 0 obrigatório · Vault ${vault.markdownFiles} notas / ${vault.folders} pastas · ${vault.root}`
+        : 'Local-first · R$ 0 obrigatório · Vault ainda não inicializado';
+      renderTimeline(core.controlRoom.timeline);
+    } catch (error) {
+      $('coreOnline').textContent = 'MEMORY STATUS INDISPONÍVEL';
+      $('coreMeta').textContent = error.message;
+      renderTimeline([]);
+    }
+  }
+
+  async function initVault() {
+    try {
+      const result = await request('/api/second-brain/vault/init', { method:'POST', body:'{}' });
+      toast(`Vault inicializado · ${result.createdFolders} pastas`);
+      await loadCore();
+    } catch (error) { toast(error.message, 'danger'); }
+  }
+
+  async function syncVault() {
+    try {
+      const result = await request('/api/second-brain/vault/sync', { method:'POST', body:'{}' });
+      toast(`${result.exported.length} seções espelhadas no Obsidian`);
+      await loadCore();
+    } catch (error) { toast(error.message, 'danger'); }
+  }
+
   async function load() {
     try {
-      const data = await request('/api/context-memory');
+      const [data] = await Promise.all([request('/api/context-memory'), loadCore()]);
       state = data.state;
       $('stats').innerHTML = [
         ['SEÇÕES', data.summary.sections],
@@ -78,7 +116,7 @@
     } catch (error) { toast(error.message, 'danger'); }
   }
 
-  window.contextMemory = Object.freeze({ load, doImport, searchMemory });
+  window.contextMemory = Object.freeze({ load, doImport, searchMemory, initVault, syncVault });
   $('file').addEventListener('change', () => $('file').files[0] && handleFile($('file').files[0]));
   ['dragenter','dragover'].forEach(name => $('drop').addEventListener(name, event => { event.preventDefault(); $('drop').classList.add('over'); }));
   ['dragleave','drop'].forEach(name => $('drop').addEventListener(name, event => { event.preventDefault(); $('drop').classList.remove('over'); }));
