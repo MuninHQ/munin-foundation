@@ -8,6 +8,7 @@ export interface HostExecutionAdapter {
   restartMunin(): Promise<string>;
   runAcceptance(): Promise<string>;
   tailscaleHealth(): Promise<string>;
+  buildAll(objective: string): Promise<string>;
 }
 
 export class HostBridgeExecutor {
@@ -36,6 +37,7 @@ export class HostBridgeExecutor {
       case 'run-acceptance': return this.adapter.runAcceptance();
       case 'tailscale-health': return this.adapter.tailscaleHealth();
       case 'creative-review': return runHostCreativeReview();
+      case 'build-all': return this.adapter.buildAll(job.objective!.trim());
     }
   }
 }
