@@ -3,7 +3,7 @@ import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import { runtimePath } from './config.js';
 import { loadContextMemory, type ContextSection } from './context-memory.js';
 
-export type KnowledgeKind = 'note' | 'career' | 'linkedin' | 'research' | 'munin' | 'project' | 'context';
+export type KnowledgeKind = 'note' | 'career' | 'linkedin' | 'research' | 'munin' | 'project' | 'decision' | 'procedure' | 'context';
 export type KnowledgeScope = 'public-professional' | 'private-operational' | 'sensitive-private';
 
 export type KnowledgeCapture = {
@@ -48,6 +48,9 @@ const folders = [
   '04 Munin/Bugs',
   '04 Munin/Changelog',
   '05 Projects',
+  '06 Daily',
+  '07 Decisions',
+  '08 Procedures',
   '90 Context Memory',
   '99 Templates',
 ];
@@ -94,6 +97,8 @@ function folderFor(kind: KnowledgeKind): string {
     case 'research': return '03 Research';
     case 'munin': return '04 Munin';
     case 'project': return '05 Projects';
+    case 'decision': return '07 Decisions';
+    case 'procedure': return '08 Procedures';
     case 'context': return '90 Context Memory';
     default: return '00 Inbox';
   }
@@ -109,12 +114,14 @@ export async function initKnowledgeVault(): Promise<{ root: string; createdFolde
   for (const folder of folders) await mkdir(path.join(root, folder), { recursive: true });
   await mkdir(path.join(root, '.obsidian'), { recursive: true });
 
-  await writeIfMissing(path.join(root, 'README.md'), `# Munin Knowledge Vault\n\nEste vault e a camada humana de conhecimento do Munin.\n\n- Munin Context Memory continua sendo a fonte de verdade operacional.\n- Este vault recebe notas, pesquisas e projecoes Markdown para navegacao no Obsidian.\n- Nao edite arquivos em \`90 Context Memory\` esperando que alterem automaticamente a Context Memory do Munin.\n- Conteudo sensivel nao e exportado por padrao.\n`);
+  await writeIfMissing(path.join(root, 'README.md'), `# Munin Knowledge Vault\n\nEste vault e a camada humana e portatil da memoria do Munin.\n\n- Munin Context Memory continua sendo a fonte de verdade operacional.\n- O protocolo PRE-TASK recupera contexto antes de cada tarefa.\n- O protocolo POST-TASK registra resumo, decisoes, mudancas, falhas e proximos passos.\n- Este vault recebe notas, pesquisas e projecoes Markdown para navegacao no Obsidian.\n- Nao edite arquivos em \`90 Context Memory\` esperando que alterem automaticamente a Context Memory do Munin.\n- Conteudo sensivel nao e exportado por padrao.\n- Obsidian e opcional: os arquivos Markdown continuam legiveis sem ele.\n`);
 
   await writeIfMissing(path.join(root, '99 Templates', 'Nota.md'), `${frontmatter({ kind: 'note', status: 'active', created: '{{date}}', tags: [] })}# {{title}}\n\n## Contexto\n\n## Insight\n\n## Proxima acao\n`);
   await writeIfMissing(path.join(root, '99 Templates', 'Pesquisa.md'), `${frontmatter({ kind: 'research', status: 'active', created: '{{date}}', tags: ['research'] })}# {{title}}\n\n## Pergunta\n\n## Evidencias\n\n## Conclusao\n\n## Fontes\n`);
   await writeIfMissing(path.join(root, '99 Templates', 'Entrevista.md'), `${frontmatter({ kind: 'career', status: 'active', created: '{{date}}', tags: ['career', 'interview'] })}# {{title}}\n\n## Empresa e vaga\n\n## Pessoas\n\n## Hipoteses\n\n## Cases relevantes\n\n## Perguntas\n\n## Follow-up\n`);
   await writeIfMissing(path.join(root, '99 Templates', 'LinkedIn.md'), `${frontmatter({ kind: 'linkedin', status: 'idea', created: '{{date}}', tags: ['linkedin'] })}# {{title}}\n\n## Tese\n\n## Evidencia\n\n## Angulo\n\n## Rascunho\n\n## Fontes\n`);
+  await writeIfMissing(path.join(root, '99 Templates', 'Decisao.md'), `${frontmatter({ kind: 'decision', status: 'active', created: '{{date}}', tags: ['decision'] })}# {{title}}\n\n## Contexto\n\n## Decisao\n\n## Motivo\n\n## Alternativas descartadas\n\n## Reavaliar quando\n`);
+  await writeIfMissing(path.join(root, '99 Templates', 'Procedimento.md'), `${frontmatter({ kind: 'procedure', status: 'active', created: '{{date}}', tags: ['procedure'] })}# {{title}}\n\n## Objetivo\n\n## Passos\n\n## Validacao\n\n## Falhas conhecidas\n`);
 
   return { root, createdFolders: folders.length };
 }
