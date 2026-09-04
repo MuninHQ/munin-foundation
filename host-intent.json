@@ -1,9 +1,10 @@
 {
   "version": 1,
-  "id": "deploy-second-brain-current-main-20260904-2053",
-  "type": "deploy-main",
-  "createdAt": "2026-09-04T23:53:00.000Z",
-  "expiresAt": "2026-09-05T00:08:00.000Z",
+  "id": "buildall-munin-core-jarvis-20260904-2059",
+  "type": "build-all",
+  "createdAt": "2026-09-04T23:59:00.000Z",
+  "expiresAt": "2026-09-05T00:14:00.000Z",
   "repo": "MuninHQ/munin-foundation",
-  "branch": "main"
+  "branch": "main",
+  "objective": "BUILD ALL the next Second Brain/MUNIN CORE increment: turn the existing real Second Brain dashboard into a unified Jarvis-style operational command surface that brings together current priorities, actionable next steps, executive checkpoints, agent/runtime status and governed memory recall in one coherent view. Preserve Munin as the source of truth, keep Obsidian as an optional Markdown mirror only, reuse existing APIs/stores instead of creating parallel state, keep local-first and zero-cost-first behavior, preserve privacy/governance boundaries, avoid speculative features, and require independent tests/verification before DONE. Do not remove or break existing Memory, Control Room, Viral Engine or Host Worker surfaces."
 }
