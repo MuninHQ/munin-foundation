@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { ModelRoute } from './model-router.js';
 
@@ -29,6 +29,17 @@ export class ExecutiveCheckpointStore {
     const id = objectiveCheckpointId(objective);
     try { return JSON.parse(await readFile(this.file(id), 'utf8')) as ExecutiveCheckpoint; }
     catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined; throw error; }
+  }
+
+  async list(limit = 30): Promise<ExecutiveCheckpoint[]> {
+    try {
+      const names = (await readdir(this.directory())).filter(name => name.endsWith('.json'));
+      const values = await Promise.all(names.map(async name => JSON.parse(await readFile(path.join(this.directory(), name), 'utf8')) as ExecutiveCheckpoint));
+      return values.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, Math.max(1, limit));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
+      throw error;
+    }
   }
 
   async save(checkpoint: ExecutiveCheckpoint): Promise<ExecutiveCheckpoint> {
