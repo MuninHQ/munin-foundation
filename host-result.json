@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "jobId": "github-buildall-final-deploy-20260904-140820",
+  "jobId": "github-buildall-final-deploy-20260904-141220",
   "type": "deploy-main",
   "status": "failed",
-  "finishedAt": "2026-09-04T14:08:07.357Z",
+  "finishedAt": "2026-09-04T14:12:05.760Z",
   "result": {
-    "id": "github-buildall-final-deploy-20260904-140820",
+    "id": "github-buildall-final-deploy-20260904-141220",
     "status": "failed",
     "summary": "Working tree is not clean; refusing automatic fast-forward."
   }
