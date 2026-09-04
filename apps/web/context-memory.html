@@ -1,136 +1,61 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Munin Core Memory</title>
-    <link rel="stylesheet" href="/munin.css" />
-    <style>
-      .row { display:flex; justify-content:space-between; align-items:center; gap:14px; }
-      h2,h3 { margin:7px 0; }
-      p,.muted { color:var(--text-muted); }
-      .grid { display:grid; grid-template-columns:.85fr 1.15fr; gap:16px; }
-      .panel,.card { border:1px solid var(--border); background:var(--surface); border-radius:var(--radius-lg); padding:20px; }
-      .drop { border:1px dashed var(--border-strong); min-height:170px; display:flex; align-items:center; justify-content:center; text-align:center; border-radius:12px; background:var(--surface-input); }
-      .drop.over { background:var(--surface-raised); border-color:var(--accent-border); }
-      .buttons { display:flex; gap:8px; flex-wrap:wrap; }
-      button,a.btn { border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-soft); border-radius:var(--radius); padding:10px 13px; text-decoration:none; cursor:pointer; }
-      button:hover,a.btn:hover { border-color:var(--accent-border); color:var(--text); }
-      button:disabled { opacity:.5; cursor:not-allowed; }
-      .primary { background:var(--accent-strong); color:white; }
-      .danger { border-color:#74404c; color:#ffb6c1; }
-      .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
-      .stat { border:1px solid var(--border); background:var(--surface); border-radius:var(--radius); padding:13px; }
-      .num { font-size:24px; }
-      .tag { display:inline-block; border:1px solid #2d607e; color:#7acbfa; padding:4px 8px; border-radius:20px; font-size:10px; margin:3px; }
-      .sensitive { border-color:#73424d; color:#ff9aaa; }
-      .private { border-color:#6e5d2d; color:#ebc977; }
-      .public { border-color:#286748; color:#89dfb1; }
-      .list { display:grid; gap:10px; }
-      .card { background:rgba(7,23,37,.72); }
-      .meta { font-size:11px; color:var(--text-muted); }
-      .warning { border:1px solid #6d532d; background:#241b0d; color:#f1ce89; border-radius:9px; padding:10px; margin:8px 0; }
-      .ok { border:1px solid #275f44; background:#0d2117; color:#8ee0af; border-radius:9px; padding:10px; margin:8px 0; }
-      .results { white-space:pre-wrap; font-size:12px; line-height:1.45; max-height:360px; overflow:auto; }
-      .option { display:flex; gap:8px; align-items:center; margin:12px 0; }
-      .core { position:relative; overflow:hidden; border:1px solid var(--accent-border); background:radial-gradient(circle at 15% 20%,rgba(28,127,183,.18),transparent 35%),var(--surface); }
-      .core::after { content:''; position:absolute; width:280px; height:280px; border:1px solid rgba(72,180,235,.14); border-radius:50%; right:-120px; top:-150px; box-shadow:0 0 0 38px rgba(72,180,235,.03),0 0 0 76px rgba(72,180,235,.02); pointer-events:none; }
-      .core-status { display:flex; align-items:center; gap:9px; font-size:12px; letter-spacing:.12em; }
-      .pulse { width:9px; height:9px; border-radius:50%; background:#78d7a6; box-shadow:0 0 16px #78d7a6; }
-      .protocol { display:grid; grid-template-columns:1fr 36px 1fr; align-items:center; gap:10px; margin-top:15px; }
-      .protocol-step { border:1px solid var(--border); background:rgba(4,17,28,.62); border-radius:10px; padding:14px; }
-      .arrow { text-align:center; color:var(--text-muted); }
-      .timeline { position:relative; display:grid; gap:0; }
-      .event { display:grid; grid-template-columns:16px 1fr; gap:10px; padding-bottom:15px; }
-      .event-dot { width:8px;height:8px;border-radius:50%;background:var(--accent-strong);margin-top:6px;box-shadow:0 0 12px rgba(58,178,235,.45); }
-      .event:not(:last-child) .event-dot::after { content:'';display:block;width:1px;height:calc(100% + 15px);background:var(--border);margin:8px 0 0 3px; }
-      @media(max-width:900px){ .grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.protocol{grid-template-columns:1fr}.arrow{transform:rotate(90deg)} }
-    </style>
-    <script defer src="/munin-nav.js"></script>
-    <script defer src="/munin-client.js"></script>
-    <script defer src="/context-memory.js"></script>
-  </head>
-  <body>
-    <main class="munin-page">
-      <header class="munin-page-header">
-        <div class="munin-page-copy">
-          <div class="eyebrow">MUNIN CORE / MEMORY</div>
-          <h1>Segundo Cérebro</h1>
-          <p>Memória local-first com recall automático antes da tarefa, commit depois da tarefa e Obsidian como espelho opcional.</p>
-        </div>
-        <div class="munin-actions">
-          <button onclick="contextMemory.load()">Atualizar</button>
-        </div>
-      </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Munin Core Memory</title>
+  <link rel="stylesheet" href="/munin.css" />
+  <style>
+    :root{--memory-cyan:#36c5ff;--memory-green:#55e3ad;--memory-purple:#a879ff}
+    .memory-shell{display:grid;gap:16px}.memory-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:16px}.memory-hero h1{font-size:42px;margin:4px 0 8px}.memory-hero p{max-width:780px;color:var(--text-muted)}
+    .memory-actions,.button-row,.recall-chips{display:flex;gap:8px;flex-wrap:wrap}.memory-actions button,.button-row button,.recall-chips button{border:1px solid var(--border-strong);background:var(--surface-raised);color:var(--text-soft);border-radius:10px;padding:10px 13px;cursor:pointer}.memory-actions .primary,.button-row .primary{background:var(--accent-strong);color:#fff}.memory-actions button:hover,.button-row button:hover,.recall-chips button:hover{border-color:var(--accent-border);color:var(--text)}
+    .memory-grid{display:grid;grid-template-columns:1.02fr 1.1fr 1fr;gap:14px}.memory-panel{border:1px solid var(--border);background:linear-gradient(145deg,rgba(6,21,34,.92),rgba(5,15,26,.86));border-radius:16px;padding:18px;position:relative;overflow:hidden}.memory-panel.accent{border-color:var(--accent-border);box-shadow:inset 0 0 42px rgba(32,137,194,.05)}.memory-panel h2{margin:5px 0 12px}.memory-panel p{color:var(--text-muted)}
+    .core-card::after{content:'';position:absolute;width:210px;height:210px;border:1px solid rgba(54,197,255,.16);border-radius:50%;right:-60px;top:-70px;box-shadow:0 0 0 28px rgba(54,197,255,.025),0 0 0 56px rgba(54,197,255,.018)}.online{display:flex;align-items:center;gap:9px;letter-spacing:.13em;font-size:11px}.dot{width:9px;height:9px;border-radius:50%;background:var(--memory-green);box-shadow:0 0 14px var(--memory-green)}.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px}.metric{padding:10px;border:1px solid var(--border);border-radius:10px;background:rgba(3,14,24,.62)}.metric b{display:block;font-size:22px}.metric span{font-size:10px;color:var(--text-muted)}
+    .active-list{display:grid;gap:0}.active-row{display:grid;grid-template-columns:105px 1fr;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}.active-row:last-child{border-bottom:0}.active-row span:first-child{color:#79cfff;font-size:11px}.active-row strong{font-size:13px;white-space:pre-wrap}
+    .knowledge{display:grid;grid-template-columns:1fr 1fr;gap:10px}.node{border:1px solid var(--border);border-radius:14px;padding:14px;background:rgba(5,19,32,.72);text-align:center}.node .value{font-size:26px;color:#83d9ff}.node .label{font-size:11px;color:var(--text-muted)}
+    .wide{grid-column:span 2}.timeline{display:grid;gap:0}.event{display:grid;grid-template-columns:18px 1fr;gap:10px;padding:0 0 14px}.event-dot{width:8px;height:8px;border-radius:50%;background:var(--memory-cyan);margin-top:6px;box-shadow:0 0 12px rgba(54,197,255,.45)}.event:not(:last-child) .event-dot::after{content:'';display:block;width:1px;height:calc(100% + 14px);background:var(--border);margin:8px 0 0 3px}.event .meta{font-size:10px;color:var(--text-muted)}.event .summary{font-size:12px;color:var(--text-muted);white-space:pre-wrap}
+    .recall-box{display:flex;gap:8px}.recall-box input{flex:1;border:1px solid var(--accent-border);background:rgba(2,14,24,.8);color:var(--text);border-radius:11px;padding:13px}.recall-box button{width:48px;border:1px solid var(--accent-border);background:var(--accent-strong);color:#fff;border-radius:11px;cursor:pointer}.recall-output{margin-top:12px;max-height:330px;overflow:auto}.recall-section{padding:10px 0;border-top:1px solid var(--border)}.recall-section pre{white-space:pre-wrap;font-family:inherit;font-size:12px;color:var(--text-soft);margin:6px 0 0}
+    .protocol{display:grid;grid-template-columns:1fr 34px 1fr 34px 1fr;gap:8px;align-items:center}.protocol-step{border:1px solid var(--border);border-radius:12px;padding:14px;background:rgba(4,16,28,.62)}.protocol-step .eyebrow{color:#67d4ff}.arrow{text-align:center;color:#6fcfff;font-size:20px}
+    details.advanced{border:1px solid var(--border);border-radius:14px;background:rgba(5,18,29,.62)}details.advanced>summary{padding:16px;cursor:pointer;font-weight:700}details.advanced .advanced-body{padding:0 16px 16px}.advanced-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:14px}.drop{border:1px dashed var(--border-strong);min-height:135px;display:flex;align-items:center;justify-content:center;text-align:center;border-radius:12px;background:var(--surface-input)}.drop.over{background:var(--surface-raised);border-color:var(--accent-border)}.list{display:grid;gap:10px}.card{border:1px solid var(--border);background:rgba(7,23,37,.72);border-radius:10px;padding:12px}.row{display:flex;justify-content:space-between;align-items:center;gap:12px}.tag{display:inline-block;border:1px solid #2d607e;color:#7acbfa;padding:4px 8px;border-radius:20px;font-size:10px;margin:2px}.sensitive{border-color:#73424d;color:#ff9aaa}.private{border-color:#6e5d2d;color:#ebc977}.public{border-color:#286748;color:#89dfb1}.muted,.meta{color:var(--text-muted)}.results{white-space:pre-wrap;font-size:12px;line-height:1.45;max-height:320px;overflow:auto}.warning{border:1px solid #6d532d;background:#241b0d;color:#f1ce89;border-radius:9px;padding:10px;margin:8px 0}.ok{border:1px solid #275f44;background:#0d2117;color:#8ee0af;border-radius:9px;padding:10px;margin:8px 0}.option{display:flex;gap:8px;align-items:center;margin:12px 0}
+    @media(max-width:1050px){.memory-grid{grid-template-columns:1fr 1fr}.knowledge-panel{grid-column:span 2}.wide{grid-column:span 2}}@media(max-width:760px){.memory-hero{align-items:flex-start;flex-direction:column}.memory-hero h1{font-size:34px}.memory-grid{grid-template-columns:1fr}.knowledge-panel,.wide{grid-column:auto}.metric-grid{grid-template-columns:repeat(2,1fr)}.protocol{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}.advanced-grid{grid-template-columns:1fr}}
+  </style>
+  <script defer src="/munin-nav.js"></script>
+  <script defer src="/munin-client.js"></script>
+  <script defer src="/context-memory.js"></script>
+</head>
+<body>
+<main class="munin-page memory-shell">
+  <header class="memory-hero">
+    <div><div class="eyebrow">MUNIN CORE / MEMORY</div><h1>Segundo Cérebro</h1><p>Memória local-first com recall automático antes da tarefa, commit depois da tarefa e Obsidian como espelho opcional.</p></div>
+    <div class="memory-actions"><button onclick="contextMemory.load()">↻ Atualizar</button><button onclick="contextMemory.initVault()">Inicializar Vault</button><button class="primary" onclick="contextMemory.syncVault()">Sincronizar Obsidian</button></div>
+  </header>
 
-      <article class="munin-panel core" style="margin:18px 0">
-        <div class="row">
-          <div>
-            <div class="core-status"><span class="pulse"></span><strong id="coreOnline">MEMORY ONLINE</strong></div>
-            <h2>Munin Core</h2>
-            <p id="coreMeta">Carregando protocolo e vault…</p>
-          </div>
-          <div class="buttons">
-            <button onclick="contextMemory.initVault()">Inicializar Vault</button>
-            <button class="primary" onclick="contextMemory.syncVault()">Sincronizar Obsidian</button>
-          </div>
-        </div>
-        <div class="protocol">
-          <div class="protocol-step"><div class="eyebrow">PRE-TASK</div><b>Context Recall</b><p>Context Memory + projetos + vault + estado operacional.</p></div>
-          <div class="arrow">→</div>
-          <div class="protocol-step"><div class="eyebrow">POST-TASK</div><b>Memory Commit</b><p>Resumo + decisões + mudanças + falhas + próximos passos.</p></div>
-        </div>
-      </article>
+  <section class="memory-grid">
+    <article class="memory-panel accent core-card">
+      <div class="online"><span class="dot"></span><strong id="coreOnline">CARREGANDO</strong></div><h2>Munin Core</h2><p id="coreMeta">Verificando memória local e Vault…</p>
+      <div id="coreMetrics" class="metric-grid"></div>
+    </article>
 
-      <section class="stats" id="stats" style="margin:18px 0"></section>
-      <div class="grid">
-        <aside>
-          <article class="munin-panel">
-            <div class="eyebrow">BOOTSTRAP</div>
-            <h2>Importar Context Seed</h2>
-            <div id="drop" class="drop">
-              <div>
-                <strong>Arraste o JSON consolidado aqui</strong>
-                <p><code>munin_context_seed_all.json</code></p>
-                <input id="file" type="file" accept="application/json,.json" hidden />
-                <button onclick="document.getElementById('file').click()">Escolher JSON</button>
-              </div>
-            </div>
-            <div id="preview" style="margin-top:14px"></div>
-            <label class="option"><input id="replace" type="checkbox" /><span>Substituir seções em conflito</span></label>
-            <p class="muted">Desmarcado é o modo seguro: dados já existentes são preservados e conflitos ficam apenas no relatório.</p>
-            <button id="importBtn" class="primary" onclick="contextMemory.doImport()" disabled>IMPORTAR MEMÓRIA</button>
-          </article>
-          <article class="munin-panel" style="margin-top:16px">
-            <div class="eyebrow">QUERY TEST</div>
-            <h2>Consultar memória</h2>
-            <input id="query" class="munin-input" placeholder="Ex.: posicionamento LinkedIn, salário alvo, Open Finance..." />
-            <div class="buttons" style="margin-top:10px">
-              <button onclick="contextMemory.searchMemory(false)">Buscar contexto operacional</button>
-              <button class="danger" onclick="contextMemory.searchMemory(true)">Incluir sensível</button>
-            </div>
-            <div id="queryResults" class="results" style="margin-top:12px"></div>
-          </article>
-        </aside>
-        <section>
-          <article class="munin-panel">
-            <div class="row"><div><div class="eyebrow">MEMORY TIMELINE</div><h2>Atividade recente</h2></div><span class="muted">PRE / POST</span></div>
-            <div id="timeline" class="timeline"></div>
-          </article>
-          <article class="munin-panel" style="margin-top:16px">
-            <div class="row">
-              <div><div class="eyebrow">MEMORY MAP</div><h2>Seções materializadas</h2></div>
-              <span id="updated" class="muted"></span>
-            </div>
-            <div id="sections" class="list"></div>
-          </article>
-          <article class="munin-panel" style="margin-top:16px">
-            <div class="eyebrow">IMPORT HISTORY</div>
-            <h2>Últimos bootstraps</h2>
-            <div id="imports" class="list"></div>
-          </article>
-        </section>
-      </div>
-    </main>
-  </body>
+    <article class="memory-panel"><div class="row"><h2>Contexto Ativo</h2><span class="tag public">EM FOCO</span></div><div id="activeContext" class="active-list"></div></article>
+
+    <article class="memory-panel knowledge-panel"><div class="row"><h2>Knowledge Map</h2><span class="muted">dados reais</span></div><div id="knowledgeMap" class="knowledge"></div></article>
+
+    <article class="memory-panel"><div class="row"><h2>Memory Timeline</h2><span class="muted">PRE / POST</span></div><div id="timeline" class="timeline"></div></article>
+
+    <article class="memory-panel wide"><div class="row"><h2>Munin Recall</h2><span class="muted">recall governado</span></div>
+      <div class="recall-box"><input id="recallQuery" placeholder="O que está acontecendo no Munin agora?" onkeydown="if(event.key==='Enter')contextMemory.recall()"/><button onclick="contextMemory.recall()">➤</button></div>
+      <div class="recall-chips" style="margin-top:9px"><button onclick="contextMemory.useRecall('Resuma o projeto atual')">Resuma o projeto atual</button><button onclick="contextMemory.useRecall('Quais são as próximas tarefas?')">Próximas tarefas</button><button onclick="contextMemory.useRecall('O que decidimos sobre o Vault?')">Decisões sobre o Vault</button><button onclick="contextMemory.useRecall('Mostre as pendências atuais')">Pendências</button></div>
+      <div id="recallOutput" class="recall-output muted">Faça uma consulta para recuperar contexto real do Context Memory, Vault e estado operacional.</div>
+    </article>
+
+    <article class="memory-panel" style="grid-column:1/-1"><div class="row"><h2>Fluxo de Memória</h2><span class="muted">automático para agentes</span></div><div class="protocol"><div class="protocol-step"><div class="eyebrow">PRE-TASK</div><b>Context Recall</b><p>Recupera contexto governado antes da execução.</p></div><div class="arrow">→</div><div class="protocol-step"><div class="eyebrow">EXECUTION</div><b>Foco e Ação</b><p>Executa com histórico, decisões e estado atual.</p></div><div class="arrow">→</div><div class="protocol-step"><div class="eyebrow">POST-TASK</div><b>Memory Commit</b><p>Registra resumo, decisões, mudanças, falhas e próximos passos.</p></div></div></article>
+  </section>
+
+  <details class="advanced"><summary>Governança e ferramentas avançadas de memória</summary><div class="advanced-body"><div id="stats" class="metric-grid" style="margin-bottom:14px"></div><div class="advanced-grid">
+    <aside><article class="memory-panel"><div class="eyebrow">BOOTSTRAP</div><h2>Importar Context Seed</h2><div id="drop" class="drop"><div><strong>Arraste o JSON consolidado aqui</strong><p><code>munin_context_seed_all.json</code></p><input id="file" type="file" accept="application/json,.json" hidden/><button onclick="document.getElementById('file').click()">Escolher JSON</button></div></div><div id="preview" style="margin-top:12px"></div><label class="option"><input id="replace" type="checkbox"/><span>Substituir seções em conflito</span></label><button id="importBtn" class="primary" onclick="contextMemory.doImport()" disabled>IMPORTAR MEMÓRIA</button></article>
+      <article class="memory-panel" style="margin-top:14px"><div class="eyebrow">QUERY TEST</div><h2>Consultar Context Memory</h2><input id="query" class="munin-input" placeholder="Ex.: posicionamento LinkedIn, salário alvo, Open Finance..."/><div class="button-row" style="margin-top:10px"><button onclick="contextMemory.searchMemory(false)">Buscar operacional</button><button onclick="contextMemory.searchMemory(true)">Incluir sensível</button></div><div id="queryResults" class="results" style="margin-top:12px"></div></article></aside>
+    <section><article class="memory-panel"><div class="row"><div><div class="eyebrow">MEMORY MAP</div><h2>Seções materializadas</h2></div><span id="updated" class="muted"></span></div><div id="sections" class="list"></div></article><article class="memory-panel" style="margin-top:14px"><div class="eyebrow">IMPORT HISTORY</div><h2>Últimos bootstraps</h2><div id="imports" class="list"></div></article></section>
+  </div></div></details>
+</main>
+</body>
 </html>
