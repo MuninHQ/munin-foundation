@@ -14,6 +14,10 @@ async function git(cwd: string, ...args: string[]): Promise<string> {
   return String(result.stdout ?? '').trim();
 }
 
+async function readNormalizedText(file: string): Promise<string> {
+  return (await readFile(file, 'utf8')).replace(/\r\n/g, '\n');
+}
+
 async function initRepo(): Promise<string> {
   const repo = await mkdtemp(path.join(os.tmpdir(), 'munin-wave-git-test-'));
   await git(repo, 'init', '-b', 'main');
@@ -52,8 +56,8 @@ test('serially reconciles independent task commits into an integration head', as
     assert.equal(result.status, 'completed');
     assert.equal(result.applied.length, 2);
     assert.ok(result.head);
-    assert.equal(await readFile(path.join(session.worktree, 'api.txt'), 'utf8'), 'api\n');
-    assert.equal(await readFile(path.join(session.worktree, 'ui.txt'), 'utf8'), 'ui\n');
+    assert.equal(await readNormalizedText(path.join(session.worktree, 'api.txt')), 'api\n');
+    assert.equal(await readNormalizedText(path.join(session.worktree, 'ui.txt')), 'ui\n');
   } finally {
     if (session) await reconciler.dispose(session);
     await rm(repo, { recursive: true, force: true });
@@ -91,7 +95,7 @@ test('rolls the whole wave back when serial reconciliation hits a conflict', asy
     assert.equal(result.status, 'failed');
     assert.match(result.blocker ?? '', /conflict/i);
     assert.equal(await git(session.worktree, 'rev-parse', 'HEAD'), before);
-    assert.equal(await readFile(path.join(session.worktree, 'shared.txt'), 'utf8'), 'base\n');
+    assert.equal(await readNormalizedText(path.join(session.worktree, 'shared.txt')), 'base\n');
   } finally {
     if (session) await reconciler.dispose(session);
     await rm(repo, { recursive: true, force: true });
