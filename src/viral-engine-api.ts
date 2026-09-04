@@ -3,9 +3,11 @@ import { AgentTelemetry, JsonlAgentTelemetrySink } from './agent-telemetry.js';
 import { json, readJsonBody, requireText, stringList } from './http.js';
 import { trustedSourceRadar } from './trusted-source-radar.js';
 import { ViralEngineStore, type ViralChannel, type ViralDimensions, type ViralSource } from './viral-engine.js';
+import { ViralProductionDispatcher } from './viral-production-dispatch.js';
 
 const telemetry = new AgentTelemetry(new JsonlAgentTelemetrySink());
 const engine = new ViralEngineStore(undefined, telemetry);
+const productionDispatcher = new ViralProductionDispatcher();
 
 const body = (request: IncomingMessage) => readJsonBody(request, 500_000);
 const number = (value: unknown, field: string): number => {
@@ -26,6 +28,7 @@ export async function handleViralEngineApi(request: IncomingMessage, response: S
   const url = new URL(request.url ?? '/', 'http://localhost');
   try {
     if (request.method === 'GET' && url.pathname === '/api/viral-engine') return json(request, response, 200, await engine.snapshot());
+    if (request.method === 'GET' && url.pathname === '/api/viral-engine/production-dispatch') return json(request, response, 200, { items: await productionDispatcher.list() });
     if (request.method === 'POST' && url.pathname === '/api/viral-engine/discover') {
       const input = await body(request); const radar = await trustedSourceRadar(input.refresh === true);
       const result = await engine.ingestTrusted(radar.signals);
@@ -52,7 +55,11 @@ export async function handleViralEngineApi(request: IncomingMessage, response: S
     const produce = url.pathname.match(/^\/api\/viral-engine\/topics\/([^/]+)\/produce$/);
     if (request.method === 'POST' && produce) {
       const input = await body(request); const job = await engine.queueProduction(produce[1], requireText(input.confirmation, 'confirmation'));
-      await telemetry.flush(); return json(request, response, 201, { job, publicationBoundary: 'manual-only', next: 'Open Content Studio and execute the governed production handoff.' });
+      const dispatch = await productionDispatcher.dispatch(job);
+      await telemetry.flush(); return json(request, response, 201, {
+        job, dispatch, publicationBoundary: 'manual-only',
+        next: dispatch.status === 'generated' ? 'Review the generated draft and asset-license ledger before manual publication.' : 'Configure the local content-video runner to turn this persisted plan into a draft MP4.',
+      });
     }
     const published = url.pathname.match(/^\/api\/viral-engine\/topics\/([^/]+)\/published$/);
     if (request.method === 'POST' && published) {
