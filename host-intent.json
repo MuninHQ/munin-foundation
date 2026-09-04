@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "id": "deploy-second-brain-20260904-1731",
-  "type": "deploy-main",
-  "createdAt": "2026-09-04T20:31:30.000Z",
-  "expiresAt": "2026-09-04T20:46:30.000Z",
+  "id": "accept-second-brain-20260904-1732",
+  "type": "run-acceptance",
+  "createdAt": "2026-09-04T20:32:00.000Z",
+  "expiresAt": "2026-09-04T20:47:00.000Z",
   "repo": "MuninHQ/munin-foundation",
   "branch": "main"
 }
