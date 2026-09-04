@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Munin Context Memory</title>
+    <title>Munin Core Memory</title>
     <link rel="stylesheet" href="/munin.css" />
     <style>
       .row { display:flex; justify-content:space-between; align-items:center; gap:14px; }
@@ -33,7 +33,18 @@
       .ok { border:1px solid #275f44; background:#0d2117; color:#8ee0af; border-radius:9px; padding:10px; margin:8px 0; }
       .results { white-space:pre-wrap; font-size:12px; line-height:1.45; max-height:360px; overflow:auto; }
       .option { display:flex; gap:8px; align-items:center; margin:12px 0; }
-      @media(max-width:900px){ .grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)} }
+      .core { position:relative; overflow:hidden; border:1px solid var(--accent-border); background:radial-gradient(circle at 15% 20%,rgba(28,127,183,.18),transparent 35%),var(--surface); }
+      .core::after { content:''; position:absolute; width:280px; height:280px; border:1px solid rgba(72,180,235,.14); border-radius:50%; right:-120px; top:-150px; box-shadow:0 0 0 38px rgba(72,180,235,.03),0 0 0 76px rgba(72,180,235,.02); pointer-events:none; }
+      .core-status { display:flex; align-items:center; gap:9px; font-size:12px; letter-spacing:.12em; }
+      .pulse { width:9px; height:9px; border-radius:50%; background:#78d7a6; box-shadow:0 0 16px #78d7a6; }
+      .protocol { display:grid; grid-template-columns:1fr 36px 1fr; align-items:center; gap:10px; margin-top:15px; }
+      .protocol-step { border:1px solid var(--border); background:rgba(4,17,28,.62); border-radius:10px; padding:14px; }
+      .arrow { text-align:center; color:var(--text-muted); }
+      .timeline { position:relative; display:grid; gap:0; }
+      .event { display:grid; grid-template-columns:16px 1fr; gap:10px; padding-bottom:15px; }
+      .event-dot { width:8px;height:8px;border-radius:50%;background:var(--accent-strong);margin-top:6px;box-shadow:0 0 12px rgba(58,178,235,.45); }
+      .event:not(:last-child) .event-dot::after { content:'';display:block;width:1px;height:calc(100% + 15px);background:var(--border);margin:8px 0 0 3px; }
+      @media(max-width:900px){ .grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.protocol{grid-template-columns:1fr}.arrow{transform:rotate(90deg)} }
     </style>
     <script defer src="/munin-nav.js"></script>
     <script defer src="/munin-client.js"></script>
@@ -43,14 +54,34 @@
     <main class="munin-page">
       <header class="munin-page-header">
         <div class="munin-page-copy">
-          <div class="eyebrow">MUNIN MEMORY GOVERNANCE</div>
-          <h1>Context Memory</h1>
-          <p>Bootstrap, escopos de privacidade, freshness e governança da memória nativa.</p>
+          <div class="eyebrow">MUNIN CORE / MEMORY</div>
+          <h1>Segundo Cérebro</h1>
+          <p>Memória local-first com recall automático antes da tarefa, commit depois da tarefa e Obsidian como espelho opcional.</p>
         </div>
         <div class="munin-actions">
           <button onclick="contextMemory.load()">Atualizar</button>
         </div>
       </header>
+
+      <article class="munin-panel core" style="margin:18px 0">
+        <div class="row">
+          <div>
+            <div class="core-status"><span class="pulse"></span><strong id="coreOnline">MEMORY ONLINE</strong></div>
+            <h2>Munin Core</h2>
+            <p id="coreMeta">Carregando protocolo e vault…</p>
+          </div>
+          <div class="buttons">
+            <button onclick="contextMemory.initVault()">Inicializar Vault</button>
+            <button class="primary" onclick="contextMemory.syncVault()">Sincronizar Obsidian</button>
+          </div>
+        </div>
+        <div class="protocol">
+          <div class="protocol-step"><div class="eyebrow">PRE-TASK</div><b>Context Recall</b><p>Context Memory + projetos + vault + estado operacional.</p></div>
+          <div class="arrow">→</div>
+          <div class="protocol-step"><div class="eyebrow">POST-TASK</div><b>Memory Commit</b><p>Resumo + decisões + mudanças + falhas + próximos passos.</p></div>
+        </div>
+      </article>
+
       <section class="stats" id="stats" style="margin:18px 0"></section>
       <div class="grid">
         <aside>
@@ -83,6 +114,10 @@
         </aside>
         <section>
           <article class="munin-panel">
+            <div class="row"><div><div class="eyebrow">MEMORY TIMELINE</div><h2>Atividade recente</h2></div><span class="muted">PRE / POST</span></div>
+            <div id="timeline" class="timeline"></div>
+          </article>
+          <article class="munin-panel" style="margin-top:16px">
             <div class="row">
               <div><div class="eyebrow">MEMORY MAP</div><h2>Seções materializadas</h2></div>
               <span id="updated" class="muted"></span>
