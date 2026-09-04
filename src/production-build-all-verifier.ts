@@ -65,25 +65,17 @@ export class GitProductionBuildAllVerifier implements ProductionBuildAllVerifier
       added = true;
       await this.attachDependencies(root, worktree);
 
-      const commands: Array<{ label: string; file: string; args: string[] }> = [
-        { label: 'build:core', file: process.platform === 'win32' ? 'npm.cmd' : 'npm', args: ['run', 'build:core'] },
-        { label: 'build:web', file: process.platform === 'win32' ? 'npm.cmd' : 'npm', args: ['run', 'build:web'] },
-        { label: 'tests', file: 'node', args: ['--test', '--test-reporter=spec', 'dist/tests/*.test.js'] },
-      ];
-
-      for (const command of commands) {
-        const result = await this.commands.run(command.file, command.args, worktree, 300_000);
-        if (!result.ok) {
-          return {
-            status: 'FAILED',
-            summary: `Independent final verification failed at ${command.label}.`,
-            evidence,
-            blocker: clip(`${result.stdout}\n${result.stderr}`),
-          };
-        }
-        evidence.push(`${command.label}:passed`);
+      const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+      const validation = await this.commands.run(npm, ['test'], worktree, 300_000);
+      if (!validation.ok) {
+        return {
+          status: 'FAILED',
+          summary: 'Independent final verification failed at npm test.',
+          evidence,
+          blocker: clip(`${validation.stdout}\n${validation.stderr}`),
+        };
       }
-
+      evidence.push('npm-test:passed');
       evidence.push(`criteria:${context.plan.completionCriteria.length}`);
       evidence.push(`tasks:${context.plan.tasks.length}`);
       return {
@@ -105,7 +97,7 @@ export class GitProductionBuildAllVerifier implements ProductionBuildAllVerifier
       if (!stat.isDirectory()) return;
       await fs.symlink(source, target, process.platform === 'win32' ? 'junction' : 'dir');
     } catch {
-      // Missing dependency reuse is surfaced by the build command, not hidden here.
+      // Missing dependency reuse is surfaced by npm test, not hidden here.
     }
   }
 }
