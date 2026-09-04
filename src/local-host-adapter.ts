@@ -123,6 +123,7 @@ export class LocalHostAdapter implements HostExecutionAdapter {
   }
 
   async deployMain(): Promise<string> {
+    await cleanGeneratedArtifacts(this.cwd, this.timeoutMs);
     const update = await this.gitFastForward();
     const npm = npmInvocation();
     await cleanGeneratedArtifacts(this.cwd, this.timeoutMs);
