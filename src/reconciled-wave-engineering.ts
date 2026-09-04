@@ -35,6 +35,25 @@ export interface WaveReconcilerPort {
   dispose(session: GitWaveSession): Promise<void>;
 }
 
+function normalizePath(value: string): string {
+  return value.trim().replaceAll('\\', '/').replace(/^\.\//, '');
+}
+
+function enforceDeclaredFiles(task: ParallelAgentTask, output: BaseAwareEngineeringResult): BaseAwareEngineeringResult {
+  if (output.status !== 'completed') return output;
+  const changedFiles = [...new Set((output.changedFiles ?? []).map(normalizePath).filter(Boolean))];
+  if (task.files.length === 0 || changedFiles.length === 0) return { ...output, changedFiles };
+  const declared = new Set(task.files.map(normalizePath));
+  const undeclared = changedFiles.filter(file => !declared.has(file));
+  if (undeclared.length === 0) return { ...output, changedFiles };
+  return {
+    status: 'failed',
+    summary: `Engineering task ${task.id} touched undeclared files: ${undeclared.join(', ')}`,
+    changedFiles,
+    evidence: output.evidence,
+  };
+}
+
 export class ReconciledWaveEngineeringRuntime {
   constructor(
     private readonly engineering: BaseAwareEngineeringRuntime,
@@ -61,7 +80,7 @@ export class ReconciledWaveEngineeringRuntime {
 
         const outputs = await Promise.all(waveTasks.map(async task => {
           try {
-            const output = await this.engineering.execute(task, currentBase);
+            const output = enforceDeclaredFiles(task, await this.engineering.execute(task, currentBase));
             return { task, output };
           } catch (error) {
             return {
