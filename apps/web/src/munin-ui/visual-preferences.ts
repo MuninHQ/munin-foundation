@@ -1,3 +1,5 @@
+export const MUNIN_VISUAL_SYSTEM_VERSION = '1.0.0';
+
 export type MotionLevel = 'minimal' | 'balanced' | 'cinematic';
 
 export type VisualPreferences = {
