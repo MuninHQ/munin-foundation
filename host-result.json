@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "jobId": "github-deploy-second-brain-current-main-20260904-2053",
-  "type": "deploy-main",
+  "jobId": "github-buildall-munin-core-jarvis-20260904-2059",
+  "type": "build-all",
   "status": "failed",
-  "finishedAt": "2026-09-04T23:55:26.556Z",
+  "finishedAt": "2026-09-05T00:10:53.047Z",
   "result": {
-    "id": "github-deploy-second-brain-current-main-20260904-2053",
+    "id": "github-buildall-munin-core-jarvis-20260904-2059",
     "status": "failed",
-    "summary": "Working tree is not clean; refusing automatic fast-forward."
+    "summary": "Engineering provider returned no valid file changes."
   }
 }
