@@ -6,6 +6,7 @@
   <title>Munin Core Memory</title>
   <link rel="stylesheet" href="/munin.css" />
   <style>
+    #coreRefresh{border:1px solid var(--border-strong);background:var(--surface-raised);color:var(--text);border-radius:10px;padding:10px 13px;cursor:pointer}#coreRefresh:disabled{opacity:.6;cursor:wait}.memory-panel a{color:var(--accent-bright)}.memory-panel h3{overflow-wrap:anywhere}
     :root{--memory-cyan:#36c5ff;--memory-green:#55e3ad;--memory-purple:#a879ff}
     .memory-shell{display:grid;gap:16px}.memory-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:16px}.memory-hero h1{font-size:42px;margin:4px 0 8px}.memory-hero p{max-width:780px;color:var(--text-muted)}
     .memory-actions,.button-row,.recall-chips{display:flex;gap:8px;flex-wrap:wrap}.memory-actions button,.button-row button,.recall-chips button{border:1px solid var(--border-strong);background:var(--surface-raised);color:var(--text-soft);border-radius:10px;padding:10px 13px;cursor:pointer}.memory-actions .primary,.button-row .primary{background:var(--accent-strong);color:#fff}.memory-actions button:hover,.button-row button:hover,.recall-chips button:hover{border-color:var(--accent-border);color:var(--text)}
@@ -22,13 +23,24 @@
   <script defer src="/munin-nav.js"></script>
   <script defer src="/munin-client.js"></script>
   <script defer src="/context-memory.js"></script>
+  <script defer src="/munin-core.js"></script>
 </head>
 <body>
 <main class="munin-page memory-shell">
   <header class="memory-hero">
-    <div><div class="eyebrow">MUNIN CORE / MEMORY</div><h1>Segundo Cérebro</h1><p>Memória local-first com recall automático antes da tarefa, commit depois da tarefa e Obsidian como espelho opcional.</p></div>
+    <div><div class="eyebrow">MUNIN CORE / SECOND BRAIN</div><h1>Seu centro de operações</h1><p>Prioridades, próximos passos, checkpoints e memória em uma só visão. Munin é a fonte de verdade; Obsidian permanece um espelho opcional.</p></div>
     <div class="memory-actions"><button onclick="contextMemory.load()">↻ Atualizar</button><button onclick="contextMemory.initVault()">Inicializar Vault</button><button class="primary" onclick="contextMemory.syncVault()">Sincronizar Obsidian</button></div>
   </header>
+
+  <section aria-label="Operação atual">
+    <div class="row"><h2>O que precisa de atenção agora</h2><button id="coreRefresh" class="munin-button" type="button">Atualizar operação</button></div>
+    <p id="coreFreshness" class="muted" role="status">Carregando fontes locais…</p>
+    <div class="memory-grid">
+      <article class="memory-panel accent"><h2>Prioridades e próximos passos</h2><div id="corePriorities" class="list">Carregando…</div><p><a href="/action-inbox.html">Ver Action Inbox →</a></p></article>
+      <article class="memory-panel"><h2>Checkpoints executivos</h2><div id="coreCheckpoints" class="list">Carregando…</div></article>
+      <article class="memory-panel knowledge-panel"><h2>Agentes e runtime</h2><div id="coreRuntime">Carregando…</div><p><a href="/council.html">Abrir Control Room →</a></p></article>
+    </div>
+  </section>
 
   <section class="memory-grid">
     <article class="memory-panel accent core-card">
