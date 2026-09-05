@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import gsap from 'gsap';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { gsap } from 'gsap';
 
 export type MuninState = 'idle' | 'listening' | 'thinking' | 'searching' | 'executing' | 'warning' | 'done';
 
@@ -72,6 +72,6 @@ export function MiniRadar({ active = 4 }: { active?: number }) {
   </div>;
 }
 
-export function ElectricFrame({ children, active = true, className = '' }: { children: React.ReactNode; active?: boolean; className?: string }) {
+export function ElectricFrame({ children, active = true, className = '' }: { children: ReactNode; active?: boolean; className?: string }) {
   return <div className={`electric-frame ${active ? 'is-active' : ''} ${className}`}>{children}</div>;
 }
