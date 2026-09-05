@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { BootAmbient } from './BootAmbient';
 import { DecryptedText, MiniRadar, MuninCore, type MuninState } from './effects';
 import { startMotionRuntime } from './motion-runtime';
+import { MUNIN_STATE_EVENT, type MuninRuntimeEvent } from './runtime-events';
 import {
   applyVisualPreferences,
   loadVisualPreferences,
@@ -22,11 +23,13 @@ function detectState(): MuninState {
 
 export function VisualRuntime() {
   const [preferences, setPreferences] = useState<VisualPreferences>(() => loadVisualPreferences());
-  const [state, setState] = useState<MuninState>('idle');
+  const [domState, setDomState] = useState<MuninState>('idle');
+  const [runtimeState, setRuntimeState] = useState<MuninState | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [portalHost, setPortalHost] = useState<HTMLElement | null>(null);
   const [bootVisible, setBootVisible] = useState(true);
 
+  const state = runtimeState ?? domState;
   const cinematicBoot = preferences.motion === 'cinematic' && preferences.ambient && preferences.gpu && !preferences.reduceMotion;
 
   useEffect(() => {
@@ -36,11 +39,26 @@ export function VisualRuntime() {
   }, [preferences]);
 
   useEffect(() => {
-    const update = () => setState(detectState());
+    const update = () => setDomState(detectState());
     update();
     const observer = new MutationObserver(update);
     observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-busy'] });
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    let resetTimer: number | undefined;
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<MuninRuntimeEvent>).detail;
+      if (!detail?.state) return;
+      if (resetTimer) window.clearTimeout(resetTimer);
+      setRuntimeState(detail.state);
+      if (detail.state === 'done' || detail.state === 'warning') {
+        resetTimer = window.setTimeout(() => setRuntimeState(null), detail.state === 'done' ? 900 : 1800);
+      }
+    };
+    window.addEventListener(MUNIN_STATE_EVENT, handler);
+    return () => { if (resetTimer) window.clearTimeout(resetTimer); window.removeEventListener(MUNIN_STATE_EVENT, handler); };
   }, []);
 
   useEffect(() => {

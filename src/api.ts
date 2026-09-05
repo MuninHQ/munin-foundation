@@ -5,6 +5,7 @@ import { buildKnowledgeGraph, buildTimeline, generateDailyBrief, generateInsight
 import type { JobStatus, Priority, Status } from './types.js';
 import { CareerInboxStore } from './career-inbox.js';
 import { syncCareerInbox } from './email-providers.js';
+import { manualSyncCareerInbox } from './email-manual-sync.js';
 import { beginOAuth, completeOAuth, connectionStatus, disconnect, type OAuthProvider } from './oauth.js';
 import { captureCareerMessage, type CaptureFormat } from './career-capture.js';
 import { CareerWatchFolder } from './watch-folder.js';
@@ -72,7 +73,7 @@ if(request.method==='GET'&&url.pathname==='/api/intelligence/daily-brief')return
 if(request.method==='GET'&&url.pathname==='/api/intelligence/insights')return json(request,response,200,{items:generateInsights(await store.load())});
 if(request.method==='GET'&&url.pathname==='/api/intelligence/context')return json(request,response,200,{query:url.searchParams.get('q')??'',matches:resolveContext(await store.load(),url.searchParams.get('q')??'')});
 if(request.method==='GET'&&url.pathname==='/api/career-inbox'){const state=await inbox.load();return json(request,response,200,{...state,connections:await connectionStatus(),watchFolder:await watchFolder.status()});}
-if(request.method==='POST'&&url.pathname==='/api/career-inbox/sync')return json(request,response,200,await syncCareerInbox());
+if(request.method==='POST'&&url.pathname==='/api/career-inbox/sync')return json(request,response,200,await manualSyncCareerInbox());
 if(request.method==='POST'&&url.pathname==='/api/career-inbox/capture'){const input=await body(request);const format=text(input.format,'format') as CaptureFormat;if(!['eml','text','txt','msg'].includes(format))throw new Error('Unsupported capture format');return json(request,response,201,await captureCareerMessage({format,filename:typeof input.filename==='string'?input.filename:undefined,content:text(input.content,'content')}));}
 if(request.method==='POST'&&url.pathname==='/api/career-inbox/capture-bulk'){const input=await body(request);if(!Array.isArray(input.items))throw new Error('items array is required');if(input.items.length>50)throw new Error('Maximum 50 messages per batch');let added=0,duplicates=0;const errors:{filename?:string;error:string}[]=[];for(const raw of input.items){try{if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Invalid item');const item=raw as Record<string,unknown>;const format=text(item.format,'format') as CaptureFormat;if(!['eml','text','txt','msg'].includes(format))throw new Error('Unsupported capture format');const result=await captureCareerMessage({format,filename:typeof item.filename==='string'?item.filename:undefined,content:text(item.content,'content')});if(result.added)added++;else duplicates++;}catch(error){const item=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw as Record<string,unknown>:{};errors.push({filename:typeof item.filename==='string'?item.filename:undefined,error:error instanceof Error?error.message:String(error)});}}return json(request,response,201,{processed:input.items.length,added,duplicates,errors});}
 if(request.method==='GET'&&url.pathname==='/api/career-inbox/watch-folder')return json(request,response,200,await watchFolder.status());

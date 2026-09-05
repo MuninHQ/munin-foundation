@@ -16,7 +16,7 @@ export const MAX_TRUSTED_SIGNAL_AGE_DAYS=60;
 export const TRUSTED_SOURCES:TrustedSource[]=[
   {id:'bcb',name:'Banco Central do Brasil',url:'https://www.bcb.gov.br/noticias',authority:'national-regulator',weight:1.25},
   {id:'cvm',name:'Comissão de Valores Mobiliários',url:'https://www.gov.br/cvm/pt-br/assuntos/noticias',authority:'national-regulator',weight:1.2},
-  {id:'bis',name:'Bank for International Settlements',url:'https://www.bis.org/',feedUrl:'https://www.bis.org/doclist/rss_all_categories.rss',authority:'international-standard-setter',weight:1.05},
+  {id:'bis',name:'Bank for International Settlements',url:'https://www.bis.org/',feedUrl:'https://www.bis.org/doclist/all_pressrels.rss',authority:'international-standard-setter',weight:1.05},
   {id:'fsb',name:'Financial Stability Board',url:'https://www.fsb.org/',feedUrl:'https://www.fsb.org/wordpress/content_type/press-releases/feed/',authority:'international-standard-setter',weight:1.1},
   {id:'febraban',name:'FEBRABAN',url:'https://portal.febraban.org.br/noticias',authority:'industry-association',weight:1.05},
 ];
