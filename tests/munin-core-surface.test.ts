@@ -27,7 +27,14 @@ async function surface(fail = '', hang = false) {
       if(path===fail) throw Error('offline');return data[path];
     },
   } };
-  runInNewContext(await readFile('apps/web/public/munin-core.js','utf8'), {window,document:{getElementById:get},Date,URL,AbortSignal:{timeout:()=>AbortSignal.timeout(5)}});
+  // Native AbortSignal.timeout uses an unreferenced timer in Node. Keep the
+  // simulated browser deadline alive even when this is the last pending test.
+  const deadline = () => {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(),5);
+    return controller.signal;
+  };
+  runInNewContext(await readFile('apps/web/public/munin-core.js','utf8'), {window,document:{getElementById:get},Date,URL,AbortSignal:{timeout:deadline}});
   await new Promise(resolve => setTimeout(resolve,20));
   await window.muninCore.refresh();
   return {get,calls,data,window};
