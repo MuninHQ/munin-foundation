@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ExecutiveDashboard } from './ExecutiveDashboard';
+import { classifyMuninRequest, emitMuninState } from './munin-ui/runtime-events';
 
 type Section = 'Command Center' | 'Projects' | 'Career' | 'Research' | 'Runtime';
 type Workspace = { state: { projects: any[]; actions: any[]; jobs: any[]; research: any[] }; events: any[]; careerQueue: any[]; intelligence?: any };
@@ -14,11 +15,18 @@ const nav: Array<{ id: Section; label: string; glyph: string }> = [
 ];
 
 async function request(path: string, options?: RequestInit) {
-  const response = await fetch(path, { headers: { 'content-type': 'application/json' }, ...options });
-  const raw = await response.text();
-  const data = raw ? JSON.parse(raw) : {};
-  if (!response.ok) throw new Error(data.error ?? `Request failed (${response.status})`);
-  return data;
+  const operationId = emitMuninState(classifyMuninRequest(path, options?.method), path);
+  try {
+    const response = await fetch(path, { headers: { 'content-type': 'application/json' }, ...options });
+    const raw = await response.text();
+    const data = raw ? JSON.parse(raw) : {};
+    if (!response.ok) throw new Error(data.error ?? `Request failed (${response.status})`);
+    emitMuninState('done', path, operationId);
+    return data;
+  } catch (error) {
+    emitMuninState('warning', path, operationId);
+    throw error;
+  }
 }
 
 export function App() {

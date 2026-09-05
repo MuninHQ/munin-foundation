@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import * as THREE from 'three';
 
 export function BootAmbient({ enabled }: { enabled: boolean }) {
   const target = useRef<HTMLDivElement>(null);
@@ -11,7 +10,8 @@ export function BootAmbient({ enabled }: { enabled: boolean }) {
 
     (async () => {
       try {
-        (window as typeof window & { THREE?: typeof THREE }).THREE = THREE;
+        const THREE = await import('three');
+        (window as typeof window & { THREE?: unknown }).THREE = THREE;
         const module = await import('vanta/dist/vanta.net.min');
         if (disposed || !target.current) return;
         const createNet = (module.default ?? module) as unknown as (options: Record<string, unknown>) => { destroy?: () => void };
