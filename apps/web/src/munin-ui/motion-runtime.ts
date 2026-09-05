@@ -1,4 +1,4 @@
-import gsap from 'gsap';
+import { gsap } from 'gsap';
 import Lenis from 'lenis';
 import type { VisualPreferences } from './visual-preferences';
 
