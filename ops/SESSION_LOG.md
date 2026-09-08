@@ -325,3 +325,24 @@ Adapt high-value patterns from changedetection.io, public-apis, n8n and command-
 - Core TypeScript build passed.
 - Vite production build passed and emitted both new pages.
 - Full suite passed: 502 tests, 0 failures.
+
+
+## 2026-09-08 — Research Fabric Wave 1
+
+### Decision
+
+- Keep Wave 1 read-only and disabled by default behind MUNIN_RESEARCH_FABRIC_V1.
+- Use public zero-cost Web/RSS/GitHub sources and local yt-dlp for YouTube without credentials.
+- Block private-network targets and revalidate redirects before external reads.
+
+### Changes
+
+- Added source adapters, normalization, bounded fallback routing and a source doctor.
+- Added Web/RSS SSRF and response-size guards, anonymous GitHub REST support and shell-free YouTube execution.
+- Installed yt-dlp 2026.07.04 on the Windows host via winget for empirical YouTube readiness.
+
+### Validation
+
+- Focused Research Fabric suite passed: 8 tests, 0 failures.
+- Full repository suite passed: 788 tests, 0 failures.
+- Source Doctor reported Web, RSS, GitHub and YouTube healthy after host setup.
