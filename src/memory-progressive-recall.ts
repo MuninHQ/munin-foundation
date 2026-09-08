@@ -20,9 +20,9 @@ export function planProgressiveRecall<T>(
   candidates: ProgressiveRecallCandidate<T>[],
   options: { compactLimit?: number; timelineLimit?: number; fullLimit?: number; minScore?: number } = {},
 ): ProgressiveRecallPlan<T> {
-  const compactLimit = options.compactLimit ?? 8;
-  const timelineLimit = Math.min(options.timelineLimit ?? 3, compactLimit);
-  const fullLimit = Math.min(options.fullLimit ?? 1, timelineLimit);
+  const compactLimit = Math.max(0, options.compactLimit ?? 8);
+  const timelineLimit = Math.max(0, Math.min(options.timelineLimit ?? 3, compactLimit));
+  const fullLimit = Math.max(0, Math.min(options.fullLimit ?? 1, timelineLimit));
   const minScore = options.minScore ?? Number.NEGATIVE_INFINITY;
 
   const compact = [...candidates]
