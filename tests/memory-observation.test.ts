@@ -8,8 +8,8 @@ import {
   normalizeTopicKey,
   observeMemory,
   runMemoryDoctor,
-} from '../src/memory-observation';
-import { planProgressiveRecall } from '../src/memory-progressive-recall';
+} from '../src/memory-observation.js';
+import { planProgressiveRecall } from '../src/memory-progressive-recall.js';
 
 test('normalizes and validates canonical two-level topic keys', () => {
   assert.equal(normalizeTopicKey(' Architecture/Auth-Model '), 'architecture/auth-model');
