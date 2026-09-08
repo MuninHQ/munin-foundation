@@ -93,3 +93,10 @@ Observation-mode output must be evaluated before canonical write behavior is ena
 - Do not replace Munin Second Brain storage.
 - Do not create a second SQLite memory database.
 - Do not weaken approval, audit, privacy, or secret-handling controls.
+
+## Implementation seams added in this branch
+
+- `src/memory-observation.ts`: topic-key normalization/validation, stable fingerprints, lifecycle review and a read-only doctor report.
+- `src/memory-progressive-recall.ts`: deterministic staged-recall planning without storage mutation.
+- `tests/memory-observation.test.ts`: focused coverage for observation-mode behavior.
+- `agents/memory-curator.md`: curator contract updated to keep these capabilities advisory until promotion.
