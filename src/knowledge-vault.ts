@@ -269,7 +269,7 @@ export async function inspectKnowledgeVaultMemory(options: { now?: Date; oversiz
   const files = await walkMarkdown(root);
   const records: MemoryDoctorRecord[] = [];
   for (const file of files) {
-    if (path.basename(file) === '_index.md' || file.includes(`${path.sep}99 Templates${path.sep}`)) continue;
+    if (path.basename(file) === '_index.md' || path.resolve(file) === path.join(root, 'README.md') || file.includes(`${path.sep}99 Templates${path.sep}`)) continue;
     const content = await readFile(file, 'utf8');
     const title = content.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? path.basename(file, '.md');
     const body = content.replace(/^---[\s\S]*?---\s*/m, '').replace(/^#\s+.+$/m, '').trim();
