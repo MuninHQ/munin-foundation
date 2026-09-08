@@ -1,4 +1,4 @@
-import { commitAfterTask, recallBeforeTask, secondBrainDoctor, secondBrainStatus } from './second-brain.js';
+import { commitAfterTask, recallBeforeTask, secondBrainDoctor, secondBrainMetrics, secondBrainStatus } from './second-brain.js';
 import { secondBrainDaily } from './second-brain-daily.js';
 
 function value(args: string[], flag: string): string | undefined {
@@ -27,6 +27,11 @@ async function main() {
 
   if (command === 'doctor') {
     console.log(JSON.stringify(await secondBrainDoctor(), null, 2));
+    return;
+  }
+
+  if (command === 'metrics') {
+    console.log(JSON.stringify(await secondBrainMetrics(), null, 2));
     return;
   }
 

@@ -1,6 +1,7 @@
 import { contextForConsumer, queryContextMemory, type ContextConsumer } from './context-memory.js';
 import { captureKnowledge, exportContextToVault, inspectKnowledgeVaultMemory, knowledgeVaultStatus, searchKnowledgeVault } from './knowledge-vault.js';
 import { planProgressiveRecall } from './memory-progressive-recall.js';
+import { memoryRecallMetricsSummary, recordMemoryRecallMetric } from './memory-observation-metrics.js';
 import { appendSessionEvent, hydrateControlRoomState } from './control-room-state.js';
 
 export type SecondBrainTaskInput = {
@@ -66,6 +67,16 @@ export async function recallBeforeTask(input: SecondBrainTaskInput, root = proce
     vaultMatches.map((match, index) => ({ id: match.file || index, score: match.score, preview: match.excerpt, value: match })),
     { compactLimit: 8, timelineLimit: 3, fullLimit: 1, minScore: 1 },
   );
+  await recordMemoryRecallMetric({
+    at: new Date().toISOString(),
+    project,
+    candidateCount: vaultMatches.length,
+    compactCount: progressiveRecall.compact.length,
+    timelineCount: progressiveRecall.timelineIds.length,
+    fullCount: progressiveRecall.fullMemoryIds.length,
+    baselineChars: vaultMatches.reduce((sum, match) => sum + match.excerpt.length, 0),
+    compactChars: progressiveRecall.compact.reduce((sum, match) => sum + match.preview.length, 0),
+  });
   await appendSessionEvent({
     title: `MEMORY PRE-TASK · ${project}`,
     summary: `Task: ${task}\nConsumer: ${consumer}\nContext matches: ${contextMatches.length}\nVault matches: ${vaultMatches.length}`,
@@ -151,6 +162,10 @@ export async function commitAfterTask(input: SecondBrainCommitInput, root = proc
 }
 
 
+
+export async function secondBrainMetrics() {
+  return { mode: 'observation' as const, readOnly: true, ...(await memoryRecallMetricsSummary()) };
+}
 
 export async function secondBrainDoctor() {
   const report = await inspectKnowledgeVaultMemory();

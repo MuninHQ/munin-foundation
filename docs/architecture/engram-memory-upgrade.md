@@ -100,3 +100,11 @@ Observation-mode output must be evaluated before canonical write behavior is ena
 - `src/memory-progressive-recall.ts`: deterministic staged-recall planning without storage mutation.
 - `tests/memory-observation.test.ts`: focused coverage for observation-mode behavior.
 - `agents/memory-curator.md`: curator contract updated to keep these capabilities advisory until promotion.
+
+## Observation metrics
+
+Each PRE-TASK recall records a content-free local JSONL metric with candidate counts and character counts only. Raw memory text, prompts, credentials, and retrieved excerpts are not copied into the metrics stream.
+
+Run `npm run second-brain:metrics` to inspect the rolling evidence summary. The report exposes sample count, average candidate/compact counts, estimated compact-context reduction, and the rate at which a full-memory expansion was planned.
+
+These measurements are evidence for the promotion gate. They do not enable canonical dedupe, destructive merging, or automatic deletion. Promotion still requires enough real samples to show lower context noise without unsafe loss of relevant recall.

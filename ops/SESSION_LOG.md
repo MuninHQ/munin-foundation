@@ -325,3 +325,32 @@ Adapt high-value patterns from changedetection.io, public-apis, n8n and command-
 - Core TypeScript build passed.
 - Vite production build passed and emitted both new pages.
 - Full suite passed: 502 tests, 0 failures.
+
+## 2026-09-08T19:11:40.160Z — MEMORY PRE-TASK · munin
+
+Task: Engram memory observation metrics
+Consumer: assistant
+Context matches: 0
+Vault matches: 2
+
+## 2026-09-08T19:12:31.125Z — MEMORY POST-TASK · munin
+
+Added content-free recall telemetry and rolling promotion evidence metrics while preserving observation-only behavior.
+## Decisions
+
+- Metrics remain local and content-free
+- No canonical promotion yet
+
+## Changed
+
+- src/memory-observation-metrics.ts
+- src/second-brain.ts
+- src/second-brain-cli.ts
+- tests/memory-observation.test.ts
+- docs/architecture/engram-memory-upgrade.md
+- package.json
+
+## Next steps
+
+- Collect real recall samples
+- Evaluate promotion only after sufficient evidence

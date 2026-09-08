@@ -123,3 +123,17 @@ test('doctor surfaces potential topic conflicts without mutating records', () =>
   assert.deepEqual(report.potentialConflicts.map(item => item.topicKey), ['decision/provider']);
   assert.deepEqual(report.missingScope.map(item => item.id), ['orphan']);
 });
+
+import { summarizeMemoryRecallMetrics } from '../src/memory-observation-metrics.js';
+
+test('recall metrics summarize context reduction without storing content', () => {
+  const summary = summarizeMemoryRecallMetrics([
+    { at: '2026-09-08T00:00:00.000Z', project: 'munin', candidateCount: 8, compactCount: 4, timelineCount: 2, fullCount: 1, baselineChars: 1000, compactChars: 400 },
+    { at: '2026-09-08T00:01:00.000Z', project: 'munin', candidateCount: 4, compactCount: 2, timelineCount: 1, fullCount: 0, baselineChars: 500, compactChars: 250 },
+  ]);
+  assert.equal(summary.samples, 2);
+  assert.equal(summary.averageCandidateCount, 6);
+  assert.equal(summary.averageCompactCount, 3);
+  assert.equal(Math.round(summary.averageContextReductionPct), 57);
+  assert.equal(summary.fullExpansionRatePct, 50);
+});
