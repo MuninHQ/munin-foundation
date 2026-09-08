@@ -94,6 +94,8 @@ test('doctor reports duplicates, topic revisions, invalid keys, stale and oversi
   assert.deepEqual(report.invalidTopicKeys.map((item) => item.id), ['c']);
   assert.deepEqual(report.needsReview.map((item) => item.id), ['a']);
   assert.deepEqual(report.oversized.map((item) => item.id), ['c']);
+  assert.equal(report.potentialConflicts.length, 0);
+  assert.equal(report.missingScope.length, 0);
 });
 
 test('progressive recall expands only top-ranked candidates', () => {
@@ -109,4 +111,15 @@ test('progressive recall expands only top-ranked candidates', () => {
   assert.deepEqual(plan.compact.map((item) => item.id), ['high', 'mid', 'low']);
   assert.deepEqual(plan.timelineIds, ['high', 'mid']);
   assert.deepEqual(plan.fullMemoryIds, ['high']);
+});
+
+
+test('doctor surfaces potential topic conflicts without mutating records', () => {
+  const report = runMemoryDoctor([
+    { id: 'v1', scope: 'project', type: 'decision', title: 'Provider', content: 'use ollama', topicKey: 'decision/provider' },
+    { id: 'v2', scope: 'project', type: 'decision', title: 'Provider', content: 'use deterministic local', topicKey: 'decision/provider' },
+    { id: 'orphan', type: 'note', title: 'Missing scope', content: 'x' },
+  ]);
+  assert.deepEqual(report.potentialConflicts.map(item => item.topicKey), ['decision/provider']);
+  assert.deepEqual(report.missingScope.map(item => item.id), ['orphan']);
 });

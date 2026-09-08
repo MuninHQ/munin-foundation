@@ -96,6 +96,8 @@ export interface MemoryDoctorReport {
   invalidTopicKeys: Array<{ id?: string | number; topicKey?: string }>;
   needsReview: Array<{ id?: string | number; reviewAfter?: string }>;
   oversized: Array<{ id?: string | number; size: number }>;
+  missingScope: Array<{ id?: string | number }>;
+  potentialConflicts: Array<{ topicKey: string; ids: Array<string | number>; fingerprints: string[] }>;
 }
 
 export function runMemoryDoctor(
@@ -106,9 +108,11 @@ export function runMemoryDoctor(
   const oversizedChars = options.oversizedChars ?? 12_000;
   const byFingerprint = new Map<string, Array<string | number>>();
   const byTopic = new Map<string, Array<string | number>>();
+  const topicFingerprints = new Map<string, Map<string, Array<string | number>>>();
   const invalidTopicKeys: MemoryDoctorReport['invalidTopicKeys'] = [];
   const needsReview: MemoryDoctorReport['needsReview'] = [];
   const oversized: MemoryDoctorReport['oversized'] = [];
+  const missingScope: MemoryDoctorReport['missingScope'] = [];
 
   records.forEach((record, index) => {
     const id = record.id ?? index;
@@ -125,7 +129,14 @@ export function runMemoryDoctor(
       const revisions = byTopic.get(observed.normalizedTopicKey) ?? [];
       revisions.push(id);
       byTopic.set(observed.normalizedTopicKey, revisions);
+      const fingerprints = topicFingerprints.get(observed.normalizedTopicKey) ?? new Map<string, Array<string | number>>();
+      const sameVersion = fingerprints.get(observed.fingerprint) ?? [];
+      sameVersion.push(id);
+      fingerprints.set(observed.fingerprint, sameVersion);
+      topicFingerprints.set(observed.normalizedTopicKey, fingerprints);
     }
+
+    if (!String(record.scope ?? '').trim()) missingScope.push({ id });
 
     if (observed.lifecycleState === 'needs_review') {
       needsReview.push({ id, reviewAfter: observed.reviewAfter });
@@ -146,5 +157,13 @@ export function runMemoryDoctor(
     invalidTopicKeys,
     needsReview,
     oversized,
+    missingScope,
+    potentialConflicts: [...topicFingerprints.entries()]
+      .filter(([, fingerprints]) => fingerprints.size > 1)
+      .map(([topicKey, fingerprints]) => ({
+        topicKey,
+        ids: [...fingerprints.values()].flat(),
+        fingerprints: [...fingerprints.keys()],
+      })),
   };
 }
