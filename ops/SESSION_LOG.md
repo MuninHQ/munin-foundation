@@ -346,3 +346,32 @@ Adapt high-value patterns from changedetection.io, public-apis, n8n and command-
 - Focused Research Fabric suite passed: 8 tests, 0 failures.
 - Full repository suite passed: 788 tests, 0 failures.
 - Source Doctor reported Web, RSS, GitHub and YouTube healthy after host setup.
+
+## 2026-09-08T20:04:23.504Z — MEMORY PRE-TASK · ^Munin^ Research^ Fabric^
+
+Task: ^Fix^ Research^ Fabric^ YouTube^ search^ buffer^
+Consumer: assistant
+Context matches: 0
+Vault matches: 0
+
+## 2026-09-08T20:05:04.629Z — MEMORY POST-TASK · ^Munin^ Research^ Fabric^
+
+^YouTube^ search^ now^ uses^ flat^ playlist^ metadata,^ preventing^ yt-dlp^ stdout^ overflow;^ live^ search^ succeeded^ after^ the^ change.^
+## Decisions
+
+- ^Use^ --flat-playlist^ only^ for^ YouTube^ search^
+- Keep^ direct^ video^ reads^ unchanged^ and^ read-only^
+
+## Changed
+
+- src/research-adapters.ts^
+- tests/research-fabric.test.ts
+
+## Next steps
+
+- ^Ship^ fix^ through^ PR^ and^ redeploy^ main^
+- Repeat^ live^ Wave^ 1^ smoke^ test^ after^ merge^
+
+## What did not work
+
+- ^Initial^ live^ YouTube^ search^ exceeded^ the^ 2^ MB^ stdout^ buffer^

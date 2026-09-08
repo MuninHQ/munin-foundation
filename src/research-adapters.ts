@@ -125,7 +125,10 @@ export class YouTubeResearchAdapter implements ResearchAdapter {
   canHandle(request: ResearchRequest) { return request.operation === 'search' || /(?:youtube\.com|youtu\.be)/i.test(request.target); }
   async execute(request: ResearchRequest): Promise<RawResearchItem[]> {
     const target = request.operation === 'search' ? `ytsearch${Math.min(request.limit ?? 10, 20)}:${request.target}` : request.target;
-    const {stdout} = await this.runner('yt-dlp', ['--dump-single-json','--skip-download','--no-warnings',target]);
+    const args = request.operation === 'search'
+      ? ['--dump-single-json','--flat-playlist','--skip-download','--no-warnings',target]
+      : ['--dump-single-json','--skip-download','--no-warnings',target];
+    const {stdout} = await this.runner('yt-dlp', args);
     const payload = JSON.parse(stdout) as Record<string, unknown>;
     const records = Array.isArray(payload.entries) ? payload.entries as Record<string, unknown>[] : [payload];
     return records.filter(Boolean).map(record => ({
