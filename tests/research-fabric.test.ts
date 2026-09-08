@@ -68,3 +68,13 @@ test('web adapter revalidates redirects before following them', async () => {
   const web = new WebResearchAdapter(fetcher as typeof fetch, publicResolver);
   await assert.rejects(() => web.execute({operation:'read', target:'https://example.com'}), /private-network/i);
 });
+
+
+test('YouTube search uses flat playlist metadata to keep output bounded', async () => {
+  const calls:Array<{file:string;args:string[]}>=[];
+  const adapter = new YouTubeResearchAdapter(async (file,args) => {calls.push({file,args}); return {stdout:JSON.stringify({entries:[{title:'Video',webpage_url:'https://youtu.be/x'}]})};});
+  const items = await adapter.execute({operation:'search', target:'stablecoin payments', limit:3});
+  assert.equal(items.length, 1);
+  assert.ok(calls[0].args.includes('--flat-playlist'));
+  assert.ok(calls[0].args.includes('--skip-download'));
+});
