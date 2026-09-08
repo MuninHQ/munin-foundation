@@ -1,5 +1,7 @@
 import { contextForConsumer, queryContextMemory, type ContextConsumer } from './context-memory.js';
-import { captureKnowledge, exportContextToVault, knowledgeVaultStatus, searchKnowledgeVault } from './knowledge-vault.js';
+import { captureKnowledge, exportContextToVault, inspectKnowledgeVaultMemory, knowledgeVaultStatus, searchKnowledgeVault } from './knowledge-vault.js';
+import { planProgressiveRecall } from './memory-progressive-recall.js';
+import { memoryRecallMetricsSummary, recordMemoryRecallMetric } from './memory-observation-metrics.js';
 import { appendSessionEvent, hydrateControlRoomState } from './control-room-state.js';
 
 export type SecondBrainTaskInput = {
@@ -15,6 +17,8 @@ export type SecondBrainCommitInput = SecondBrainTaskInput & {
   nextSteps?: string[];
   failed?: string[];
   tags?: string[];
+  topicKey?: string;
+  reviewAfterDays?: number;
 };
 
 export type MemoryTimelineItem = {
@@ -59,6 +63,20 @@ export async function recallBeforeTask(input: SecondBrainTaskInput, root = proce
     knowledgeVaultStatus(),
   ]);
   const project = input.project?.trim() || 'general';
+  const progressiveRecall = planProgressiveRecall(
+    vaultMatches.map((match, index) => ({ id: match.file || index, score: match.score, preview: match.excerpt, value: match })),
+    { compactLimit: 8, timelineLimit: 3, fullLimit: 1, minScore: 1 },
+  );
+  await recordMemoryRecallMetric({
+    at: new Date().toISOString(),
+    project,
+    candidateCount: vaultMatches.length,
+    compactCount: progressiveRecall.compact.length,
+    timelineCount: progressiveRecall.timelineIds.length,
+    fullCount: progressiveRecall.fullMemoryIds.length,
+    baselineChars: vaultMatches.reduce((sum, match) => sum + match.excerpt.length, 0),
+    compactChars: progressiveRecall.compact.reduce((sum, match) => sum + match.preview.length, 0),
+  });
   await appendSessionEvent({
     title: `MEMORY PRE-TASK · ${project}`,
     summary: `Task: ${task}\nConsumer: ${consumer}\nContext matches: ${contextMatches.length}\nVault matches: ${vaultMatches.length}`,
@@ -77,6 +95,14 @@ export async function recallBeforeTask(input: SecondBrainTaskInput, root = proce
     vault: {
       status: vault,
       matches: vaultMatches,
+    },
+    memoryObservation: {
+      mode: 'observation' as const,
+      progressiveRecall: {
+        compact: progressiveRecall.compact.map(candidate => ({ id: candidate.id, score: candidate.score, preview: candidate.preview })),
+        timelineIds: progressiveRecall.timelineIds,
+        fullMemoryIds: progressiveRecall.fullMemoryIds,
+      },
     },
     controlRoom: {
       currentState: controlRoom.currentState,
@@ -119,6 +145,8 @@ export async function commitAfterTask(input: SecondBrainCommitInput, root = proc
     scope: 'private-operational',
     source: 'munin-second-brain-post-task',
     tags: ['second-brain', 'task-memory', project, ...compact(input.tags)],
+    topicKey: input.topicKey,
+    reviewAfterDays: input.reviewAfterDays,
   });
   const mirror = await exportContextToVault();
   const controlRoom = await hydrateControlRoomState(root);
@@ -130,6 +158,23 @@ export async function commitAfterTask(input: SecondBrainCommitInput, root = proc
     contextMirror: mirror,
     recentTimeline: parseMemoryTimeline(controlRoom.sessionLog, 12),
     committedAt: new Date().toISOString(),
+  };
+}
+
+
+
+export async function secondBrainMetrics() {
+  return { mode: 'observation' as const, readOnly: true, ...(await memoryRecallMetricsSummary()) };
+}
+
+export async function secondBrainDoctor() {
+  const report = await inspectKnowledgeVaultMemory();
+  return {
+    mode: 'observation' as const,
+    readOnly: true,
+    canonicalStoreChanged: false,
+    generatedAt: new Date().toISOString(),
+    ...report,
   };
 }
 

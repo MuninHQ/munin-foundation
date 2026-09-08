@@ -1,4 +1,4 @@
-import { commitAfterTask, recallBeforeTask, secondBrainStatus } from './second-brain.js';
+import { commitAfterTask, recallBeforeTask, secondBrainDoctor, secondBrainMetrics, secondBrainStatus } from './second-brain.js';
 import { secondBrainDaily } from './second-brain-daily.js';
 
 function value(args: string[], flag: string): string | undefined {
@@ -25,6 +25,16 @@ async function main() {
     return;
   }
 
+  if (command === 'doctor') {
+    console.log(JSON.stringify(await secondBrainDoctor(), null, 2));
+    return;
+  }
+
+  if (command === 'metrics') {
+    console.log(JSON.stringify(await secondBrainMetrics(), null, 2));
+    return;
+  }
+
   if (command === 'recall') {
     const task = value(args, '--task') ?? args.slice(1).join(' ').trim();
     if (!task) throw new Error('Uso: second-brain recall --task "..." [--project munin]');
@@ -45,6 +55,8 @@ async function main() {
       nextSteps: list(args, '--next'),
       failed: list(args, '--failed'),
       tags: list(args, '--tags'),
+      topicKey: value(args, '--topic-key'),
+      reviewAfterDays: value(args, '--review-after-days') ? Number(value(args, '--review-after-days')) : undefined,
     }), null, 2));
     return;
   }

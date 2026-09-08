@@ -2,6 +2,7 @@ import path from 'node:path';
 import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import { runtimePath } from './config.js';
 import { loadContextMemory, type ContextSection } from './context-memory.js';
+import { observeMemory, runMemoryDoctor, type MemoryDoctorReport, type MemoryDoctorRecord } from './memory-observation.js';
 
 export type KnowledgeKind = 'note' | 'career' | 'linkedin' | 'research' | 'munin' | 'project' | 'decision' | 'procedure' | 'context';
 export type KnowledgeScope = 'public-professional' | 'private-operational' | 'sensitive-private';
@@ -14,6 +15,8 @@ export type KnowledgeCapture = {
   source?: string;
   scope?: KnowledgeScope;
   links?: string[];
+  topicKey?: string;
+  reviewAfterDays?: number;
 };
 
 export type VaultStatus = {
@@ -141,6 +144,15 @@ export async function captureKnowledge(input: KnowledgeCapture): Promise<{ file:
     try { await stat(file); file = path.join(dir, `${base}-${suffix++}.md`); } catch { break; }
   }
   const links = (input.links ?? []).map(x => `[[${x}]]`).join(' ');
+  const observed = observeMemory({
+    scope: input.scope ?? 'private-operational',
+    type: kind,
+    title: input.title,
+    content: input.body,
+    topicKey: input.topicKey,
+    updatedAt: now,
+    reviewAfterDays: input.reviewAfterDays,
+  }, now);
   const content = `${frontmatter({
     kind,
     scope: input.scope ?? 'private-operational',
@@ -148,6 +160,10 @@ export async function captureKnowledge(input: KnowledgeCapture): Promise<{ file:
     created: now.toISOString(),
     updated: now.toISOString(),
     tags: input.tags ?? [],
+    topic_key: observed.normalizedTopicKey,
+    memory_fingerprint: observed.fingerprint,
+    memory_state: observed.lifecycleState,
+    review_after: observed.reviewAfter,
   })}# ${input.title}\n\n${input.body.trim()}\n${links ? `\n## Links\n\n${links}\n` : ''}`;
   await writeFile(file, content, 'utf8');
   return { file };
@@ -238,4 +254,34 @@ export async function knowledgeVaultStatus(): Promise<VaultStatus> {
     folders: foldersCount,
     contextExports: files.filter(f => f.includes(`${path.sep}90 Context Memory${path.sep}`) && path.basename(f) !== '_index.md').length,
   };
+}
+
+
+function frontmatterValue(content: string, key: string): string | undefined {
+  const match = content.match(new RegExp(`^${key}:\\s*(.+)$`, 'm'));
+  if (!match) return undefined;
+  const raw = match[1].trim();
+  try { return JSON.parse(raw) as string; } catch { return raw.replace(/^['"]|['"]$/g, ''); }
+}
+
+export async function inspectKnowledgeVaultMemory(options: { now?: Date; oversizedChars?: number } = {}): Promise<MemoryDoctorReport & { root: string }> {
+  const root = knowledgeVaultRoot();
+  const files = await walkMarkdown(root);
+  const records: MemoryDoctorRecord[] = [];
+  for (const file of files) {
+    if (path.basename(file) === '_index.md' || path.resolve(file) === path.join(root, 'README.md') || file.includes(`${path.sep}99 Templates${path.sep}`)) continue;
+    const content = await readFile(file, 'utf8');
+    const title = content.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? path.basename(file, '.md');
+    const body = content.replace(/^---[\s\S]*?---\s*/m, '').replace(/^#\s+.+$/m, '').trim();
+    records.push({
+      id: path.relative(root, file),
+      scope: frontmatterValue(content, 'scope'),
+      type: frontmatterValue(content, 'kind'),
+      title,
+      content: body,
+      topicKey: frontmatterValue(content, 'topic_key'),
+      updatedAt: frontmatterValue(content, 'updated') ?? frontmatterValue(content, 'created'),
+    });
+  }
+  return { root, ...runMemoryDoctor(records, options) };
 }

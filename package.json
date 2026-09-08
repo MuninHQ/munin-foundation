@@ -38,6 +38,8 @@
     "second-brain:status": "npm run second-brain -- status",
     "second-brain:recall": "npm run second-brain -- recall",
     "second-brain:commit": "npm run second-brain -- commit",
+    "second-brain:doctor": "npm run second-brain -- doctor",
+    "second-brain:metrics": "npm run second-brain -- metrics",
     "document:ingest": "npm run build:core && node dist/src/document-ingest-cli.js",
     "document:benchmark": "npm run build:core && node dist/src/document-benchmark-cli.js",
     "document:promote": "npm run build:core && node dist/src/document-promotion-cli.js",
