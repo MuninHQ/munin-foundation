@@ -2,12 +2,12 @@ import type { MuninState, JobOpportunity } from './types.js';
 import type { OutcomeRecord } from './adaptive-execution.js';
 import { AgentRuntimeV1 } from './agent-runtime-v1.js';
 import { buildCareerApplicationPacket, type CareerApplicationPacket } from './career-application-packet.js';
-import { evaluateWatcher, type WatcherDefinition, type WatcherState } from './watchers.js';
+import { evaluateWatch, type WatchDefinition, type WatchSample } from './watchers.js';
 
 export interface CareerRuntimePreparation {
   packet: CareerApplicationPacket;
   runtime: Awaited<ReturnType<AgentRuntimeV1['plan']>>;
-  watcher?: ReturnType<typeof evaluateWatcher>;
+  watcher?: ReturnType<typeof evaluateWatch>;
 }
 
 export async function prepareCareerApplicationWithRuntime(
@@ -27,11 +27,12 @@ export async function prepareCareerApplicationWithRuntime(
     reason: 'Prepare evidence-backed application materials without submitting them.',
   }, options.outcomes ?? [], now);
 
-  let watcher: ReturnType<typeof evaluateWatcher> | undefined;
+  let watcher: ReturnType<typeof evaluateWatch> | undefined;
   if (options.previousFitScore !== undefined) {
-    const definition: WatcherDefinition = { id: `career-fit:${job.id}`, metric: `career.fit.${job.id}`, condition: 'gte', threshold: 80 };
-    const stateBefore: WatcherState = { watcherId: definition.id, lastValue: options.previousFitScore, lastCheckedAt: now.toISOString() };
-    watcher = evaluateWatcher(definition, job.fitScore, stateBefore, now);
+    const definition: WatchDefinition = { id: `career-fit:${job.id}`, name: `Career fit threshold for ${job.company} ${job.role}`, comparator: 'gte', target: 80 };
+    const previous: WatchSample = { value: options.previousFitScore, sampledAt: now.toISOString() };
+    const current: WatchSample = { value: job.fitScore, sampledAt: now.toISOString() };
+    watcher = evaluateWatch(definition, current, previous);
   }
   return { packet, runtime: plan, watcher };
 }
