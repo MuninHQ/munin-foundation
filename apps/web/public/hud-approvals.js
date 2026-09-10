@@ -28,7 +28,9 @@
     if (!confirm(`Deseja ${verb} esta ação?`)) return;
     button.disabled = true;
     try {
-      await request(`/api/mobile/approvals/${encodeURIComponent(id)}/${action}`, { method: 'POST', body: '{}' });
+      const result = await request(`/api/mobile/approvals/${encodeURIComponent(id)}/${action}`, { method: 'POST', body: '{}' });
+      const toast = document.getElementById('hud-toast');
+      if (toast && action === 'approve') { const status = result.execution?.status; toast.textContent = status === 'applied' ? 'APROVADO · EXECUTADO' : status ? `APROVADO · ${String(status).toUpperCase()}` : 'APROVADO'; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 3200); }
       await load();
     } catch (error) {
       button.disabled = false;

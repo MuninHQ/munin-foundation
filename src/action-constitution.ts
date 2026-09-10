@@ -4,7 +4,9 @@ import { randomUUID } from 'node:crypto';
 
 export type ActionClass='read'|'local-write'|'git-write'|'network-read'|'external-write'|'destructive';
 export type PolicyDecision='allow'|'deny'|'needs_user';
-export type ActionRequest={class:ActionClass;tool:string;target?:string;payloadPreview?:string;reason?:string};
+export type ApprovalEffectType='career.submit'|'video.publish'|'email.send'|'linkedin.publish';
+export type ApprovalEffect={type:ApprovalEffectType;resourceId:string;payload?:Record<string,unknown>};
+export type ActionRequest={class:ActionClass;tool:string;target?:string;payloadPreview?:string;reason?:string;effect?:ApprovalEffect};
 export type PolicyResult={decision:PolicyDecision;rule:string;request:ActionRequest};
 export type ActionAuditRecord=PolicyResult&{id:string;at:string};
 export type ActionAuditReplayFilter={decision?:PolicyDecision;actionClass?:ActionClass;limit?:number};

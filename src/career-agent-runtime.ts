@@ -49,5 +49,6 @@ export async function planCareerSubmission(
     target: job.link ?? `${job.company}:${job.role}`,
     payloadPreview: `${job.company} ${job.role}`,
     reason: 'Submitting an application changes an external system and requires explicit user approval.',
+    effect: { type: 'career.submit', resourceId: job.id, payload: { company: job.company, role: job.role, link: job.link } },
   }, options.outcomes ?? [], options.now ?? new Date());
 }
