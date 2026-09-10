@@ -19,3 +19,14 @@ test('handled email never returns to the operator queue',()=>{
  const result=buildActionInbox(empty(),{messages:[{id:'m1',provider:'capture',providerMessageId:'1',subject:'Done',snippet:'',receivedAt:'2026-08-22T12:00:00Z',category:'other',confidence:.5,handled:true,attention:'general_action',needsAction:true}]});
  assert.equal(result.items.length,0);
 });
+
+
+test('pending Sentinel approvals surface as P0 review items',()=>{
+ const decision={band:'RED' as const,disposition:'needs_approval' as const,rule:'external-write-escalation',request:{class:'external-write' as const,tool:'send email',target:'recruiter'},policy:{decision:'needs_user' as const,rule:'external-write-escalation',request:{class:'external-write' as const,tool:'send email',target:'recruiter'}}};
+ const approvals=[{id:'approval-1',createdAt:'2026-09-10T03:00:00.000Z',updatedAt:'2026-09-10T03:00:00.000Z',status:'pending' as const,decision}];
+ const result=buildActionInbox(empty(),{messages:[]},undefined,new Date('2026-09-10T03:01:00.000Z'),[],approvals);
+ const item=result.items.find(entry=>entry.origin==='approval');
+ assert.equal(item?.lane,'review');
+ assert.equal(item?.priority,'P0');
+ assert.match(item?.whyItMatters??'',/Sentinel/i);
+});
