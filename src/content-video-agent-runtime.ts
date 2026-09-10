@@ -42,5 +42,6 @@ export async function planVideoPublication(
     target,
     payloadPreview: summary,
     reason: 'Publishing media is an external side effect and requires explicit user approval.',
+    effect: { type: 'video.publish', resourceId: target, payload: { target, summary } },
   }, options.outcomes ?? [], options.now ?? new Date());
 }

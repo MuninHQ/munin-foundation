@@ -68,6 +68,11 @@ export class ApprovalQueue {
     return status ? records.filter(record => record.status === status) : records;
   }
 
+  async get(id: string): Promise<ApprovalRecord | undefined> {
+    const record = (await this.readAll()).find(item => item.id === id);
+    return record ? structuredClone(record) : undefined;
+  }
+
   async resolve(id: string, status: 'approved' | 'rejected', note?: string): Promise<ApprovalRecord> {
     const records = await this.readAll();
     const record = records.find(item => item.id === id);
