@@ -18,7 +18,14 @@ export async function generateVideoDraftWithRuntime(
     reason: 'Generate a reversible local draft; publication remains a separate external action.',
   }, options.outcomes ?? [], now);
   if (plan.sentinel.disposition !== 'guarded_execute') return { plan, output: undefined };
-  const output = await createContentVideoCapability().execute({ ...input, action: 'generate' });
+  const capabilityInput: ContentVideoInput = { ...input, action: 'generate' };
+  const output = await createContentVideoCapability().execute(capabilityInput, {
+    capability: 'media.content-video',
+    executionId: `agent-runtime-v1-${Date.now().toString(36)}`,
+    input: capabilityInput,
+    startedAt: now.toISOString(),
+    metadata: { governedBy: 'AgentRuntimeV1' },
+  });
   return { plan, output };
 }
 
