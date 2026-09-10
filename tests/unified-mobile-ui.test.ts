@@ -17,9 +17,16 @@ test('React home no longer requires desktop width and has the same mobile destin
   assert.match(css,/@media\(max-width:760px\)/);
 });
 
-test('Action Inbox explains decisions and offers resilient feedback without API mutation',async()=>{
+test('Action Inbox explains decisions and exposes explicit Sentinel approval controls',async()=>{
   const page=await web('action-inbox.html');
-  for(const label of ['POR QUE IMPORTA','RECOMENDAÇÃO','IMPACTO','Tentar novamente','Adiar','Descartar'])assert.match(page,new RegExp(label));
-  assert.match(page,/munin-skeleton/);assert.match(page,/Recebido/);assert.match(page,/Concluído/);
-  assert.doesNotMatch(page,/method:\s*['"]POST/);
+  for(const label of ['POR QUE IMPORTA','RECOMENDAÇÃO','IMPACTO','Tentar novamente','Aprovar','Rejeitar'])assert.match(page,new RegExp(label));
+  assert.match(page,/munin-skeleton/);assert.match(page,/api\/mobile\/approvals/);
+  assert.match(page,/munin-mobile-token/);assert.match(page,/confirm\(/);
+});
+
+test('HUD mobile exposes bounded approval controls without automatic execution',async()=>{
+  const [page,controls]=await Promise.all([web('hud-mobile.html'),web('public/hud-approvals.js')]);
+  assert.match(page,/hud-approvals\.js/);assert.match(controls,/APROVAÇÕES/);
+  assert.match(controls,/api\/mobile\/approvals/);assert.match(controls,/APROVAR/);assert.match(controls,/REJEITAR/);
+  assert.doesNotMatch(controls,/auto.?approve/i);
 });

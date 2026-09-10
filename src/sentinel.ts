@@ -21,6 +21,8 @@ export interface ApprovalRecord {
   status: 'pending' | 'approved' | 'rejected';
   decision: SentinelDecision;
   note?: string;
+  resolvedAt?: string;
+  resolvedBy?: 'human';
 }
 
 export function evaluateSentinel(request: ActionRequest): SentinelDecision {
@@ -71,8 +73,11 @@ export class ApprovalQueue {
     const record = records.find(item => item.id === id);
     if (!record) throw new Error(`Approval ${id} not found.`);
     if (record.status !== 'pending') throw new Error(`Approval ${id} is already ${record.status}.`);
+    const resolvedAt = new Date().toISOString();
     record.status = status;
-    record.updatedAt = new Date().toISOString();
+    record.updatedAt = resolvedAt;
+    record.resolvedAt = resolvedAt;
+    record.resolvedBy = 'human';
     if (note) record.note = note;
     await this.save(records);
     return record;

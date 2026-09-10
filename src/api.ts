@@ -21,6 +21,7 @@ import { bytes, json, readJsonBody, redirect, requireText as text } from './http
 import { apiPort, webBaseUrl } from './config.js';
 import { trustedSourceRadar } from './trusted-source-radar.js';
 import { buildActionInbox } from './action-inbox.js';
+import { ApprovalQueue } from './sentinel.js';
 import { connectorRegistry } from './connector-registry.js';
 import { ManusTaskStore, manusBridgeStatus, refreshManusTasks, submitManusTask, type ManusTaskKind } from './manus-operational-bridge.js';
 import { buildProactiveOperator } from './proactive-operator.js';
@@ -33,6 +34,7 @@ import { firecrawlHealth, scrapeWithFirecrawl } from './firecrawl-context.js';
 import { localVideoPolicy } from './local-video-capability.js';
 const store=new ContextStore(); const service=new MuninService(store); const inbox=new CareerInboxStore(); const watchFolder=new CareerWatchFolder();
 const manusTasks=new ManusTaskStore();
+const approvals=new ApprovalQueue();
 const body=(request:IncomingMessage)=>readJsonBody(request,5_000_000);
 export async function handleApi(request:IncomingMessage,response:ServerResponse):Promise<void>{if(request.method==='OPTIONS')return json(request,response,204,{});const url=new URL(request.url??'/','http://localhost');try{
 if(request.method==='GET'&&url.pathname==='/api/health')return json(request,response,200,{status:'ok',service:'munin-workspace'});
@@ -40,7 +42,7 @@ if(request.method==='GET'&&url.pathname==='/api/content-studio/status')return js
 if(request.method==='POST'&&url.pathname==='/api/content-studio/video'){const input=await body(request);const action=input.action==='generate'?'generate':'plan';const capability=createContentVideoCapability();const capabilityInput={action,topic:text(input.topic,'topic'),script:typeof input.script==='string'?input.script:undefined,language:typeof input.language==='string'?input.language:undefined,aspectRatio:input.aspectRatio==='16:9'||input.aspectRatio==='1:1'?input.aspectRatio:'9:16'} as ContentVideoInput;return json(request,response,action==='generate'?201:200,await capability.execute(capabilityInput,{capability:'media.content-video',executionId:`content-studio-${Date.now()}`,startedAt:new Date().toISOString(),input:capabilityInput,metadata:{source:'content-studio'}}));}
 if(request.method==='POST'&&url.pathname==='/api/content-studio/scrape'){const input=await body(request);return json(request,response,200,await scrapeWithFirecrawl(text(input.url,'url')));}
 if(request.method==='GET'&&url.pathname==='/api/radar'){const snapshot=await trustedSourceRadar(url.searchParams.get('refresh')==='1');return json(request,response,200,snapshot);}
-if(request.method==='GET'&&url.pathname==='/api/action-inbox'){const [state,email,radar,manus]=await Promise.all([store.load(),inbox.load(),trustedSourceRadar(false),manusTasks.list()]);return json(request,response,200,buildActionInbox(state,email,radar,new Date(),manus));}
+if(request.method==='GET'&&url.pathname==='/api/action-inbox'){const [state,email,radar,manus,pendingApprovals]=await Promise.all([store.load(),inbox.load(),trustedSourceRadar(false),manusTasks.list(),approvals.list('pending')]);return json(request,response,200,buildActionInbox(state,email,radar,new Date(),manus,pendingApprovals));}
 if(request.method==='GET'&&url.pathname==='/api/connectors'){const [radar,connections,manus]=await Promise.all([trustedSourceRadar(false),connectionStatus(),manusBridgeStatus(manusTasks)]);return json(request,response,200,{generatedAt:new Date().toISOString(),items:[...connectorRegistry(radar,connections),{id:'manus',name:'Manus Operational Bridge',category:'research',cost:'free',auth:'oauth',enabled:manus.enabled,health:manus.enabled?'healthy':'not-connected',detail:manus.enabled?`${manus.profile} · ${manus.declaredCreditsToday}/${manus.dailyCreditBudget} créditos reservados hoje`:manus.reason}]});}
 if(request.method==='GET'&&url.pathname==='/api/manus/status')return json(request,response,200,await manusBridgeStatus(manusTasks));
 if(request.method==='GET'&&url.pathname==='/api/manus/tasks')return json(request,response,200,{items:await manusTasks.list()});
