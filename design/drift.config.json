@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "mode": "observe",
+  "roots": ["apps/web"],
+  "extensions": [".css", ".scss", ".sass", ".less", ".html", ".tsx", ".jsx", ".ts", ".js"],
+  "ignoreDirectories": ["node_modules", "dist", "dist-web", "build", "coverage", ".git", ".vite"],
+  "ignoreFiles": [],
+  "rules": {
+    "rawColorLiteral": {
+      "enabled": true,
+      "severity": "info",
+      "description": "Raw color literals may bypass semantic design tokens."
+    },
+    "inlineVisualStyle": {
+      "enabled": true,
+      "severity": "info",
+      "description": "Inline visual styles are harder to govern consistently."
+    },
+    "arbitraryTailwindValue": {
+      "enabled": true,
+      "severity": "info",
+      "description": "Arbitrary Tailwind values may indicate token bypass."
+    },
+    "fontFamilyLiteral": {
+      "enabled": true,
+      "severity": "info",
+      "description": "Ad hoc font-family declarations may drift from the canonical type system."
+    },
+    "largeRadius": {
+      "enabled": true,
+      "severity": "info",
+      "thresholdPx": 20,
+      "description": "Large radii should be deliberate and semantically justified."
+    },
+    "largeBlurShadow": {
+      "enabled": true,
+      "severity": "info",
+      "thresholdPx": 24,
+      "description": "Large shadow blur/glow should encode hierarchy or state rather than decoration."
+    }
+  },
+  "report": {
+    "jsonPath": ".artifacts/design-drift-report.json"
+  }
+}
