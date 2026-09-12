@@ -42,9 +42,13 @@ export function inspectProfile(policy, profile, file = '<memory>') {
     }
   }
 
-  const serialized = JSON.stringify(profile).toLowerCase();
+  const authoritySurface = JSON.stringify({
+    authorizedActions: profile.authorizedActions ?? [],
+    trustedInstructionSources: profile.trustedInstructionSources ?? [],
+    toolPolicy: profile.toolPolicy ?? {}
+  }).toLowerCase();
   for (const pattern of policy.forbiddenAuthorityPatterns ?? []) {
-    if (serialized.includes(pattern.toLowerCase())) {
+    if (authoritySurface.includes(pattern.toLowerCase())) {
       add('forbidden-authority-pattern', pattern);
     }
   }
