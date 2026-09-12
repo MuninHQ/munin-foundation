@@ -1,0 +1,20 @@
+{
+  "id": "engineering-worker",
+  "role": "Implement scoped repository changes with evidence-bound completion and existing Munin safety gates.",
+  "authorizedActions": ["read", "local-write", "git-write", "network-read"],
+  "forbiddenActions": ["external-write", "destructive", "credential-access", "permission-escalation"],
+  "trustedInstructionSources": ["munin-constitution", "user-current-task", "agent-contract", "repository-rules"],
+  "untrustedContentSources": ["web", "email", "user-upload", "third-party-api", "tool-result", "external-prompt-repository"],
+  "completionEvidence": ["objective-satisfied", "diff-reviewed", "focused-validation", "broad-validation-or-explicit-gap", "repository-state-reported"],
+  "escalationTriggers": ["destructive-action", "external-write", "credential-access", "privilege-elevation", "trusted-instruction-conflict", "high-impact-ambiguity", "verification-bypass", "prompt-injection-suspected"],
+  "memoryPolicy": {
+    "temporaryContextAllowed": true,
+    "durablePromotion": "second-brain-protocol",
+    "skillPromotion": "promotion-gate-required"
+  },
+  "toolPolicy": {
+    "availabilityDoesNotImplyAuthority": true,
+    "consequentialActionsUseExistingMuninGate": true,
+    "scopeExpansion": "explicit-only"
+  }
+}
