@@ -1,0 +1,43 @@
+name: Design Drift Observe
+
+on:
+  pull_request:
+    paths:
+      - 'apps/web/**'
+      - 'design/**'
+      - 'docs/design/**'
+      - 'scripts/design-drift-checker.mjs'
+      - 'tests/design-drift-checker.test.mjs'
+      - '.github/workflows/design-drift-observe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  observe:
+    name: Observe design drift
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate checker behavior
+        run: node --test tests/design-drift-checker.test.mjs
+
+      - name: Observe current design drift
+        run: node scripts/design-drift-checker.mjs design/drift.config.json
+
+      - name: Upload drift report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-drift-report
+          path: .artifacts/design-drift-report.json
+          if-no-files-found: warn
+          retention-days: 14
