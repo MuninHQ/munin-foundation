@@ -181,7 +181,12 @@ try {
     findings
   };
 
+  const artifactRoot = path.resolve(cwd, '.artifacts');
   const reportPath = path.resolve(cwd, config.report.jsonPath);
+  const reportRelative = path.relative(artifactRoot, reportPath);
+  if (!reportRelative || reportRelative.startsWith(`..${path.sep}`) || path.isAbsolute(reportRelative)) {
+    throw new Error('report path must stay inside .artifacts');
+  }
   fs.mkdirSync(path.dirname(reportPath), { recursive: true });
   fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
 

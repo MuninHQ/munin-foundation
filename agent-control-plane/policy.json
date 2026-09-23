@@ -25,6 +25,12 @@
     "external-write",
     "destructive"
   ],
+  "requiredForbiddenActions": [
+    "external-write",
+    "destructive",
+    "credential-access",
+    "permission-escalation"
+  ],
   "requiredUntrustedSources": [
     "web",
     "email",

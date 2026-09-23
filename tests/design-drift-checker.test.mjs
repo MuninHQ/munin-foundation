@@ -70,3 +70,19 @@ test('enforce mode can fail on the same findings without changing files', () => 
   assert.equal(fs.readFileSync(source, 'utf8'), before);
   fs.rmSync(root, { recursive: true, force: true });
 });
+
+test('report path cannot escape the artifact directory or overwrite source', () => {
+  const root = fixture('observe');
+  const source = path.join(root, 'ui', 'sample.css');
+  const before = fs.readFileSync(source, 'utf8');
+  const configPath = path.join(root, 'design', 'drift.config.json');
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  config.report.jsonPath = path.join('.artifacts', '..', 'ui', 'sample.css');
+  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+
+  const result = run(root);
+  assert.equal(result.status, 2, result.stdout || result.stderr);
+  assert.match(result.stderr, /report path must stay inside \.artifacts/i);
+  assert.equal(fs.readFileSync(source, 'utf8'), before);
+  fs.rmSync(root, { recursive: true, force: true });
+});

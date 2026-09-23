@@ -18,6 +18,8 @@ export function inspectProfile(policy, profile, file = '<memory>') {
 
   const authorized = new Set(profile.authorizedActions ?? []);
   const forbidden = new Set(profile.forbiddenActions ?? []);
+  const trustedSources = new Set(profile.trustedInstructionSources ?? []);
+  const untrustedSources = new Set(profile.untrustedContentSources ?? []);
 
   for (const action of authorized) {
     if (!(policy.canonicalActionClasses ?? []).includes(action)) {
@@ -30,10 +32,15 @@ export function inspectProfile(policy, profile, file = '<memory>') {
     if (authorized.has(action)) add('consequential-action-authorized', action);
   }
 
+  for (const action of policy.requiredForbiddenActions ?? []) {
+    if (!forbidden.has(action)) add('required-forbidden-action-missing', action);
+  }
+
   for (const source of policy.requiredUntrustedSources ?? []) {
-    if (!(profile.untrustedContentSources ?? []).includes(source)) {
+    if (!untrustedSources.has(source)) {
       add('untrusted-source-not-declared', source);
     }
+    if (trustedSources.has(source)) add('source-both-trusted-and-untrusted', source);
   }
 
   for (const trigger of policy.requiredEscalationTriggers ?? []) {
@@ -53,16 +60,24 @@ export function inspectProfile(policy, profile, file = '<memory>') {
     }
   }
 
-  if (profile.memoryPolicy?.durablePromotion === 'automatic') {
+  if (typeof profile.memoryPolicy?.durablePromotion !== 'string') {
+    add('durable-memory-promotion-policy-missing', 'Durable memory promotion policy must be explicit.');
+  } else if (profile.memoryPolicy.durablePromotion === 'automatic') {
     add('automatic-durable-memory-promotion', 'Durable memory must require an explicit promotion path.');
   }
 
-  if (profile.memoryPolicy?.skillPromotion === 'automatic') {
+  if (typeof profile.memoryPolicy?.skillPromotion !== 'string') {
+    add('skill-promotion-policy-missing', 'Skill promotion policy must be explicit.');
+  } else if (profile.memoryPolicy.skillPromotion === 'automatic') {
     add('automatic-skill-promotion', 'Skills must pass the Munin promotion gate.');
   }
 
   if (profile.toolPolicy?.availabilityDoesNotImplyAuthority !== true) {
     add('tool-authority-boundary-not-explicit', 'Tool availability must not imply permission.');
+  }
+
+  if (profile.toolPolicy?.consequentialActionsUseExistingMuninGate !== true) {
+    add('consequential-action-gate-not-required', 'Consequential actions must use the existing Munin approval gate.');
   }
 
   return findings;
