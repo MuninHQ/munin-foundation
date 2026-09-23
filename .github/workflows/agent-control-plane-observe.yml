@@ -1,0 +1,32 @@
+name: Agent Control Plane Observe
+
+on:
+  pull_request:
+    paths:
+      - 'agent-control-plane/**'
+      - 'scripts/agent-control-plane-observer.mjs'
+      - 'tests/agent-control-plane-observer.test.mjs'
+      - 'docs/agent-control-plane/**'
+      - '.github/workflows/agent-control-plane-observe.yml'
+  workflow_dispatch:
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run observer tests
+        run: node --test tests/agent-control-plane-observer.test.mjs
+      - name: Produce observation report
+        run: node scripts/agent-control-plane-observer.mjs | tee agent-control-plane-report.json
+      - name: Publish report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-control-plane-observation
+          path: agent-control-plane-report.json
+          retention-days: 14

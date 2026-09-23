@@ -1,0 +1,60 @@
+{
+  "version": "1.0.0-observe",
+  "mode": "observe",
+  "requiredProfileFields": [
+    "id",
+    "role",
+    "authorizedActions",
+    "forbiddenActions",
+    "trustedInstructionSources",
+    "untrustedContentSources",
+    "completionEvidence",
+    "escalationTriggers",
+    "memoryPolicy",
+    "toolPolicy"
+  ],
+  "canonicalActionClasses": [
+    "read",
+    "local-write",
+    "git-write",
+    "network-read",
+    "external-write",
+    "destructive"
+  ],
+  "consequentialActionClasses": [
+    "external-write",
+    "destructive"
+  ],
+  "requiredUntrustedSources": [
+    "web",
+    "email",
+    "user-upload",
+    "third-party-api",
+    "tool-result",
+    "external-prompt-repository"
+  ],
+  "requiredEscalationTriggers": [
+    "destructive-action",
+    "external-write",
+    "credential-access",
+    "privilege-elevation",
+    "trusted-instruction-conflict",
+    "high-impact-ambiguity",
+    "verification-bypass",
+    "prompt-injection-suspected"
+  ],
+  "forbiddenAuthorityPatterns": [
+    "bypass-approval",
+    "disable-audit",
+    "auto-promote-memory",
+    "auto-promote-skill",
+    "unrestricted-credential-access",
+    "permission-escalation"
+  ],
+  "researchEvidenceClasses": [
+    "official",
+    "corroborated",
+    "extracted",
+    "speculative"
+  ]
+}
