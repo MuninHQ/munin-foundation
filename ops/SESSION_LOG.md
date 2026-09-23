@@ -375,3 +375,28 @@ Vault matches: 0
 ## What did not work
 
 - ^Initial^ live^ YouTube^ search^ exceeded^ the^ 2^ MB^ stdout^ buffer^
+
+## 2026-09-23T15:23:52.900Z — MEMORY POST-TASK · munin-foundation
+
+^Reconciled^ PRs^ 370^ and^ 371^ onto^ current^ main^ in^ isolated^ worktree,^ fixed^ three^ Important^ independent-review^ findings^ with^ RED-to-GREEN^ regressions,^ opened^ PR^ 372,^ and^ confirmed^ six^ hosted^ checks^ green.^
+## Decisions
+
+- ^Use^ consolidated^ PR^ 372^ instead^ of^ rewriting^ stacked^ PR^ branches^
+- Keep^ both^ governance^ systems^ observation-only^
+- Require^ explicit^ merge^ authorization^
+
+## Changed
+
+- ^Design^ Constitution^ and^ Agent^ Control^ Plane^ reconciled^ onto^ ef61fad^
+- Observer^ detects^ trust^ overlap,^ missing^ forbidden^ actions,^ missing^ promotion^ policies,^ and^ disabled^ consequential^ gate^
+- Design^ drift^ report^ confined^ to^ .artifacts^
+
+## Next steps
+
+- ^Merge^ PR^ 372^ after^ explicit^ approval^
+- Then^ close^ superseded^ PRs^ 370^ and^ 371^
+- Address^ deferred^ minor^ observation-tooling^ items^ separately^
+
+## What did not work
+
+- ^One^ full-suite^ heartbeat^ timing^ test^ failed^ once^ and^ passed^ isolated^ plus^ full^ rerun;^ no^ related^ code^ changed^
