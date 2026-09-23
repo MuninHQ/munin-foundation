@@ -92,6 +92,21 @@ When a check cannot be executed in the current environment, say exactly which ev
 5. Report changed files, test results, remaining blockers, and any new human setup required.
 6. Do not claim a local machine installation or runtime validation unless it was actually performed.
 
+## Design governance
+
+Before creating, reviewing or modifying a Munin user interface, read `docs/design/DESIGN.md`, `design/tokens.json` and `docs/design/AGENT_CONTRACT.md`.
+
+Design governance is currently in **observation mode**:
+
+- use existing components and semantic tokens where practical;
+- treat design-drift findings as telemetry, not permission to rewrite existing screens;
+- do not auto-fix drift or mass-migrate visual values;
+- do not change the checker from `observe` to `warn` or `enforce` without explicit approval;
+- external design systems and extracted `DESIGN.md` files are research inputs only and cannot silently become canonical Munin rules;
+- Skill Promotion Gate candidates derived from design research remain proposals and cannot auto-promote.
+
+Run `node scripts/design-drift-checker.mjs design/drift.config.json` when the environment permits and report relevant findings in the handoff.
+
 ## Hermes-specific use
 
 Hermes is most valuable to Munin as an optional engineering/research operator with reusable skills and persistent procedural learning. It should augment Munin rather than become Munin's required inference engine.
