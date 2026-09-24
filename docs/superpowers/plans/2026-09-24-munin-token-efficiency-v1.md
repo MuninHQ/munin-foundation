@@ -69,7 +69,7 @@ test('invalid threshold overrides fall back as one safe policy', () => {
 
 - [ ] **Step 2: Run the focused test and verify RED**
 
-Run: `npm run build:core && node --test dist/tests/token-efficiency-config.test.js`  
+Run: `npm run build:core && node --test dist/tests/token-efficiency-config.test.js`
 Expected: TypeScript fails because `token-efficiency-config.ts` does not exist.
 
 - [ ] **Step 3: Implement the immutable configuration loader**
@@ -155,7 +155,7 @@ Add all flags and thresholds to `.env.example` with observation-only comments an
 
 - [ ] **Step 4: Run the focused test and verify GREEN**
 
-Run: `npm run build:core && node --test dist/tests/token-efficiency-config.test.js`  
+Run: `npm run build:core && node --test dist/tests/token-efficiency-config.test.js`
 Expected: 2 tests pass.
 
 - [ ] **Step 5: Commit**
@@ -203,7 +203,7 @@ Add an agent telemetry test that emits `efficiency.usage_observed` containing `a
 
 - [ ] **Step 2: Run and verify RED**
 
-Run: `npm run build:core && node --test dist/tests/token-efficiency-usage.test.js dist/tests/agent-telemetry.test.js`  
+Run: `npm run build:core && node --test dist/tests/token-efficiency-usage.test.js dist/tests/agent-telemetry.test.js`
 Expected: build fails on missing module and missing event union member.
 
 - [ ] **Step 3: Implement bounded usage normalization**
@@ -250,7 +250,7 @@ Extend `AgentTelemetryEventName` with:
 
 - [ ] **Step 4: Run and verify GREEN**
 
-Run: `npm run build:core && node --test dist/tests/token-efficiency-usage.test.js dist/tests/agent-telemetry.test.js`  
+Run: `npm run build:core && node --test dist/tests/token-efficiency-usage.test.js dist/tests/agent-telemetry.test.js`
 Expected: all focused tests pass.
 
 - [ ] **Step 5: Commit**
@@ -304,7 +304,7 @@ test('missing token values produce unavailable instead of healthy', () => {
 
 - [ ] **Step 3: Run both tests and verify RED**
 
-Run: `npm run build:core && node --test dist/tests/token-efficiency-router.test.js dist/tests/token-efficiency-budget.test.js`  
+Run: `npm run build:core && node --test dist/tests/token-efficiency-router.test.js dist/tests/token-efficiency-budget.test.js`
 Expected: build fails because both modules are absent.
 
 - [ ] **Step 4: Implement pure recommendation and budget functions**
@@ -332,7 +332,7 @@ The profile descriptor contains identifiers and tier labels only. It does not co
 
 - [ ] **Step 5: Run focused tests and verify GREEN**
 
-Run: `npm run build:core && node --test dist/tests/token-efficiency-router.test.js dist/tests/token-efficiency-budget.test.js`  
+Run: `npm run build:core && node --test dist/tests/token-efficiency-router.test.js dist/tests/token-efficiency-budget.test.js`
 Expected: all focused tests pass.
 
 - [ ] **Step 6: Commit**
@@ -391,7 +391,7 @@ test('checkpoint is idempotent for the same source revision', async () => {
 
 - [ ] **Step 3: Run and verify RED**
 
-Run: `npm run build:core && node --test dist/tests/token-efficiency-compaction.test.js dist/tests/token-efficiency-checkpoint.test.js`  
+Run: `npm run build:core && node --test dist/tests/token-efficiency-compaction.test.js dist/tests/token-efficiency-checkpoint.test.js`
 Expected: build fails on missing compaction and checkpoint modules.
 
 - [ ] **Step 4: Implement deterministic compaction**
@@ -415,7 +415,7 @@ Use `mkdir`, a SHA-256 hash of `runId/sessionId/sourceRevision`, an atomic tempo
 
 - [ ] **Step 6: Run focused tests and verify GREEN**
 
-Run: `npm run build:core && node --test dist/tests/token-efficiency-compaction.test.js dist/tests/token-efficiency-checkpoint.test.js`  
+Run: `npm run build:core && node --test dist/tests/token-efficiency-compaction.test.js dist/tests/token-efficiency-checkpoint.test.js`
 Expected: all focused tests pass.
 
 - [ ] **Step 7: Commit**
@@ -458,7 +458,7 @@ test('malformed telemetry is skipped and counted', async () => {
 
 - [ ] **Step 2: Run and verify RED**
 
-Run: `npm run build:core && node --test dist/tests/token-efficiency-report.test.js`  
+Run: `npm run build:core && node --test dist/tests/token-efficiency-report.test.js`
 Expected: build fails because report module does not exist.
 
 - [ ] **Step 3: Implement aggregation and a local CLI entrypoint**
@@ -480,7 +480,7 @@ Create `src/token-efficiency-report-cli.ts` and map `token-efficiency:report` to
 
 - [ ] **Step 4: Run focused tests and verify GREEN**
 
-Run: `npm run build:core && node --test dist/tests/token-efficiency-report.test.js`  
+Run: `npm run build:core && node --test dist/tests/token-efficiency-report.test.js`
 Expected: all focused tests pass.
 
 - [ ] **Step 5: Commit**
@@ -530,7 +530,7 @@ Add worker and supervisor contract tests asserting that observation can add aggr
 
 - [ ] **Step 3: Run focused integration tests and verify RED**
 
-Run: `npm run build:core && node --test dist/tests/token-efficiency-observer.test.js dist/tests/orchestrator-observability.test.js dist/tests/host-bridge-worker.test.js dist/tests/workspace-supervisor.test.js`  
+Run: `npm run build:core && node --test dist/tests/token-efficiency-observer.test.js dist/tests/orchestrator-observability.test.js dist/tests/host-bridge-worker.test.js dist/tests/workspace-supervisor.test.js`
 Expected: build fails on missing observer and optional usage contract.
 
 - [ ] **Step 4: Implement the observer facade and optional result usage**
@@ -563,7 +563,7 @@ For Host Worker, inject an optional callback receiving job ID and duration after
 
 - [ ] **Step 5: Run focused tests and verify GREEN**
 
-Run: `npm run build:core && node --test dist/tests/token-efficiency-observer.test.js dist/tests/orchestrator-observability.test.js dist/tests/host-bridge-worker.test.js dist/tests/workspace-supervisor.test.js`  
+Run: `npm run build:core && node --test dist/tests/token-efficiency-observer.test.js dist/tests/orchestrator-observability.test.js dist/tests/host-bridge-worker.test.js dist/tests/workspace-supervisor.test.js`
 Expected: all focused tests pass and orchestration outputs remain equivalent.
 
 - [ ] **Step 6: Commit**
@@ -608,7 +608,7 @@ test('disabled promotion observation emits nothing', () => {
 
 - [ ] **Step 2: Run and verify RED**
 
-Run: `npm run build:core && node --test dist/tests/token-efficiency-promotion-observer.test.js dist/tests/capability-promotion-benchmark.test.js`  
+Run: `npm run build:core && node --test dist/tests/token-efficiency-promotion-observer.test.js dist/tests/capability-promotion-benchmark.test.js`
 Expected: build fails on the missing observer and optional hook.
 
 - [ ] **Step 3: Implement a side-channel observation hook**
@@ -621,7 +621,7 @@ Document flags, defaults, runtime paths, report command, metric-quality labels, 
 
 - [ ] **Step 5: Run focused tests and verify GREEN**
 
-Run: `npm run build:core && node --test dist/tests/token-efficiency-promotion-observer.test.js dist/tests/capability-promotion-benchmark.test.js`  
+Run: `npm run build:core && node --test dist/tests/token-efficiency-promotion-observer.test.js dist/tests/capability-promotion-benchmark.test.js`
 Expected: all focused tests pass and benchmark results are identical.
 
 - [ ] **Step 6: Commit**
@@ -654,7 +654,7 @@ Expected: zero failures.
 
 - [ ] **Step 2: Run complete build and regression suite**
 
-Run: `npm test`  
+Run: `npm test`
 Expected: TypeScript build, Vite production build, and all compiled Node tests pass with zero failures.
 
 - [ ] **Step 3: Run repository integrity checks**
@@ -690,5 +690,5 @@ git commit -m "docs: record token efficiency v1 sitrep"
 
 - [ ] **Step 6: Re-run verification after the final documentation commit**
 
-Run: `npm test` and `git diff --check origin/main...HEAD`  
+Run: `npm test` and `git diff --check origin/main...HEAD`
 Expected: zero test failures and zero diff errors.

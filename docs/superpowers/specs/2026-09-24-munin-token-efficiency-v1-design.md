@@ -1,7 +1,7 @@
 # Munin Token Efficiency v1 Design
 
-**Status:** Approved design, pending implementation-plan approval  
-**Date:** 2026-09-24  
+**Status:** Approved design, pending implementation-plan approval
+**Date:** 2026-09-24
 **Scope:** Shadow/observation mode only
 
 ## Intent
