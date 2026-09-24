@@ -1,4 +1,5 @@
 import type { CapabilityCandidate } from './capability-radar.js';
+import { buildPromotionEfficiencyObservation, type TokenEfficiencyPromotionObservation } from './token-efficiency-promotion-observer.js';
 
 export type CapabilityBenchmarkStatus='promote'|'hold';
 export interface CapabilityBenchmarkResult{
@@ -9,7 +10,9 @@ export interface CapabilityBenchmarkResult{
  reasons:string[];
 }
 
-export function benchmarkCapabilityCandidate(candidate:CapabilityCandidate):CapabilityBenchmarkResult{
+export interface CapabilityBenchmarkOptions { observe?: (observation: TokenEfficiencyPromotionObservation) => void }
+
+export function benchmarkCapabilityCandidate(candidate:CapabilityCandidate,options:CapabilityBenchmarkOptions={}):CapabilityBenchmarkResult{
  const checks={
   zeroCost:(candidate.recurringCost??0)===0&&!candidate.metered&&!candidate.paidApiRequired,
   licensed:Boolean(candidate.license),
@@ -30,5 +33,7 @@ export function benchmarkCapabilityCandidate(candidate:CapabilityCandidate):Capa
  if(!checks.nonDuplicate)reasons.push('Existing Munin capability likely overlaps this candidate.');
  if(!checks.evidence)reasons.push('Insufficient bounded evidence for promotion.');
  const status:CapabilityBenchmarkStatus=Object.values(checks).every(Boolean)&&score>=0.8?'promote':'hold';
- return{id:candidate.id,status,score,checks,reasons:reasons.length?reasons:['Candidate clears non-executing promotion benchmark.']};
+ const result={id:candidate.id,status,score,checks,reasons:reasons.length?reasons:['Candidate clears non-executing promotion benchmark.']};
+ try{options.observe?.(buildPromotionEfficiencyObservation(candidate,result))}catch{}
+ return result;
 }
