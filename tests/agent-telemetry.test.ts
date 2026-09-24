@@ -50,3 +50,17 @@ test('telemetry flush waits for local writes but remains bounded for a stalled c
   await stalled.flush(10);
   assert.ok(Date.now() - startedAt < 100);
 });
+
+test('efficiency telemetry uses the existing redaction boundary', async () => {
+  const sink = new MemoryAgentTelemetrySink();
+  const telemetry = new AgentTelemetry(sink);
+  telemetry.emit({
+    name: 'efficiency.usage_observed',
+    runId: 'run-efficiency',
+    metadata: { apiKey: 'synthetic-private-value', inputTokens: 10 },
+  });
+  await telemetry.flush();
+  const serialized = JSON.stringify(sink.events[0]);
+  assert.match(serialized, /\[REDACTED\]/);
+  assert.doesNotMatch(serialized, /synthetic-private-value/);
+});
