@@ -4,6 +4,12 @@ import { defaultProviderProfiles, ProviderRegistry, type ProviderProfile } from 
 import { orchestrationPolicy } from './orchestration-provider-preference.js';
 import type { ProviderRequest } from './providers.js';
 import type { OrchestrationAttempt, OrchestrationTrace } from './orchestration-trace.js';
+import { observeTokenUsage, type TokenGovernorObservation, type TokenGovernorOptions } from './token-governor.js';
+
+export interface OrchestrationRuntimeOptions {
+  tokenGovernor?: TokenGovernorOptions;
+  tokenGovernorStore?: { append(observation: TokenGovernorObservation): Promise<void> };
+}
 
 export class OrchestrationRuntimeError extends Error {
   constructor(message: string, readonly trace: OrchestrationTrace) {
@@ -18,7 +24,30 @@ function preferenceIndex(plan: ReturnType<IntelligenceOrchestrationPlanner['plan
 }
 
 export class OrchestrationRuntimeCore {
-  constructor(private readonly profiles: ProviderProfile[] = defaultProviderProfiles()) {}
+  constructor(
+    private readonly profiles: ProviderProfile[] = defaultProviderProfiles(),
+    private readonly options: OrchestrationRuntimeOptions = {},
+  ) {}
+
+  private async observe(input: OrchestrationInput, request: ProviderRequest, providerId: string, output: string): Promise<TokenGovernorObservation | undefined> {
+    try {
+      let requestText = request.objective;
+      try { requestText = JSON.stringify(request); } catch { /* Objective remains a safe bounded fallback. */ }
+      const observation = observeTokenUsage({
+        runId: request.taskId,
+        source: 'provider',
+        capability: request.capability,
+        risk: input.risk ?? 'medium',
+        selectedProviderId: providerId,
+        input: requestText.slice(0, 100_000),
+        output,
+      }, this.options.tokenGovernor);
+      try { await this.options.tokenGovernorStore?.append(observation); } catch { /* Shadow telemetry cannot fail execution. */ }
+      return observation;
+    } catch {
+      return undefined;
+    }
+  }
 
   async run(input: OrchestrationInput) {
     const plan = new IntelligenceOrchestrationPlanner().plan(input);
@@ -66,6 +95,7 @@ export class OrchestrationRuntimeCore {
             attempts,
             selectedProviderId: profile.id,
             providerDecision: choice.decision,
+            tokenGovernor: await this.observe(input, request, profile.id, ''),
             startedAt,
             completedAt: new Date().toISOString(),
           };
@@ -74,12 +104,14 @@ export class OrchestrationRuntimeCore {
 
         const response = await choice.provider.execute(request);
         attempts.push({ providerId: profile.id, ok: true });
+        const tokenGovernor = await this.observe(input, request, profile.id, response.output);
         const trace: OrchestrationTrace = {
           planId: plan.id,
           route: plan.route,
           attempts,
           selectedProviderId: profile.id,
           providerDecision: choice.decision,
+          tokenGovernor,
           startedAt,
           completedAt: new Date().toISOString(),
         };
