@@ -50,3 +50,13 @@ test('token efficiency observation adds events without changing orchestration ou
   assert.ok(enabledSink.events.some(event => event.name === 'efficiency.route_recommended'));
   assert.ok(enabledSink.events.some(event => event.name === 'efficiency.usage_observed' && event.agentId === 'engineer'));
 });
+
+test('observed orchestration propagates explicit high risk into strong model recommendation', async () => {
+  const sink = new MemoryAgentTelemetrySink(); const telemetry = new AgentTelemetry(sink);
+  const observer = new TokenEfficiencyObserver(loadTokenEfficiencyConfig({ MUNIN_TOKEN_EFFICIENCY_ENABLED: '1' }), telemetry);
+  const executors: MuninAgentExecutors = { 'product-state-manager': completed, engineer: completed, 'qa-verifier': completed, 'memory-curator': completed, operator: completed };
+  await runObservedOrchestration('build safety-critical architecture', { efficiencyRisk: 'high' }, executors, telemetry, {}, observer);
+  await telemetry.flush();
+  const routes = sink.events.filter(event => event.name === 'efficiency.route_recommended');
+  assert.ok(routes.length > 0); assert.ok(routes.every(event => event.metadata?.recommendedTier === 'strong_model'));
+});

@@ -25,3 +25,9 @@ test('observer callback failure cannot change the promotion result', () => {
   const observed = benchmarkCapabilityCandidate(candidate, { observe: () => { throw new Error('observer failed'); } });
   assert.deepEqual(observed, baseline);
 });
+
+test('rejected async promotion observer is consumed', async () => {
+  const result = benchmarkCapabilityCandidate(candidate, { observe: async () => { throw new Error('async observer failed'); } });
+  assert.equal(result.status, 'promote');
+  await new Promise(resolve => setImmediate(resolve));
+});

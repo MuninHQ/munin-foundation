@@ -14,6 +14,7 @@ export interface EfficiencyTaskDescriptor {
   contextTokens?: number;
   actualExecutorId?: string;
   actualProviderId?: string;
+  estimatedTokenReduction?: number;
 }
 
 export interface EfficiencyProfileDescriptor {
@@ -59,6 +60,7 @@ export function recommendExecutionTier(task: EfficiencyTaskDescriptor, profiles:
   if (task.verificationRequired) reasonCodes.push('verification-required');
   if ((task.contextTokens ?? 0) >= 128_000) reasonCodes.push('large-context');
   const recommendedProfileId = profiles.find(profile => profile.enabled && profile.tier === recommendedTier)?.id;
+  const estimatedTokenReduction = task.contextTokens === undefined || recommendedTier === 'strong_model' ? undefined : Math.floor(task.contextTokens * (recommendedTier === 'deterministic_local' ? 0.5 : 0.25));
   return Object.freeze({
     classification,
     recommendedTier,
@@ -67,5 +69,6 @@ export function recommendExecutionTier(task: EfficiencyTaskDescriptor, profiles:
     reasonCodes: Object.freeze(reasonCodes) as unknown as string[],
     actualExecutorId: task.actualExecutorId,
     actualProviderId: task.actualProviderId,
+    estimatedTokenReduction,
   });
 }

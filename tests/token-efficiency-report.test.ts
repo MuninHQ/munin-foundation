@@ -35,3 +35,24 @@ test('malformed telemetry is skipped and counted', async () => {
 test('observed comparison requires two explicit windows', () => {
   assert.throws(() => buildTokenEfficiencyReport([], { mode: 'observed' }), /baseline and observation windows/i);
 });
+
+test('observed comparison filters validated windows and compares baseline to observation', () => {
+  const events: AgentTelemetryEvent[] = [
+    { name: 'efficiency.usage_observed', at: '2026-09-01T00:00:00Z', runId: 'base', metadata: { totalTokens: 1000, quality: 'provider_reported' } },
+    { name: 'efficiency.usage_observed', at: '2026-09-20T00:00:00Z', runId: 'after', metadata: { totalTokens: 400, quality: 'provider_reported' } },
+  ];
+  const report = buildTokenEfficiencyReport(events, { mode: 'observed', baselineWindow: { from: '2026-09-01T00:00:00Z', to: '2026-09-02T00:00:00Z' }, observationWindow: { from: '2026-09-19T00:00:00Z', to: '2026-09-21T00:00:00Z' } });
+  assert.equal(report.actual.tokens, 1000);
+  assert.equal(report.counterfactual.tokens, 400);
+  assert.equal(report.savings.tokens, 600);
+  assert.equal(report.savings.tokenPercent, 60);
+});
+
+test('invalid observed windows fail closed', () => {
+  assert.throws(() => buildTokenEfficiencyReport([], { mode: 'observed', baselineWindow: { from: 'bad', to: 'also-bad' }, observationWindow: { from: '2026-09-20T00:00:00Z', to: '2026-09-21T00:00:00Z' } }), /valid ordered ISO dates/i);
+});
+
+test('estimated samples are not counted as actual tokens', () => {
+  const report = buildTokenEfficiencyReport([{ name: 'efficiency.usage_observed', at: '2026-09-24T00:00:00Z', runId: 'r', metadata: { totalTokens: 100, quality: 'estimated' } }], { mode: 'projected' });
+  assert.equal(report.actual.tokens, undefined);
+});

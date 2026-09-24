@@ -64,3 +64,11 @@ test('efficiency telemetry uses the existing redaction boundary', async () => {
   assert.match(serialized, /\[REDACTED\]/);
   assert.doesNotMatch(serialized, /synthetic-private-value/);
 });
+
+test('telemetry preserves numeric token metrics while redacting string credentials', async () => {
+  const sink = new MemoryAgentTelemetrySink();
+  const telemetry = new AgentTelemetry(sink);
+  telemetry.emit({ name: 'efficiency.usage_observed', runId: 'r', metadata: { inputTokens: 10, outputTokens: 5, totalTokens: 15, accessToken: 'private' } });
+  await telemetry.flush();
+  assert.deepEqual(sink.events[0].metadata, { inputTokens: 10, outputTokens: 5, totalTokens: 15, accessToken: '[REDACTED]' });
+});

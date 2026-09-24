@@ -5,7 +5,7 @@ import { JsonHostJobQueue } from './json-host-job-queue.js';
 export interface HostBridgeWorkerOptions {
   queuePath: string;
   intervalMs?: number;
-  onCompleted?: (observation: HostBridgeWorkerObservation) => void;
+  onCompleted?: (observation: HostBridgeWorkerObservation) => unknown;
 }
 
 export interface HostBridgeWorkerObservation { jobId: string; durationMs: number; status: string }
@@ -25,7 +25,7 @@ export class HostBridgeWorker {
     const startedAt = Date.now();
     const result = await this.executor.execute(claimed.job);
     await this.queue.finish(claimed.job.id, result);
-    try { this.options.onCompleted?.({ jobId: claimed.job.id, durationMs: Date.now() - startedAt, status: result.status }); } catch {}
+    try { const observed=this.options.onCompleted?.({ jobId: claimed.job.id, durationMs: Date.now() - startedAt, status: result.status }); if(observed)void Promise.resolve(observed).catch(()=>undefined); } catch {}
     return true;
   }
 

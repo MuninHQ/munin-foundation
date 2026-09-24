@@ -28,3 +28,9 @@ test('compaction deduplicates normalized entries and keeps verification failures
   assert.deepEqual(compact.errors, ['Build failed']);
   assert.deepEqual(compact.verification, ['npm test: failed']);
 });
+
+test('compaction redacts standalone provider tokens', () => {
+  const compact = compactWorkflowContext({ objective: 'verify', status: 'failed', decisions: [], errors: ['sk-proj-ABCDEFGHIJKLMNOP123456'], artifacts: [], blockers: [], nextSteps: [], verification: [], commentary: [] });
+  assert.doesNotMatch(JSON.stringify(compact), /sk-proj-ABCDEFGHIJKLMNOP123456/);
+  assert.match(JSON.stringify(compact), /\[REDACTED\]/);
+});

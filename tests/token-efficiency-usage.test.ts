@@ -32,3 +32,19 @@ test('invalid negative or non-finite usage is unavailable', () => {
   assert.equal(sample.inputTokens, undefined);
   assert.equal(sample.costUsd, undefined);
 });
+
+test('mixed reported and estimated fields remain estimated and arbitrary raw fields are dropped', () => {
+  const sample = normalizeTokenUsage({ inputTokens: 10, outputText: 'x'.repeat(400), rawPrompt: 'private prompt' } as never);
+  assert.equal(sample.quality, 'estimated');
+  assert.equal(sample.totalTokens, 110);
+  assert.equal('rawPrompt' in sample, false);
+});
+
+test('explicit measured quality without measurements degrades to unavailable', () => {
+  assert.equal(normalizeTokenUsage({ quality: 'measured' }).quality, 'unavailable');
+});
+
+test('usage identifiers are bounded before persistence', () => {
+  const sample = normalizeTokenUsage({ inputTokens: 1, providerId: 'p'.repeat(200_000) });
+  assert.equal(sample.providerId?.length, 256);
+});

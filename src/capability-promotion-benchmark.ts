@@ -10,7 +10,7 @@ export interface CapabilityBenchmarkResult{
  reasons:string[];
 }
 
-export interface CapabilityBenchmarkOptions { observe?: (observation: TokenEfficiencyPromotionObservation) => void }
+export interface CapabilityBenchmarkOptions { observe?: (observation: TokenEfficiencyPromotionObservation) => unknown }
 
 export function benchmarkCapabilityCandidate(candidate:CapabilityCandidate,options:CapabilityBenchmarkOptions={}):CapabilityBenchmarkResult{
  const checks={
@@ -34,6 +34,6 @@ export function benchmarkCapabilityCandidate(candidate:CapabilityCandidate,optio
  if(!checks.evidence)reasons.push('Insufficient bounded evidence for promotion.');
  const status:CapabilityBenchmarkStatus=Object.values(checks).every(Boolean)&&score>=0.8?'promote':'hold';
  const result={id:candidate.id,status,score,checks,reasons:reasons.length?reasons:['Candidate clears non-executing promotion benchmark.']};
- try{options.observe?.(buildPromotionEfficiencyObservation(candidate,result))}catch{}
+ try{const observed=options.observe?.(buildPromotionEfficiencyObservation(candidate,result));if(observed)void Promise.resolve(observed).catch(()=>undefined)}catch{}
  return result;
 }

@@ -2,8 +2,11 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { runtimePath } from './config.js';
 import { buildTokenEfficiencyReport, readEfficiencyEvents } from './token-efficiency-report.js';
+import { loadTokenEfficiencyConfig } from './token-efficiency-config.js';
 
 async function main(): Promise<void> {
+  const config = loadTokenEfficiencyConfig();
+  if (!config.enabled || !config.reportEnabled) { process.stdout.write(`${JSON.stringify({ status: 'disabled' })}\n`); return; }
   const source = process.argv.find(arg => arg.startsWith('--source='))?.slice('--source='.length) ?? runtimePath('telemetry', 'agent-events.jsonl');
   const outputDir = runtimePath('token-efficiency', 'reports');
   const { events, invalidLines } = await readEfficiencyEvents(source);

@@ -12,6 +12,7 @@ export interface ContextBudgetAssessment {
 }
 
 export function evaluateContextBudget(scope: 'task' | 'session', samples: TokenUsageSample[], config: Readonly<TokenEfficiencyConfig>): ContextBudgetAssessment {
+  if (!samples.length || samples.some(sample => sample.totalTokens === undefined || sample.quality === 'unavailable')) return { scope, state: 'unavailable', reason: 'Complete token usage is unavailable for this scope.' };
   const totals = samples.map(sample => sample.totalTokens).filter((value): value is number => value !== undefined && Number.isFinite(value));
   if (!totals.length) return { scope, state: 'unavailable', reason: 'Token usage is unavailable for this scope.' };
   const usedTokens = totals.reduce((sum, value) => sum + value, 0);

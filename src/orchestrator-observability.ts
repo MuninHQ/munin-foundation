@@ -8,6 +8,19 @@ import {
   type OrchestratorRunResult,
 } from './agent-orchestrator.js';
 import type { TokenEfficiencyObserver } from './token-efficiency-observer.js';
+import { estimateTokens } from './token-efficiency-usage.js';
+
+function riskFromContext(context: Record<string, unknown>, objective: string): 'low' | 'medium' | 'high' {
+  if (context.efficiencyRisk === 'high' || context.risk === 'high' || /safety-critical|security-critical|high[- ]risk/i.test(objective)) return 'high';
+  if (context.efficiencyRisk === 'low' || context.risk === 'low') return 'low';
+  return 'medium';
+}
+
+function ambiguityFromContext(context: Record<string, unknown>, workType: string, objective: string): 'low' | 'medium' | 'high' {
+  if (context.efficiencyAmbiguity === 'high' || /architect|novel diagnosis|conflicting evidence/i.test(objective) || workType === 'mixed') return 'high';
+  if (context.efficiencyAmbiguity === 'low') return 'low';
+  return 'medium';
+}
 
 export function instrumentAgentExecutors(executors: MuninAgentExecutors, telemetry: AgentTelemetry, efficiency?: TokenEfficiencyObserver): MuninAgentExecutors {
   const instrumented: MuninAgentExecutors = {};
@@ -30,10 +43,11 @@ export function instrumentAgentExecutors(executors: MuninAgentExecutors, telemet
         task: {
           workType: context.workType,
           capabilities: context.agent.capabilities,
-          localCapable: true,
-          risk: agentId === 'qa-verifier' ? 'medium' : 'low',
-          ambiguity: context.workType === 'mixed' ? 'high' : 'medium',
+          localCapable: context.context.localCapable !== false,
+          risk: riskFromContext(context.context, context.objective),
+          ambiguity: ambiguityFromContext(context.context, context.workType, context.objective),
           verificationRequired: agentId === 'engineer' || agentId === 'qa-verifier',
+          contextTokens: estimateTokens(JSON.stringify(context.context)),
           actualExecutorId: agentId,
         },
         profiles: [],
