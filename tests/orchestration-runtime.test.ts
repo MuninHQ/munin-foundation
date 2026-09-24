@@ -5,13 +5,13 @@ import type { ProviderProfile } from '../src/provider-policy.js';
 import type { ExecutionProvider, ProviderRequest, ProviderResponse } from '../src/providers.js';
 
 class StubProvider implements ExecutionProvider {
-  constructor(readonly id: string, private readonly fail = false) {}
+  constructor(readonly id: string, private readonly fail = false, private readonly output?: string) {}
 
   async execute(request: ProviderRequest): Promise<ProviderResponse> {
     if (this.fail) throw new Error(`${this.id} unavailable`);
     return {
       providerId: this.id,
-      output: `${this.id}:${request.capability}`,
+      output: this.output ?? `${this.id}:${request.capability}`,
       metadata: {},
     };
   }
@@ -103,4 +103,61 @@ test('runtime throws a trace-bearing error after all providers fail', async () =
       return true;
     },
   );
+});
+
+test('runtime records shadow advice without changing provider or output', async () => {
+  const largeOutput = `start\n${'routine output\n'.repeat(500)}FAIL payment timeout\nexit code 1`;
+  const provider = new StubProvider('deterministic-local', false, largeOutput);
+  const runtime = new OrchestrationRuntimeCore([{
+    id: provider.id,
+    provider,
+    capabilities: ['*'],
+    mode: 'offline',
+    estimatedCostPerCall: 0,
+    estimatedLatencyMs: 1,
+    enabled: true,
+  }], { tokenGovernor: { largeOutputChars: 100, maxSummaryChars: 240 } });
+  const result = await runtime.run({ objective: 'Inspect logs', capability: 'execute', mode: 'direct', risk: 'low' });
+  assert.equal(result.providerId, 'deterministic-local');
+  assert.ok('response' in result);
+  assert.equal(result.response?.output, largeOutput);
+  assert.equal(result.trace.tokenGovernor?.mode, 'shadow');
+  assert.equal(result.trace.tokenGovernor?.recommendation.applied, false);
+  assert.ok((result.trace.tokenGovernor?.output.estimatedSavedTokens ?? 0) > 0);
+});
+
+test('telemetry write failure cannot fail the governed task', async () => {
+  const expectedOutput = 'governed output remains available';
+  const provider = new StubProvider('deterministic-local', false, expectedOutput);
+  const runtime = new OrchestrationRuntimeCore([{
+    id: provider.id,
+    provider,
+    capabilities: ['*'],
+    mode: 'offline',
+    estimatedCostPerCall: 0,
+    estimatedLatencyMs: 1,
+    enabled: true,
+  }], { tokenGovernorStore: { async append() { throw new Error('disk unavailable'); } } });
+  const result = await runtime.run({ objective: 'Continue safely', capability: 'execute', mode: 'direct' });
+  assert.equal(result.providerId, 'deterministic-local');
+  assert.ok('response' in result);
+  assert.equal(result.response?.output, expectedOutput);
+});
+
+test('telemetry write that never settles is bounded and cannot stall task completion', async () => {
+  const provider = new StubProvider('deterministic-local', false, 'completed output');
+  const runtime = new OrchestrationRuntimeCore([{
+    id: provider.id,
+    provider,
+    capabilities: ['*'],
+    mode: 'offline',
+    estimatedCostPerCall: 0,
+    estimatedLatencyMs: 1,
+    enabled: true,
+  }], { tokenGovernorStore: { async append() { await new Promise(() => undefined); } }, tokenGovernorTimeoutMs: 20 });
+  const result = await Promise.race([
+    runtime.run({ objective: 'Do not stall', capability: 'execute', mode: 'direct' }),
+    new Promise<never>((_resolve, reject) => setTimeout(() => reject(new Error('runtime stalled')), 250)),
+  ]);
+  assert.equal(result.response?.output, 'completed output');
 });

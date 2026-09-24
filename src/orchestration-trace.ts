@@ -1,4 +1,5 @@
 import type { ProviderDecision } from './provider-policy.js';
+import type { TokenGovernorObservation } from './token-governor.js';
 
 export interface OrchestrationAttempt {
   providerId: string;
@@ -12,6 +13,7 @@ export interface OrchestrationTrace {
   attempts: OrchestrationAttempt[];
   selectedProviderId?: string;
   providerDecision?: ProviderDecision;
+  tokenGovernor?: TokenGovernorObservation;
   startedAt: string;
   completedAt: string;
 }
