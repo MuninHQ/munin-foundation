@@ -47,3 +47,29 @@ test('candidate skill text remains inert observation data', () => {
   assert.equal('execute' in observation, false);
   assert.equal('promote' in observation, false);
 });
+
+test('saturated budgets preserve middle diagnostics by shrinking prefix and suffix', () => {
+  const input = `${'prefix '.repeat(80)}\n${Array.from({ length: 10 }, (_, index) => `FAIL diagnostic ${index}`).join('\n')}\n${'suffix '.repeat(80)}`;
+  const defaultBudgets = summarizeContext(input, { largeOutputChars: 100, maxSummaryChars: 240 });
+  const explicitBudgets = summarizeContext(input, { largeOutputChars: 100, maxSummaryChars: 160, prefixChars: 80, suffixChars: 80 });
+  assert.match(defaultBudgets.summary, /FAIL diagnostic/);
+  assert.match(explicitBudgets.summary, /FAIL diagnostic/);
+  assert.ok(defaultBudgets.summary.length <= 240);
+  assert.ok(explicitBudgets.summary.length <= 160);
+});
+
+test('adversarial repeated test markers are inspected with bounded work', () => {
+  const input = `start\n${'test '.repeat(40_000)}\nend`;
+  const started = performance.now();
+  const result = summarizeContext(input, { largeOutputChars: 100, maxSummaryChars: 200 });
+  assert.ok(performance.now() - started < 250);
+  assert.ok(result.summary.length <= 200);
+});
+
+test('source secrets are redacted before clipping summary fragments', () => {
+  const password = 'correct-horse-battery-staple';
+  const providerToken = `ghp_${'b'.repeat(24)}`;
+  const observation = observeTokenUsage({ runId: 'secret', source: 'terminal', capability: 'code', risk: 'low', selectedProviderId: providerToken, input: '', output: `password=${password}${'x'.repeat(5000)}\n${providerToken}` }, { largeOutputChars: 50, maxSummaryChars: 180 });
+  assert.doesNotMatch(JSON.stringify(observation), new RegExp(`${password}|${providerToken}`));
+  assert.match(JSON.stringify(observation), /REDACTED/);
+});

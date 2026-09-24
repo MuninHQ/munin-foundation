@@ -9,6 +9,14 @@ import { observeTokenUsage, type TokenGovernorObservation, type TokenGovernorOpt
 export interface OrchestrationRuntimeOptions {
   tokenGovernor?: TokenGovernorOptions;
   tokenGovernorStore?: { append(observation: TokenGovernorObservation): Promise<void> };
+  tokenGovernorTimeoutMs?: number;
+}
+
+async function boundedObservationWrite(operation: Promise<void>, timeoutMs: number): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(resolve, timeoutMs);
+    operation.then(() => { clearTimeout(timer); resolve(); }, error => { clearTimeout(timer); reject(error); });
+  });
 }
 
 export class OrchestrationRuntimeError extends Error {
@@ -42,7 +50,10 @@ export class OrchestrationRuntimeCore {
         input: requestText.slice(0, 100_000),
         output,
       }, this.options.tokenGovernor);
-      try { await this.options.tokenGovernorStore?.append(observation); } catch { /* Shadow telemetry cannot fail execution. */ }
+      try {
+        const write = this.options.tokenGovernorStore?.append(observation);
+        if (write) await boundedObservationWrite(write, Math.max(1, Math.min(5_000, this.options.tokenGovernorTimeoutMs ?? 250)));
+      } catch { /* Shadow telemetry cannot fail execution. */ }
       return observation;
     } catch {
       return undefined;

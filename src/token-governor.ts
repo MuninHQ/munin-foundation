@@ -65,7 +65,9 @@ const DEFAULTS = {
   suffixChars: 600,
 } as const;
 
-const DIAGNOSTIC = /(?:\bfail(?:ed|ure)?\b|\berror\b|\bwarn(?:ing)?\b|\bexception\b|\btraceback\b|\bstack\b|^\s*(?:at |[+-]{3}|@@)|\btests?\b.*\b(?:pass|fail|skip)|\b(?:duration|elapsed)\b|\bexit(?:ed)?(?:\s+code|\s+status)?\b)/i;
+const DIAGNOSTIC = /\b(?:fail(?:ed|ure)?|error|warn(?:ing)?|exception|traceback|stack|duration|elapsed)\b|^\s*(?:at |[+-]{3}|@@)|\bexit(?:ed)?(?:\s+code|\s+status)?\b/i;
+const TEST_RESULT = /\btests?\b.{0,80}\b(?:pass(?:ed)?|fail(?:ed)?|skip(?:ped)?)\b/i;
+const MAX_INSPECTED_LINE_CHARS = 4_096;
 
 function bounded(value: number | undefined, fallback: number, minimum: number, maximum: number): number {
   return Number.isFinite(value) ? Math.max(minimum, Math.min(maximum, Math.floor(value!))) : fallback;
@@ -113,20 +115,28 @@ export function summarizeContext(text: string, inputOptions: TokenGovernorOption
   if (text.length <= config.largeOutputChars) return metrics(text, text, false, 0);
 
   const lines = text.split(/\r?\n/);
-  const prefix = clipped(text, config.prefixChars);
-  const suffix = text.slice(Math.max(prefix.length, text.length - config.suffixChars));
-  const diagnosticLines = lines.filter(line => DIAGNOSTIC.test(line)).map(line => clipped(line, Math.max(40, Math.floor(config.maxSummaryChars / 3))));
-  const unique = [...new Set(diagnosticLines)].filter(line => !prefix.includes(line) && !suffix.includes(line));
+  const diagnosticLines = lines
+    .map(line => line.slice(0, MAX_INSPECTED_LINE_CHARS))
+    .filter(line => DIAGNOSTIC.test(line) || TEST_RESULT.test(line))
+    .map(line => clipped(line, 240));
+  const unique = [...new Set(diagnosticLines)];
   const omission = `\n… ${Math.max(0, lines.length - unique.length - 2)} lines omitted …\n`;
-  const middleBudget = Math.max(0, config.maxSummaryChars - prefix.length - suffix.length - omission.length);
-  const diagnostics = clipped(unique.join('\n'), middleBudget);
-  let summary = `${prefix}${omission}${diagnostics}${diagnostics ? '\n' : ''}${suffix}`;
-  if (summary.length > config.maxSummaryChars) {
-    const marker = `\n… ${Math.max(0, text.length - config.maxSummaryChars)} chars omitted …\n`;
-    const remaining = Math.max(2, config.maxSummaryChars - marker.length);
-    const head = Math.floor(remaining / 2);
-    summary = `${text.slice(0, head)}${marker}${text.slice(text.length - (remaining - head))}`;
+  const diagnosticBudget = unique.length ? Math.min(Math.floor(config.maxSummaryChars * 0.4), config.maxSummaryChars - omission.length - 2) : 0;
+  const diagnostics = clipped(unique.join('\n'), Math.max(0, diagnosticBudget));
+  const diagnosticSeparator = diagnostics ? '\n' : '';
+  const outerBudget = Math.max(0, config.maxSummaryChars - omission.length - diagnostics.length - diagnosticSeparator.length);
+  let prefixLength = Math.min(config.prefixChars, Math.ceil(outerBudget / 2));
+  let suffixLength = Math.min(config.suffixChars, outerBudget - prefixLength);
+  const unused = outerBudget - prefixLength - suffixLength;
+  if (unused > 0) {
+    const prefixRoom = Math.max(0, config.prefixChars - prefixLength);
+    const addPrefix = Math.min(unused, prefixRoom);
+    prefixLength += addPrefix;
+    suffixLength += Math.min(unused - addPrefix, Math.max(0, config.suffixChars - suffixLength));
   }
+  const prefix = text.slice(0, prefixLength);
+  const suffix = suffixLength ? text.slice(-suffixLength) : '';
+  const summary = `${prefix}${omission}${diagnostics}${diagnosticSeparator}${suffix}`;
   return metrics(text, summary, true, Math.max(0, lines.length - unique.length - 2));
 }
 
@@ -148,7 +158,15 @@ export function recommendShadowRoute(input: ShadowRouteInput): ShadowRouteRecomm
 }
 
 export function observeTokenUsage(input: TokenObservationInput, inputOptions: TokenGovernorOptions = {}): TokenGovernorObservation {
-  const output = summarizeContext(input.output, inputOptions);
+  const safeOutput = redactSecretText(input.output);
+  const summarized = summarizeContext(safeOutput, inputOptions);
+  const estimatedOriginalTokens = estimateTokens(input.output);
+  const output: ContextSummary = {
+    ...summarized,
+    originalChars: input.output.length,
+    estimatedOriginalTokens,
+    estimatedSavedTokens: Math.max(0, estimatedOriginalTokens - summarized.estimatedRetainedTokens),
+  };
   const inputTokens = estimateTokens(input.input);
   return Object.freeze({
     runId: input.runId,
@@ -163,7 +181,8 @@ export function observeTokenUsage(input: TokenObservationInput, inputOptions: To
       risk: input.risk,
       inputTokens,
       outputTokens: output.estimatedOriginalTokens,
-      selectedProviderId: input.selectedProviderId,
+      selectedProviderId: input.selectedProviderId ? redactSecretText(input.selectedProviderId) : undefined,
     })),
   });
 }
+import { redactSecretText } from './secret-redaction.js';

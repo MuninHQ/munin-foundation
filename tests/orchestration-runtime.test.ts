@@ -143,3 +143,21 @@ test('telemetry write failure cannot fail the governed task', async () => {
   assert.ok('response' in result);
   assert.equal(result.response?.output, expectedOutput);
 });
+
+test('telemetry write that never settles is bounded and cannot stall task completion', async () => {
+  const provider = new StubProvider('deterministic-local', false, 'completed output');
+  const runtime = new OrchestrationRuntimeCore([{
+    id: provider.id,
+    provider,
+    capabilities: ['*'],
+    mode: 'offline',
+    estimatedCostPerCall: 0,
+    estimatedLatencyMs: 1,
+    enabled: true,
+  }], { tokenGovernorStore: { async append() { await new Promise(() => undefined); } }, tokenGovernorTimeoutMs: 20 });
+  const result = await Promise.race([
+    runtime.run({ objective: 'Do not stall', capability: 'execute', mode: 'direct' }),
+    new Promise<never>((_resolve, reject) => setTimeout(() => reject(new Error('runtime stalled')), 250)),
+  ]);
+  assert.equal(result.response?.output, 'completed output');
+});

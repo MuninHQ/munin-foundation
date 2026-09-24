@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { appendFile, mkdtemp, rm } from 'node:fs/promises';
+import { appendFile, mkdtemp, readFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { observeTokenUsage } from '../src/token-governor.js';
@@ -43,6 +43,22 @@ test('store rejects invalid list bounds and missing files read as empty', async 
     const store = new TokenGovernorStore(path.join(dir, 'missing.jsonl'));
     assert.deepEqual(await store.list(), []);
     await assert.rejects(() => store.list(0), /between 1 and 1000/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('store bytes never contain credentials clipped away from their assignment', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'munin-token-governor-'));
+  try {
+    const file = path.join(dir, 'token-governor.jsonl');
+    const password = 'correct-horse-battery-staple';
+    const providerToken = `ghp_${'c'.repeat(24)}`;
+    const observation = observeTokenUsage({ runId: 'secret', source: 'terminal', capability: 'code', risk: 'low', selectedProviderId: providerToken, input: '', output: `password=${password}${'x'.repeat(5000)}\n${providerToken}` }, { largeOutputChars: 50, maxSummaryChars: 180 });
+    await new TokenGovernorStore(file).append(observation);
+    const bytes = await readFile(file, 'utf8');
+    assert.doesNotMatch(bytes, new RegExp(`${password}|${providerToken}`));
+    assert.match(bytes, /REDACTED/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
