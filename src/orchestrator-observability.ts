@@ -7,8 +7,9 @@ import {
   type OrchestratorPolicy,
   type OrchestratorRunResult,
 } from './agent-orchestrator.js';
+import type { TokenEfficiencyObserver } from './token-efficiency-observer.js';
 
-export function instrumentAgentExecutors(executors: MuninAgentExecutors, telemetry: AgentTelemetry): MuninAgentExecutors {
+export function instrumentAgentExecutors(executors: MuninAgentExecutors, telemetry: AgentTelemetry, efficiency?: TokenEfficiencyObserver): MuninAgentExecutors {
   const instrumented: MuninAgentExecutors = {};
   const startedRuns = new Set<string>();
 
@@ -21,8 +22,31 @@ export function instrumentAgentExecutors(executors: MuninAgentExecutors, telemet
       }
       const startedAt = Date.now();
       telemetry.emit({ name: 'agent.started', runId: context.runId, agentId, metadata: { cycle: context.cycle, workType: context.workType } });
+      efficiency?.observeStart({
+        runId: context.runId,
+        taskId: typeof context.context.taskId === 'string' ? context.context.taskId : `${context.runId}:${agentId}:${context.cycle}`,
+        sessionId: typeof context.context.sessionId === 'string' ? context.context.sessionId : context.runId,
+        agentId: context.agent.id,
+        task: {
+          workType: context.workType,
+          capabilities: context.agent.capabilities,
+          localCapable: true,
+          risk: agentId === 'qa-verifier' ? 'medium' : 'low',
+          ambiguity: context.workType === 'mixed' ? 'high' : 'medium',
+          verificationRequired: agentId === 'engineer' || agentId === 'qa-verifier',
+          actualExecutorId: agentId,
+        },
+        profiles: [],
+      });
       try {
         const result: AgentExecutionResult = await executor(context);
+        efficiency?.observeCompletion({
+          runId: context.runId,
+          taskId: typeof context.context.taskId === 'string' ? context.context.taskId : `${context.runId}:${agentId}:${context.cycle}`,
+          sessionId: typeof context.context.sessionId === 'string' ? context.context.sessionId : context.runId,
+          agentId: context.agent.id,
+          usage: result.usage,
+        });
         telemetry.emit({
           name: result.status === 'completed' ? 'agent.completed' : 'agent.failed',
           runId: context.runId,
@@ -59,8 +83,9 @@ export async function runObservedOrchestration(
   executors: MuninAgentExecutors,
   telemetry: AgentTelemetry,
   policy: Partial<OrchestratorPolicy> = {},
+  efficiency?: TokenEfficiencyObserver,
 ): Promise<{ result: OrchestratorRunResult; receipt: ExecutionReceipt }> {
-  const orchestrator = new MuninAgentOrchestrator(instrumentAgentExecutors(executors, telemetry), policy);
+  const orchestrator = new MuninAgentOrchestrator(instrumentAgentExecutors(executors, telemetry, efficiency), policy);
   const result = await orchestrator.run(objective, context);
   const receipt = buildExecutionReceipt(result);
   telemetry.emit({

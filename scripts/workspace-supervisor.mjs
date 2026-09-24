@@ -6,6 +6,7 @@ const root = process.cwd();
 const dataDir = resolve(process.env.MUNIN_DATA_DIR ?? 'data/runtime');
 const lockPath = resolve(dataDir, 'workspace-supervisor.lock');
 const statePath = resolve(dataDir, 'workspace-supervisor.json');
+const efficiencyHealthPath = resolve(dataDir, 'token-efficiency', 'health.json');
 const launcher = resolve(root, 'scripts', 'launch.mjs');
 const restartExitCode = 75;
 
@@ -41,7 +42,9 @@ let generation = 0;
 const startedAt = new Date().toISOString();
 
 async function persistState(extra = {}) {
-  await writeFile(statePath, JSON.stringify({ pid: process.pid, childPid: child?.pid, startedAt, heartbeatAt: new Date().toISOString(), generation, ...extra }, null, 2) + '\n', 'utf8');
+  let tokenEfficiency;
+  try { tokenEfficiency = JSON.parse(await readFile(efficiencyHealthPath, 'utf8')); } catch {}
+  await writeFile(statePath, JSON.stringify({ pid: process.pid, childPid: child?.pid, startedAt, heartbeatAt: new Date().toISOString(), generation, ...(tokenEfficiency ? { tokenEfficiency } : {}), ...extra }, null, 2) + '\n', 'utf8');
 }
 
 function startWorkspace() {
