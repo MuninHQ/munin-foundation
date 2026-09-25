@@ -341,3 +341,78 @@ Add token/context efficiency as a disabled-by-default observation layer on exist
 ### Validation
 
 Focused RED/GREEN evidence is recorded per task in the ignored execution ledger. Complete build and regression results remain pending the final verification task; no full-suite result is inferred here.
+
+
+## 2026-09-08 — Research Fabric Wave 1
+
+### Decision
+
+- Keep Wave 1 read-only and disabled by default behind MUNIN_RESEARCH_FABRIC_V1.
+- Use public zero-cost Web/RSS/GitHub sources and local yt-dlp for YouTube without credentials.
+- Block private-network targets and revalidate redirects before external reads.
+
+### Changes
+
+- Added source adapters, normalization, bounded fallback routing and a source doctor.
+- Added Web/RSS SSRF and response-size guards, anonymous GitHub REST support and shell-free YouTube execution.
+- Installed yt-dlp 2026.07.04 on the Windows host via winget for empirical YouTube readiness.
+
+### Validation
+
+- Focused Research Fabric suite passed: 8 tests, 0 failures.
+- Full repository suite passed: 788 tests, 0 failures.
+- Source Doctor reported Web, RSS, GitHub and YouTube healthy after host setup.
+
+## 2026-09-08T20:04:23.504Z — MEMORY PRE-TASK · ^Munin^ Research^ Fabric^
+
+Task: ^Fix^ Research^ Fabric^ YouTube^ search^ buffer^
+Consumer: assistant
+Context matches: 0
+Vault matches: 0
+
+## 2026-09-08T20:05:04.629Z — MEMORY POST-TASK · ^Munin^ Research^ Fabric^
+
+^YouTube^ search^ now^ uses^ flat^ playlist^ metadata,^ preventing^ yt-dlp^ stdout^ overflow;^ live^ search^ succeeded^ after^ the^ change.^
+## Decisions
+
+- ^Use^ --flat-playlist^ only^ for^ YouTube^ search^
+- Keep^ direct^ video^ reads^ unchanged^ and^ read-only^
+
+## Changed
+
+- src/research-adapters.ts^
+- tests/research-fabric.test.ts
+
+## Next steps
+
+- ^Ship^ fix^ through^ PR^ and^ redeploy^ main^
+- Repeat^ live^ Wave^ 1^ smoke^ test^ after^ merge^
+
+## What did not work
+
+- ^Initial^ live^ YouTube^ search^ exceeded^ the^ 2^ MB^ stdout^ buffer^
+
+## 2026-09-23T15:23:52.900Z — MEMORY POST-TASK · munin-foundation
+
+^Reconciled^ PRs^ 370^ and^ 371^ onto^ current^ main^ in^ isolated^ worktree,^ fixed^ three^ Important^ independent-review^ findings^ with^ RED-to-GREEN^ regressions,^ opened^ PR^ 372,^ and^ confirmed^ six^ hosted^ checks^ green.^
+## Decisions
+
+- ^Use^ consolidated^ PR^ 372^ instead^ of^ rewriting^ stacked^ PR^ branches^
+- Keep^ both^ governance^ systems^ observation-only^
+- Require^ explicit^ merge^ authorization^
+
+## Changed
+
+- ^Design^ Constitution^ and^ Agent^ Control^ Plane^ reconciled^ onto^ ef61fad^
+- Observer^ detects^ trust^ overlap,^ missing^ forbidden^ actions,^ missing^ promotion^ policies,^ and^ disabled^ consequential^ gate^
+- Design^ drift^ report^ confined^ to^ .artifacts^
+
+## Next steps
+
+- ^Merge^ PR^ 372^ after^ explicit^ approval^
+- Then^ close^ superseded^ PRs^ 370^ and^ 371^
+- Address^ deferred^ minor^ observation-tooling^ items^ separately^
+
+## What did not work
+
+- ^One^ full-suite^ heartbeat^ timing^ test^ failed^ once^ and^ passed^ isolated^ plus^ full^ rerun;^ no^ related^ code^ changed^

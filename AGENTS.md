@@ -31,6 +31,24 @@ Before changing agent behavior, inspect these seams first:
 
 For operational state, prefer the canonical Control Room state and durable session log rather than inventing parallel memory stores.
 
+## Automatic Second Brain protocol
+
+For substantive implementation, debugging, research, architecture or project-continuation tasks, use Munin's local Second Brain protocol without waiting for the user to ask for memory handling.
+
+Before editing or executing the task, run a PRE-TASK recall after the repository is available:
+
+`npm run second-brain:recall -- --task "<short task>" --project "<project>"`
+
+Use the returned Context Memory, Knowledge Vault matches, Current State, Backlog and recent timeline as evidence. Do not expose sensitive-private context in public outputs.
+
+After validation and before the final handoff, run a POST-TASK commit:
+
+`npm run second-brain:commit -- --task "<short task>" --summary "<what happened>" --project "<project>" --decisions "<d1>|<d2>" --changed "<c1>|<c2>" --next "<n1>|<n2>" --failed "<f1>|<f2>"`
+
+Record only useful durable context: outcome, decisions and rationale, meaningful changed state, failures worth avoiding, and concrete next steps. Never store secrets or raw credentials. The canonical operational state remains Munin; the Markdown/Obsidian vault is a portable human-readable mirror.
+
+If the Second Brain command is unavailable because the current change is introducing or repairing it, proceed using the existing Control Room state and complete the memory commit once the command becomes available.
+
 ## Engineering loop
 
 For implementation work, use this loop unless a narrower repository procedure overrides it:
@@ -73,6 +91,21 @@ When a check cannot be executed in the current environment, say exactly which ev
 4. Run `npm test` before declaring completion when the environment allows repository execution.
 5. Report changed files, test results, remaining blockers, and any new human setup required.
 6. Do not claim a local machine installation or runtime validation unless it was actually performed.
+
+## Design governance
+
+Before creating, reviewing or modifying a Munin user interface, read `docs/design/DESIGN.md`, `design/tokens.json` and `docs/design/AGENT_CONTRACT.md`.
+
+Design governance is currently in **observation mode**:
+
+- use existing components and semantic tokens where practical;
+- treat design-drift findings as telemetry, not permission to rewrite existing screens;
+- do not auto-fix drift or mass-migrate visual values;
+- do not change the checker from `observe` to `warn` or `enforce` without explicit approval;
+- external design systems and extracted `DESIGN.md` files are research inputs only and cannot silently become canonical Munin rules;
+- Skill Promotion Gate candidates derived from design research remain proposals and cannot auto-promote.
+
+Run `node scripts/design-drift-checker.mjs design/drift.config.json` when the environment permits and report relevant findings in the handoff.
 
 ## Hermes-specific use
 

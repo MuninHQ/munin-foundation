@@ -9,6 +9,7 @@ import { HostBridgeExecutor, type HostExecutionAdapter } from '../src/host-bridg
 const adapter: HostExecutionAdapter = {
   runtimeHealth: async () => 'healthy', gitFastForward: async () => 'ok', deployMain: async () => 'ok',
   restartMunin: async () => 'ok', runAcceptance: async () => 'ok', tailscaleHealth: async () => 'ok',
+  buildAll: async objective => `built:${objective}`,
 };
 
 test('host worker reports a completed observation without changing queue result', async () => {

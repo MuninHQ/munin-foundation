@@ -5,6 +5,7 @@ import { buildKnowledgeGraph, buildTimeline, generateDailyBrief, generateInsight
 import type { JobStatus, Priority, Status } from './types.js';
 import { CareerInboxStore } from './career-inbox.js';
 import { syncCareerInbox } from './email-providers.js';
+import { manualSyncCareerInbox } from './email-manual-sync.js';
 import { beginOAuth, completeOAuth, connectionStatus, disconnect, type OAuthProvider } from './oauth.js';
 import { captureCareerMessage, type CaptureFormat } from './career-capture.js';
 import { CareerWatchFolder } from './watch-folder.js';
@@ -20,6 +21,7 @@ import { bytes, json, readJsonBody, redirect, requireText as text } from './http
 import { apiPort, webBaseUrl } from './config.js';
 import { trustedSourceRadar } from './trusted-source-radar.js';
 import { buildActionInbox } from './action-inbox.js';
+import { ApprovalQueue } from './sentinel.js';
 import { connectorRegistry } from './connector-registry.js';
 import { ManusTaskStore, manusBridgeStatus, refreshManusTasks, submitManusTask, type ManusTaskKind } from './manus-operational-bridge.js';
 import { buildProactiveOperator } from './proactive-operator.js';
@@ -32,6 +34,7 @@ import { firecrawlHealth, scrapeWithFirecrawl } from './firecrawl-context.js';
 import { localVideoPolicy } from './local-video-capability.js';
 const store=new ContextStore(); const service=new MuninService(store); const inbox=new CareerInboxStore(); const watchFolder=new CareerWatchFolder();
 const manusTasks=new ManusTaskStore();
+const approvals=new ApprovalQueue();
 const body=(request:IncomingMessage)=>readJsonBody(request,5_000_000);
 export async function handleApi(request:IncomingMessage,response:ServerResponse):Promise<void>{if(request.method==='OPTIONS')return json(request,response,204,{});const url=new URL(request.url??'/','http://localhost');try{
 if(request.method==='GET'&&url.pathname==='/api/health')return json(request,response,200,{status:'ok',service:'munin-workspace'});
@@ -39,7 +42,7 @@ if(request.method==='GET'&&url.pathname==='/api/content-studio/status')return js
 if(request.method==='POST'&&url.pathname==='/api/content-studio/video'){const input=await body(request);const action=input.action==='generate'?'generate':'plan';const capability=createContentVideoCapability();const capabilityInput={action,topic:text(input.topic,'topic'),script:typeof input.script==='string'?input.script:undefined,language:typeof input.language==='string'?input.language:undefined,aspectRatio:input.aspectRatio==='16:9'||input.aspectRatio==='1:1'?input.aspectRatio:'9:16'} as ContentVideoInput;return json(request,response,action==='generate'?201:200,await capability.execute(capabilityInput,{capability:'media.content-video',executionId:`content-studio-${Date.now()}`,startedAt:new Date().toISOString(),input:capabilityInput,metadata:{source:'content-studio'}}));}
 if(request.method==='POST'&&url.pathname==='/api/content-studio/scrape'){const input=await body(request);return json(request,response,200,await scrapeWithFirecrawl(text(input.url,'url')));}
 if(request.method==='GET'&&url.pathname==='/api/radar'){const snapshot=await trustedSourceRadar(url.searchParams.get('refresh')==='1');return json(request,response,200,snapshot);}
-if(request.method==='GET'&&url.pathname==='/api/action-inbox'){const [state,email,radar,manus]=await Promise.all([store.load(),inbox.load(),trustedSourceRadar(false),manusTasks.list()]);return json(request,response,200,buildActionInbox(state,email,radar,new Date(),manus));}
+if(request.method==='GET'&&url.pathname==='/api/action-inbox'){const [state,email,radar,manus,pendingApprovals]=await Promise.all([store.load(),inbox.load(),trustedSourceRadar(false),manusTasks.list(),approvals.list('pending')]);return json(request,response,200,buildActionInbox(state,email,radar,new Date(),manus,pendingApprovals));}
 if(request.method==='GET'&&url.pathname==='/api/connectors'){const [radar,connections,manus]=await Promise.all([trustedSourceRadar(false),connectionStatus(),manusBridgeStatus(manusTasks)]);return json(request,response,200,{generatedAt:new Date().toISOString(),items:[...connectorRegistry(radar,connections),{id:'manus',name:'Manus Operational Bridge',category:'research',cost:'free',auth:'oauth',enabled:manus.enabled,health:manus.enabled?'healthy':'not-connected',detail:manus.enabled?`${manus.profile} · ${manus.declaredCreditsToday}/${manus.dailyCreditBudget} créditos reservados hoje`:manus.reason}]});}
 if(request.method==='GET'&&url.pathname==='/api/manus/status')return json(request,response,200,await manusBridgeStatus(manusTasks));
 if(request.method==='GET'&&url.pathname==='/api/manus/tasks')return json(request,response,200,{items:await manusTasks.list()});
@@ -48,6 +51,7 @@ if(request.method==='POST'&&url.pathname==='/api/manus/tasks'){const input=await
 if(request.method==='POST'&&url.pathname==='/api/manus/refresh')return json(request,response,200,{items:await refreshManusTasks(manusTasks)});
 if(request.method==='GET'&&url.pathname==='/api/workspace'){const state=await store.load();const events=await store.events();const careerQueue=await service.careerQueue();return json(request,response,200,{state,events:events.slice(-20).reverse(),careerQueue,intelligence:{dailyBrief:generateDailyBrief(state),timeline:buildTimeline(state,events,30),graph:buildKnowledgeGraph(state),insights:generateInsights(state).slice(0,20)}});}
 if(request.method==='POST'&&url.pathname==='/api/assistant'){const input=await body(request);return json(request,response,200,await executeAssistantCommand(text(input.command,'command')));}
+if(request.method==='POST'&&url.pathname==='/api/chat'){const input=await body(request);const command=typeof input.command==='string'?input.command:typeof input.message==='string'?input.message:'';return json(request,response,200,await executeAssistantCommand(text(command,'command')));}
 if(request.method==='GET'&&url.pathname==='/api/assistant/history')return json(request,response,200,await loadAssistantMemory());
 if(request.method==='DELETE'&&url.pathname==='/api/assistant/history')return json(request,response,200,await clearAssistantMemory());
 if(request.method==='GET'&&url.pathname==='/api/settings/llm')return json(request,response,200,{settings:publicLlmSettings(await loadLlmSettings()),status:await llmProviderStatus()});
@@ -71,7 +75,7 @@ if(request.method==='GET'&&url.pathname==='/api/intelligence/daily-brief')return
 if(request.method==='GET'&&url.pathname==='/api/intelligence/insights')return json(request,response,200,{items:generateInsights(await store.load())});
 if(request.method==='GET'&&url.pathname==='/api/intelligence/context')return json(request,response,200,{query:url.searchParams.get('q')??'',matches:resolveContext(await store.load(),url.searchParams.get('q')??'')});
 if(request.method==='GET'&&url.pathname==='/api/career-inbox'){const state=await inbox.load();return json(request,response,200,{...state,connections:await connectionStatus(),watchFolder:await watchFolder.status()});}
-if(request.method==='POST'&&url.pathname==='/api/career-inbox/sync')return json(request,response,200,await syncCareerInbox());
+if(request.method==='POST'&&url.pathname==='/api/career-inbox/sync')return json(request,response,200,await manualSyncCareerInbox());
 if(request.method==='POST'&&url.pathname==='/api/career-inbox/capture'){const input=await body(request);const format=text(input.format,'format') as CaptureFormat;if(!['eml','text','txt','msg'].includes(format))throw new Error('Unsupported capture format');return json(request,response,201,await captureCareerMessage({format,filename:typeof input.filename==='string'?input.filename:undefined,content:text(input.content,'content')}));}
 if(request.method==='POST'&&url.pathname==='/api/career-inbox/capture-bulk'){const input=await body(request);if(!Array.isArray(input.items))throw new Error('items array is required');if(input.items.length>50)throw new Error('Maximum 50 messages per batch');let added=0,duplicates=0;const errors:{filename?:string;error:string}[]=[];for(const raw of input.items){try{if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Invalid item');const item=raw as Record<string,unknown>;const format=text(item.format,'format') as CaptureFormat;if(!['eml','text','txt','msg'].includes(format))throw new Error('Unsupported capture format');const result=await captureCareerMessage({format,filename:typeof item.filename==='string'?item.filename:undefined,content:text(item.content,'content')});if(result.added)added++;else duplicates++;}catch(error){const item=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw as Record<string,unknown>:{};errors.push({filename:typeof item.filename==='string'?item.filename:undefined,error:error instanceof Error?error.message:String(error)});}}return json(request,response,201,{processed:input.items.length,added,duplicates,errors});}
 if(request.method==='GET'&&url.pathname==='/api/career-inbox/watch-folder')return json(request,response,200,await watchFolder.status());

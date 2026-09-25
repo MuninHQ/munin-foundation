@@ -10,6 +10,7 @@ function adapter(){
     restartMunin: async()=> 'restarted',
     runAcceptance: async()=> 'Authorization: Bearer secret accepted',
     tailscaleHealth: async()=> 'tailscale ok',
+    buildAll: async(objective:string)=> `built:${objective}`,
   };
 }
 

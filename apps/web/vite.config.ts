@@ -34,6 +34,7 @@ export default defineConfig({
         'operator-hub': path.resolve(root, 'operator-hub.html'),
         intelligence: path.resolve(root, 'intelligence.html'),
         'content-studio': path.resolve(root, 'content-studio.html'),
+        'viral-engine': path.resolve(root, 'viral-engine.html'),
         'context-memory': path.resolve(root, 'context-memory.html'),
         council: path.resolve(root, 'council.html'),
         'executive-briefing': path.resolve(root, 'executive-briefing.html'),

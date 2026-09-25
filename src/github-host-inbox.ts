@@ -10,7 +10,7 @@ const REMOTE='origin';
 const INBOX_BRANCH='munin-host-inbox';
 const REMOTE_REF=`refs/remotes/${REMOTE}/${INBOX_BRANCH}`;
 const INBOX_FILE='host-intent.json';
-const ALLOWED:ReadonlySet<HostJobType>=new Set(['runtime-health','git-fast-forward','deploy-main','restart-munin','run-acceptance','tailscale-health','creative-review']);
+const ALLOWED:ReadonlySet<HostJobType>=new Set(['runtime-health','git-fast-forward','deploy-main','restart-munin','run-acceptance','tailscale-health','creative-review','build-all']);
 const MAX_INTENT_AGE_MS=15*60*1000;
 
 export interface GitHubHostIntent{
@@ -21,6 +21,7 @@ export interface GitHubHostIntent{
  expiresAt:string;
  repo:'MuninHQ/munin-foundation';
  branch:'main';
+ objective?:string;
  dryRun?:boolean;
 }
 interface ReplayFile{version:1;processed:Array<{id:string;processedAt:string}>}
@@ -35,11 +36,15 @@ export function parseGitHubHostIntent(value:unknown,now=Date.now()):GitHubHostIn
  if(typeof input.type!=='string'||!ALLOWED.has(input.type as HostJobType))throw new Error('Host inbox intent type is not allowlisted.');
  if(input.repo!=='MuninHQ/munin-foundation'||input.branch!=='main')throw new Error('Host inbox target is restricted to Munin main.');
  if(typeof input.createdAt!=='string'||typeof input.expiresAt!=='string')throw new Error('Host inbox intent requires timestamps.');
+ const type=input.type as HostJobType;
+ const objective=typeof input.objective==='string'?input.objective.trim():undefined;
+ if(type==='build-all'&&!objective)throw new Error('BUILD ALL Host inbox intent requires objective.');
+ if(objective&&objective.length>2000)throw new Error('BUILD ALL Host inbox objective exceeds 2000 characters.');
  const created=Date.parse(input.createdAt),expires=Date.parse(input.expiresAt);
  if(!Number.isFinite(created)||!Number.isFinite(expires)||expires<=created)throw new Error('Invalid Host inbox intent timestamps.');
  if(expires-created>MAX_INTENT_AGE_MS)throw new Error('Host inbox intent lifetime exceeds 15 minutes.');
  if(created>now+60_000)throw new Error('Host inbox intent is dated in the future.');
- return{version:1,id:input.id,type:input.type as HostJobType,createdAt:input.createdAt,expiresAt:input.expiresAt,repo:'MuninHQ/munin-foundation',branch:'main',dryRun:input.dryRun===true};
+ return{version:1,id:input.id,type,createdAt:input.createdAt,expiresAt:input.expiresAt,repo:'MuninHQ/munin-foundation',branch:'main',objective,dryRun:input.dryRun===true};
 }
 
 async function fixedGit(cwd:string,args:string[],timeoutMs:number):Promise<string>{
@@ -62,7 +67,8 @@ export class GitHubHostInbox{
   let intent:GitHubHostIntent;try{intent=parseGitHubHostIntent(parsed,now)}catch(error){return{status:'invalid',summary:error instanceof Error?error.message:String(error)}}
   if(Date.parse(intent.expiresAt)<=now){await this.mark(intent.id);return{status:'expired',summary:`Host intent ${intent.id} expired before processing.`}}
   if(await this.seen(intent.id))return{status:'replayed',summary:`Host intent ${intent.id} already processed.`}
-  const gitTarget=intent.type==='git-fast-forward'||intent.type==='deploy-main';const job:HostJob={id:`github-${intent.id}`,type:intent.type,repo:gitTarget?intent.repo:undefined,branch:gitTarget?intent.branch:undefined,dryRun:intent.dryRun,createdAt:intent.createdAt};
+  const repoTarget=intent.type==='git-fast-forward'||intent.type==='deploy-main'||intent.type==='build-all';
+  const job:HostJob={id:`github-${intent.id}`,type:intent.type,repo:repoTarget?intent.repo:undefined,branch:repoTarget?intent.branch:undefined,objective:intent.objective,dryRun:intent.dryRun,createdAt:intent.createdAt};
   const gate=validateHostJob(job);if(gate.status!=='approved'){await this.mark(intent.id);return{status:'invalid',summary:gate.summary}}
   await this.queue.enqueue(job);await this.mark(intent.id);return{status:'enqueued',summary:`Host intent ${intent.id} enqueued as ${job.id}.`,jobId:job.id};
  }

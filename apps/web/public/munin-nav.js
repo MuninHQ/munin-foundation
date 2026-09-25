@@ -15,6 +15,7 @@
     { label: 'Career', href: '/career-command.html' },
     { label: 'Memory', href: '/context-memory.html' },
     { label: 'LinkedIn', href: '/linkedin.html' },
+    { label: 'Viral', href: '/viral-engine.html' },
   ];
   const tools = [
     ['/email-intelligence.html', 'Email Intelligence'],
@@ -56,6 +57,7 @@
     ['/executive-briefing.html', 'Briefing', 'Prioridades adaptativas'],
     ['/career-command.html', 'Career', 'Pipeline profissional'],
     ['/context-memory.html', 'Memory', 'Contexto durável'],
+    ['/viral-engine.html', 'Viral Engine', 'Descobrir, produzir e aprender com conteúdo'],
   ];
   const commandButton=document.createElement('button');commandButton.className='munin-command-launch';commandButton.innerHTML='<span>＋</span><b>Ação rápida</b>';commandButton.setAttribute('aria-label','Abrir ações rápidas e comandos');
   const palette=document.createElement('div');palette.className='munin-command-overlay';palette.innerHTML=`<section class="munin-command-sheet" role="dialog" aria-modal="true" aria-label="Paleta de comandos"><div class="munin-command-head"><strong>IR PARA</strong><button aria-label="Fechar">×</button></div><input class="munin-command-search" placeholder="Buscar módulo ou ação…" autocomplete="off"><div class="munin-command-results"></div></section>`;

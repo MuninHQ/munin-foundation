@@ -105,6 +105,7 @@
 
 ## P2 — Hardening
 
+- [x] **Token Governor shadow foundation** — deterministic large-output summaries, heuristic token-budget telemetry, conservative non-binding model/effort recommendations, redacted evidence, and operator status are integrated without changing Provider Registry authority or Skill Promotion Gate behavior. Promotion remains evidence- and approval-gated.
 - [x] **Daily briefing intake — 2026-08-25** — mapped Agent Safety Gate to the existing Action Constitution, added bounded Audit Replay retrieval, promoted explicit `whyItMatters`/recommendation/impact fields in Action Inbox, added FEBRABAN to the trusted Radar and preserved two follow-on LinkedIn themes in Content Intelligence.
 - [x] **Agent safety, isolation and observability** — isolated workspaces, guarded/strict sandbox backends, adversarial policy benchmark, durable traces/metrics, local telemetry and replay receipts are integrated; Windows npm/npx and recursive secret-redaction regressions are covered.
 

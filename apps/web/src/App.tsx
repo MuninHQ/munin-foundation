@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ExecutiveDashboard } from './ExecutiveDashboard';
+import { classifyMuninRequest, emitMuninState } from './munin-ui/runtime-events';
 
 type Section = 'Command Center' | 'Projects' | 'Career' | 'Research' | 'Runtime';
 type Workspace = { state: { projects: any[]; actions: any[]; jobs: any[]; research: any[] }; events: any[]; careerQueue: any[]; intelligence?: any };
@@ -14,11 +15,18 @@ const nav: Array<{ id: Section; label: string; glyph: string }> = [
 ];
 
 async function request(path: string, options?: RequestInit) {
-  const response = await fetch(path, { headers: { 'content-type': 'application/json' }, ...options });
-  const raw = await response.text();
-  const data = raw ? JSON.parse(raw) : {};
-  if (!response.ok) throw new Error(data.error ?? `Request failed (${response.status})`);
-  return data;
+  const operationId = emitMuninState(classifyMuninRequest(path, options?.method), path);
+  try {
+    const response = await fetch(path, { headers: { 'content-type': 'application/json' }, ...options });
+    const raw = await response.text();
+    const data = raw ? JSON.parse(raw) : {};
+    if (!response.ok) throw new Error(data.error ?? `Request failed (${response.status})`);
+    emitMuninState('done', path, operationId);
+    return data;
+  } catch (error) {
+    emitMuninState('warning', path, operationId);
+    throw error;
+  }
 }
 
 export function App() {
@@ -67,7 +75,7 @@ export function App() {
 
   return <div className="shell">
     <aside className="sidebar"><div className="brand"><span className="brand-mark" aria-hidden="true"><i /></span><div><strong>MUNIN</strong><small>Life Intelligence</small></div></div><nav aria-label="Navegação principal">{nav.map(item => <button key={item.id} className={section === item.id ? 'active' : ''} onClick={() => setSection(item.id)}><span aria-hidden="true">{item.glyph}</span>{item.label}</button>)}</nav><p className="nav-group">CENTRAIS</p><nav className="nav-modules">
-      <a href="/action-inbox.html">Action Inbox</a><a href="/radar.html">Munin Radar</a><a href="/career-intake.html">Analyze Job</a><a href="/career-command.html">Career Command</a><a href="/executive-briefing.html">Executive Briefing</a><a href="/intelligence.html">Intelligence</a><a href="/context-memory.html">Context Memory</a><a href="/linkedin.html">LinkedIn Studio</a><a href="/linkedin-compose.html">Post Composer</a><a href="/linkedin-history.html">Editorial History</a><a href="/linkedin-assets.html">Visual Assets</a><a href="/settings.html">Settings</a>
+      <a href="/action-inbox.html">Action Inbox</a><a href="/radar.html">Munin Radar</a><a href="/viral-engine.html">Viral Engine</a><a href="/career-intake.html">Analyze Job</a><a href="/career-command.html">Career Command</a><a href="/executive-briefing.html">Executive Briefing</a><a href="/intelligence.html">Intelligence</a><a href="/context-memory.html">Context Memory</a><a href="/linkedin.html">LinkedIn Studio</a><a href="/linkedin-compose.html">Post Composer</a><a href="/linkedin-history.html">Editorial History</a><a href="/linkedin-assets.html">Visual Assets</a><a href="/settings.html">Settings</a>
     </nav><div className={`sidebar-foot ${error ? 'offline' : ''}`}><span className="status-dot" /> <span><strong>{error ? 'Conexão interrompida' : 'Munin operacional'}</strong><small>{error ? 'Dados locais preservados' : 'Runtime local · privado'}</small></span></div></aside>
     <main id="main-content"><header><div><p className="eyebrow">MUNIN · COMMAND LAYER</p><h1>{nav.find(item => item.id === section)?.label}</h1></div><div className="tools"><a className="hud-launch" href="/hud.html"><span aria-hidden="true">◉</span> Abrir HUD</a><div className="search"><span>⌕</span><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar projetos, vagas e pesquisas" aria-label="Pesquisar no Munin" />{matches.length > 0 && <div className="search-results">{matches.map(item => <button key={item}>{item}</button>)}</div>}</div><button className="command" onClick={() => setPalette(true)}>Comandos <kbd>Ctrl K</kbd></button></div></header>
       {notice && <div className="toast">{notice}</div>}

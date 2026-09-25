@@ -3,6 +3,7 @@ import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { basename, dirname, isAbsolute, resolve } from 'node:path';
 import type { HostExecutionAdapter } from './host-bridge-executor.js';
+import { ProductionBuildAllRuntime } from './production-build-all-runtime.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -59,6 +60,21 @@ export class LocalHostAdapter implements HostExecutionAdapter {
     this.restartRequestPath = resolve(options.restartRequestPath ?? resolve(dataDir, 'workspace-restart-request.json'));
   }
 
+  async buildAll(objective: string): Promise<string> {
+    const result = await new ProductionBuildAllRuntime().run(objective, 'main');
+    if (result.status !== 'DONE') throw new Error(result.blocker ?? `BUILD ALL ended as ${result.status}.`);
+    return JSON.stringify({
+      status: result.status,
+      objective: result.objective,
+      waves: result.wavePlan?.waves.length ?? 0,
+      tasks: result.plan?.tasks.length ?? 0,
+      integrationHead: result.engineering?.integrationHead,
+      integrationBranch: result.engineering?.integrationBranch,
+      verification: result.verification?.summary,
+      evidence: result.verification?.evidence ?? [],
+    });
+  }
+
   async runtimeHealth(): Promise<string> {
     const response = await fetch(`${this.apiUrl}/api/health`, { signal: AbortSignal.timeout(Math.min(this.timeoutMs, 5000)) });
     if (!response.ok) throw new Error(`Munin API health returned HTTP ${response.status}.`);
@@ -107,6 +123,7 @@ export class LocalHostAdapter implements HostExecutionAdapter {
   }
 
   async deployMain(): Promise<string> {
+    await cleanGeneratedArtifacts(this.cwd, this.timeoutMs);
     const update = await this.gitFastForward();
     const npm = npmInvocation();
     await cleanGeneratedArtifacts(this.cwd, this.timeoutMs);

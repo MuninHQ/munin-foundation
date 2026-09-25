@@ -1,0 +1,41 @@
+name: Quality Gates
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'apps/web/**'
+      - 'scripts/**'
+      - '.github/workflows/quality-gates.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  changed-file-size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check changed source file size
+        env:
+          MAX_LINES: '350'
+          BASE_REF: origin/${{ github.base_ref }}
+        run: node scripts/check-changed-file-size.mjs
+
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Typecheck / build core
+        run: npm run build:core
+      - name: Build web
+        run: npm run build:web
+      - name: Run tests
+        run: node --test --test-reporter=spec dist/tests/*.test.js

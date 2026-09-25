@@ -58,6 +58,7 @@
   }
 
   window.Munin = Object.freeze({ request, toast, escapeHtml, setBusy });
+  window.MuninClient = window.Munin; // backwards-compatible alias for HUD/mobile clients
 
   if (location.pathname.endsWith('/hud.html') || location.pathname === '/hud') {
     const script = document.createElement('script');

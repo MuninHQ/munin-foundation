@@ -12,6 +12,7 @@
  * All values are resolved lazily so tests can set environment variables at
  * runtime before touching any store.
  */
+import './local-env.js';
 import path from 'node:path';
 
 export function dataDir(): string {

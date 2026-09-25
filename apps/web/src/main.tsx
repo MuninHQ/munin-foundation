@@ -1,7 +1,9 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { VisualRuntime } from './munin-ui/VisualRuntime';
 import './styles.css';
+import './munin-ui/visual-system.css';
 
 // Career Intelligence v2 now lives in the dedicated Career Command surface.
 // Keep the legacy React section available internally, but make the primary
@@ -19,5 +21,6 @@ document.addEventListener('click', event => {
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
+    <VisualRuntime />
   </React.StrictMode>,
 );

@@ -8,7 +8,7 @@
     "provider-policy": "dist/src/provider-cli.js"
   },
   "scripts": {
-    "build:core": "tsc -p tsconfig.json",
+    "build:core": "node scripts/clean-core-build.mjs && tsc -p tsconfig.json",
     "build:web": "vite build --config apps/web/vite.config.ts",
     "build": "npm run build:core && npm run build:web",
     "test": "npm run build && node --test dist/tests/*.test.js",
@@ -34,6 +34,10 @@
     "knowledge:vault:init": "npm run knowledge:vault -- init",
     "knowledge:vault:status": "npm run knowledge:vault -- status",
     "knowledge:vault:sync": "npm run knowledge:vault -- export-context",
+    "second-brain": "npm run build:core && node dist/src/second-brain-cli.js",
+    "second-brain:status": "npm run second-brain -- status",
+    "second-brain:recall": "npm run second-brain -- recall",
+    "second-brain:commit": "npm run second-brain -- commit",
     "document:ingest": "npm run build:core && node dist/src/document-ingest-cli.js",
     "document:benchmark": "npm run build:core && node dist/src/document-benchmark-cli.js",
     "document:promote": "npm run build:core && node dist/src/document-promotion-cli.js",
@@ -64,6 +68,7 @@
     "email:worker:startup:install": "powershell -ExecutionPolicy Bypass -File scripts/install-email-intelligence-startup.ps1",
     "provider-policy": "npm run build:core && node dist/src/provider-cli.js",
     "token-efficiency:report": "npm run build:core && node dist/src/token-efficiency-report-cli.js",
+    "token-governor:status": "npm run build:core && node dist/src/token-governor-cli.js",
     "host:bridge": "npm run build:core && node dist/src/host-bridge-cli.js",
     "host:worker": "npm run build:core && node dist/src/host-worker-cli.js",
     "host:worker:once": "npm run build:core && node dist/src/host-worker-cli.js --once",
@@ -76,12 +81,17 @@
     "linkedin:editorial:once": "npm run build:core && node dist/src/linkedin-editorial-worker-cli.js",
     "linkedin:editorial:task:install": "powershell -ExecutionPolicy Bypass -File scripts/install-linkedin-editorial-task.ps1",
     "linkedin:editorial:task:remove": "powershell -ExecutionPolicy Bypass -File scripts/remove-linkedin-editorial-task.ps1",
-    "creative:review": "npm run build:core && node dist/src/creative-studio-cli.js"
+    "creative:review": "npm run build:core && node dist/src/creative-studio-cli.js",
+    "research:doctor": "npm run build:core && node dist/src/research-fabric-doctor-cli.js"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
+    "gsap": "^3.15.0",
+    "lenis": "^1.3.26",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "three": "^0.180.0",
+    "vanta": "^0.5.24",
     "vite": "^6.0.5"
   },
   "devDependencies": {
