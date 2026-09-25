@@ -1,7 +1,7 @@
 # SITREP — Munin Token Efficiency v1
 
-**Date:** 2026-09-24  
-**Branch:** `feature/token-efficiency-v1`  
+**Date:** 2026-09-24
+**Branch:** `feature/token-efficiency-v1`
 **Mode:** shadow/observation; disabled by default
 
 ## Outcome
