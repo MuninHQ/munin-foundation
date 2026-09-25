@@ -27,7 +27,7 @@ Token Efficiency v1 is implemented as a provider-neutral observation layer. It r
 - Complete `npm test`: TypeScript build passed; Vite production build passed; 772 tests passed, 0 failed, 0 skipped.
 - `git diff --check`: clean after documentation normalization.
 - Bounded credential scan: no added secret-shaped values; one pre-existing synthetic redaction fixture remains in `tests/chatgpt-memory-promotion.test.ts`.
-- Independent whole-branch review initially found nine Important defects. Each was reproduced with a failing test, fixed in one RED→GREEN pass, and covered by the 61-test feature gate and 772-test full regression.
+- Independent whole-branch review initially found nine Important defects. Each was reproduced with a failing test, fixed in one RED-to-GREEN pass, and covered by the 61-test feature gate and 772-test full regression.
 
 ## Metrics observed and estimated
 
