@@ -26,6 +26,7 @@ In-process AI is optional. The default runtime does not probe, start or wait for
 
 ## Completed foundations and integrations
 
+- Token Efficiency v1 is implemented on its feature branch as a disabled-by-default observation layer. It distinguishes reported, estimated and unavailable metrics, records advisory tier recommendations, evaluates non-enforcing context budgets, creates structured handoffs, generates projected reports and observes Promotion Gate decisions without routing authority. Full-suite evidence is recorded in the delivery SITREP when final verification completes.
 - Token Governor shadow mode now records deterministic context-compression opportunity, heuristic token-budget telemetry, and non-binding model/effort recommendations in redacted orchestration evidence. Provider selection, full task output, reasoning effort, and Skill Promotion Gate authority remain unchanged; no paid dependency was added.
 - Adaptive execution now ranks up to five relevant outcomes with deterministic lexical relevance, a 30-day decay half-life, and bounded operator feedback; schema-v2 outcome persistence, redacted feedback-mutation events, and the `MUNIN_MOBILE_TOKEN`-authorized local feedback endpoint are delivered without changing safety, review, zero-cost, local-only, or provider authority.
 - Control Room protocol, canonical backlog/state/session files and bounded `PLAN → BUILD → TEST → VERIFY → FIX` loop.

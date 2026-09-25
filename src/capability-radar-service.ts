@@ -6,6 +6,8 @@ import { assessOpportunity, type OpportunityAssessment } from './opportunity-ass
 import { benchmarkCapabilityCandidate, type CapabilityBenchmarkResult } from './capability-promotion-benchmark.js';
 import { JsonCapabilityDecisionLog, type PersistedCapabilityDecision } from './json-capability-decision-log.js';
 import { ProjectMemoryStore } from './project-memory.js';
+import { AgentTelemetry, JsonlAgentTelemetrySink } from './agent-telemetry.js';
+import { loadTokenEfficiencyConfig } from './token-efficiency-config.js';
 
 export interface CapabilityRadarRunOptions {
   query: string;
@@ -48,7 +50,16 @@ export async function runCapabilityRadar(options: CapabilityRadarRunOptions): Pr
   const benchmarks: CapabilityBenchmarkResult[] = [];
   const skippedIds: string[] = [];
   const duplicationCollector = options.duplicationCollector ?? collectDuplicationEvidence;
-  const benchmark = options.benchmark ?? benchmarkCapabilityCandidate;
+  const efficiencyConfig = loadTokenEfficiencyConfig();
+  const efficiencyTelemetry = efficiencyConfig.enabled && efficiencyConfig.promotionObservationEnabled
+    ? new AgentTelemetry(new JsonlAgentTelemetrySink(runtimePath('telemetry', 'agent-events.jsonl')))
+    : undefined;
+  const benchmark = options.benchmark ?? ((candidate) => benchmarkCapabilityCandidate(candidate, {
+    observe: observation => efficiencyTelemetry?.emit({
+      name: 'efficiency.promotion_observed', runId: `capability:${candidate.id}`, taskId: candidate.id,
+      metadata: { ...observation },
+    }),
+  }));
   const opportunityAssessor = options.opportunityAssessor ?? assessOpportunity;
   let promoted = 0;
 
@@ -94,6 +105,7 @@ export async function runCapabilityRadar(options: CapabilityRadarRunOptions): Pr
     promoted++;
   }
 
+  await efficiencyTelemetry?.flush();
   return {
     query: options.query,
     discovered: discovered.length,

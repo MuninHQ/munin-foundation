@@ -5,13 +5,16 @@ import { JsonHostJobQueue } from './json-host-job-queue.js';
 export interface HostBridgeWorkerOptions {
   queuePath: string;
   intervalMs?: number;
+  onCompleted?: (observation: HostBridgeWorkerObservation) => unknown;
 }
+
+export interface HostBridgeWorkerObservation { jobId: string; durationMs: number; status: string }
 
 export class HostBridgeWorker {
   readonly queue: JsonHostJobQueue;
   private readonly executor: HostBridgeExecutor;
 
-  constructor(options: HostBridgeWorkerOptions, executor = new HostBridgeExecutor(new LocalHostAdapter())) {
+  constructor(private readonly options: HostBridgeWorkerOptions, executor = new HostBridgeExecutor(new LocalHostAdapter())) {
     this.queue = new JsonHostJobQueue(options.queuePath);
     this.executor = executor;
   }
@@ -19,8 +22,10 @@ export class HostBridgeWorker {
   async runOnce(): Promise<boolean> {
     const claimed = await this.queue.claimNext();
     if (!claimed) return false;
+    const startedAt = Date.now();
     const result = await this.executor.execute(claimed.job);
     await this.queue.finish(claimed.job.id, result);
+    try { const observed=this.options.onCompleted?.({ jobId: claimed.job.id, durationMs: Date.now() - startedAt, status: result.status }); if(observed)void Promise.resolve(observed).catch(()=>undefined); } catch {}
     return true;
   }
 

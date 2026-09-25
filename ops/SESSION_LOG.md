@@ -325,6 +325,22 @@ Adapt high-value patterns from changedetection.io, public-apis, n8n and command-
 - Core TypeScript build passed.
 - Vite production build passed and emitted both new pages.
 - Full suite passed: 502 tests, 0 failures.
+## 2026-09-24 — Token Efficiency v1 shadow mode
+
+### Decision
+
+Add token/context efficiency as a disabled-by-default observation layer on existing telemetry and orchestration seams. Keep provider selection, agent execution, Promotion Gate outcomes and live context unchanged.
+
+### Changes
+
+- Added safe configuration, normalized usage quality, a deterministic advisory tier classifier and non-enforcing task/session budgets.
+- Added redacted structured compaction, idempotent fresh-session checkpoints and projected savings reports.
+- Integrated optional observations with Control Room agents, Host Worker completion, workspace-supervisor health and Capability Promotion benchmarking.
+- Preserved zero-cost, Windows, provider independence and fail-open productive execution.
+
+### Validation
+
+Focused RED/GREEN evidence is recorded per task in the ignored execution ledger. Complete build and regression results remain pending the final verification task; no full-suite result is inferred here.
 
 
 ## 2026-09-08 — Research Fabric Wave 1

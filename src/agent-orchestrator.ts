@@ -35,6 +35,8 @@ export interface AgentExecutionContext {
   previousResults: AgentExecutionRecord[];
 }
 
+import type { TokenUsageInput } from './token-efficiency-usage.js';
+
 export interface AgentExecutionResult {
   status: AgentExecutionStatus;
   summary: string;
@@ -42,6 +44,7 @@ export interface AgentExecutionResult {
   evidence?: string[];
   nextAgent?: MuninAgentId;
   fingerprint?: string;
+  usage?: TokenUsageInput;
 }
 
 export interface AgentExecutionRecord extends AgentExecutionResult {
