@@ -68,6 +68,7 @@
     "email:worker:startup:install": "powershell -ExecutionPolicy Bypass -File scripts/install-email-intelligence-startup.ps1",
     "provider-policy": "npm run build:core && node dist/src/provider-cli.js",
     "token-governor:status": "npm run build:core && node dist/src/token-governor-cli.js",
+    "efficiency:status": "npm run build:core && node dist/src/efficiency-cli.js",
     "host:bridge": "npm run build:core && node dist/src/host-bridge-cli.js",
     "host:worker": "npm run build:core && node dist/src/host-worker-cli.js",
     "host:worker:once": "npm run build:core && node dist/src/host-worker-cli.js --once",

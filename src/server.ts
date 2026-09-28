@@ -26,9 +26,11 @@ import { handleEmailMobileApi } from './email-mobile-api.js';
 import { handleAgentForgeApi } from './agent-forge-api.js';
 import { handleAdaptiveFeedbackApi } from './adaptive-feedback-api.js';
 import { handleViralEngineApi } from './viral-engine-api.js';
+import { handleEfficiencyApi } from './efficiency-api.js';
 import { apiPort } from './config.js';
 type Handler=(request:IncomingMessage,response:ServerResponse)=>Promise<void>;
 const routes:Array<[prefix:string,handler:Handler]>=[
+  ['/api/efficiency',handleEfficiencyApi],
   ['/api/viral-engine',handleViralEngineApi],
   ['/api/adaptive',handleAdaptiveFeedbackApi],
   ['/api/agent-forge',handleAgentForgeApi],
