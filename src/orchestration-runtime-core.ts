@@ -5,11 +5,13 @@ import { orchestrationPolicy } from './orchestration-provider-preference.js';
 import type { ProviderRequest } from './providers.js';
 import type { OrchestrationAttempt, OrchestrationTrace } from './orchestration-trace.js';
 import { observeTokenUsage, type TokenGovernorObservation, type TokenGovernorOptions } from './token-governor.js';
+import type { EfficiencyObservation, EfficiencyObservationInput } from './efficiency-telemetry.js';
 
 export interface OrchestrationRuntimeOptions {
   tokenGovernor?: TokenGovernorOptions;
   tokenGovernorStore?: { append(observation: TokenGovernorObservation): Promise<void> };
   tokenGovernorTimeoutMs?: number;
+  efficiencyObserver?: { observe(input: EfficiencyObservationInput): Promise<EfficiencyObservation | undefined> };
 }
 
 async function boundedObservationWrite(operation: Promise<void>, timeoutMs: number): Promise<void> {
@@ -60,6 +62,13 @@ export class OrchestrationRuntimeCore {
     }
   }
 
+  private async observeEfficiency(request: ProviderRequest, output: string): Promise<EfficiencyObservation | undefined> {
+    if (!this.options.efficiencyObserver) return undefined;
+    let requestText = request.objective;
+    try { requestText = JSON.stringify(request); } catch {}
+    try { return await this.options.efficiencyObserver.observe({ runId: request.taskId, candidateFiles: 0, selectedFiles: 0, inputChars: requestText.length, selectedChars: requestText.length, outputOriginalChars: output.length, outputRetainedChars: output.length, capabilitiesConsidered: 0, capabilitiesActive: 0, reusedHistoryChars: 0, modelTier: 'economy', reasonCode: 'orchestration-observation', zeroRiskMode: 'disabled' }); } catch { return undefined; }
+  }
+
   async run(input: OrchestrationInput) {
     const plan = new IntelligenceOrchestrationPlanner().plan(input);
     const startedAt = new Date().toISOString();
@@ -107,6 +116,7 @@ export class OrchestrationRuntimeCore {
             selectedProviderId: profile.id,
             providerDecision: choice.decision,
             tokenGovernor: await this.observe(input, request, profile.id, ''),
+            efficiency: await this.observeEfficiency(request, ''),
             startedAt,
             completedAt: new Date().toISOString(),
           };
@@ -116,6 +126,7 @@ export class OrchestrationRuntimeCore {
         const response = await choice.provider.execute(request);
         attempts.push({ providerId: profile.id, ok: true });
         const tokenGovernor = await this.observe(input, request, profile.id, response.output);
+        const efficiency = await this.observeEfficiency(request, response.output);
         const trace: OrchestrationTrace = {
           planId: plan.id,
           route: plan.route,
@@ -123,6 +134,7 @@ export class OrchestrationRuntimeCore {
           selectedProviderId: profile.id,
           providerDecision: choice.decision,
           tokenGovernor,
+          efficiency,
           startedAt,
           completedAt: new Date().toISOString(),
         };

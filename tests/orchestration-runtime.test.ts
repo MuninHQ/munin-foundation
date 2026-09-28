@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { OrchestrationRuntimeCore, OrchestrationRuntimeError } from '../src/orchestration-runtime-core.js';
 import type { ProviderProfile } from '../src/provider-policy.js';
 import type { ExecutionProvider, ProviderRequest, ProviderResponse } from '../src/providers.js';
+import { observeEfficiency } from '../src/efficiency-telemetry.js';
 
 class StubProvider implements ExecutionProvider {
   constructor(readonly id: string, private readonly fail = false, private readonly output?: string) {}
@@ -116,7 +117,7 @@ test('runtime records shadow advice without changing provider or output', async 
     estimatedCostPerCall: 0,
     estimatedLatencyMs: 1,
     enabled: true,
-  }], { tokenGovernor: { largeOutputChars: 100, maxSummaryChars: 240 } });
+  }], { tokenGovernor: { largeOutputChars: 100, maxSummaryChars: 240 }, efficiencyObserver: { observe: async input => observeEfficiency(input) } });
   const result = await runtime.run({ objective: 'Inspect logs', capability: 'execute', mode: 'direct', risk: 'low' });
   assert.equal(result.providerId, 'deterministic-local');
   assert.ok('response' in result);
@@ -124,6 +125,9 @@ test('runtime records shadow advice without changing provider or output', async 
   assert.equal(result.trace.tokenGovernor?.mode, 'shadow');
   assert.equal(result.trace.tokenGovernor?.recommendation.applied, false);
   assert.ok((result.trace.tokenGovernor?.output.estimatedSavedTokens ?? 0) > 0);
+  assert.equal(result.trace.efficiency?.contextEfficiency.modelTier, 'economy');
+  assert.equal(result.trace.efficiency?.contextEfficiency.selectedFiles, 0);
+  assert.equal(result.trace.efficiency?.creditSavingsProxy.kind, 'estimated-avoidable-context-tokens');
 });
 
 test('telemetry write failure cannot fail the governed task', async () => {
