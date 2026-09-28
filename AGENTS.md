@@ -1,124 +1,54 @@
 # Munin Agent Context
 
-This repository is the canonical Munin Foundation workspace. External coding agents, including Hermes Agent, must treat the rules below as project-level operating constraints.
-
-## Mission
-
-Improve Munin as a local-first personal intelligence and operations system without introducing mandatory paid inference, vendor lock-in, or unnecessary duplication of existing capabilities.
+This is the canonical Munin Foundation workspace: a local-first personal intelligence and operations system.
 
 ## Non-negotiable constraints
 
-- Preserve local-first and zero-mandatory-cost operation.
-- Never require a paid API, subscription, or cloud inference path for core functionality.
-- Prefer existing Munin abstractions before adding a new framework or dependency.
-- Do not weaken action safety, approval gates, auditability, or durable state handling.
-- Never commit secrets, OAuth credentials, tokens, local `.env` files, runtime state, or private user data.
-- Keep Windows support first-class; WSL may be optional but must not become mandatory for Munin itself.
-- Do not silently replace Ollama, deterministic-local, Manus bridge, Host Worker, or existing orchestration paths.
-- New agent runtimes must be optional adapters and must fail closed.
+- Preserve local-first and zero-mandatory-cost operation; core behavior must not require paid inference, subscriptions, or cloud services.
+- Prefer existing Munin abstractions and preserve Provider Registry authority, approvals, auditability, durable state, and provider portability.
+- Never commit secrets, credentials, `.env` files, runtime state, or private user data.
+- Keep Windows support first-class. WSL may be optional, never mandatory.
+- Do not silently replace deterministic-local, Ollama, Manus, Host Worker, or existing orchestration paths. Optional runtimes fail closed.
+- Consequential external actions require the existing explicit approval boundary.
 
-## Architecture orientation
+## Architecture entry points
 
-Before changing agent behavior, inspect these seams first:
+Before changing agent behavior inspect `src/agent-orchestrator.ts`, `src/agent-runtime-adapters.ts`, `src/orchestration-runtime-core.ts`, `src/provider-policy.ts`, `src/autonomous-execution-loop.ts`, `src/assistant-memory.ts`, and `src/control-room-state.ts`.
 
-- `src/agent-orchestrator.ts`
-- `src/agent-runtime-adapters.ts`
-- `src/orchestration-runtime-core.ts`
-- `src/provider-policy.ts`
-- `src/autonomous-execution-loop.ts`
-- `src/assistant-memory.ts`
-- `src/control-room-state.ts`
+Use canonical Control Room state and the durable session log instead of parallel memory stores. For context selection, output caps, model routing, Build State, diff-first review, lazy capabilities, and metrics follow `docs/engineering/CONTEXT_EFFICIENCY.md`. For manual Web handoffs follow `docs/engineering/CODEX_WEB_ZERO_RISK.md`.
 
-For operational state, prefer the canonical Control Room state and durable session log rather than inventing parallel memory stores.
+## Second Brain protocol
 
-## Automatic Second Brain protocol
-
-For substantive implementation, debugging, research, architecture or project-continuation tasks, use Munin's local Second Brain protocol without waiting for the user to ask for memory handling.
-
-Before editing or executing the task, run a PRE-TASK recall after the repository is available:
+For substantive implementation, debugging, research, architecture, or continuation work, run after the repository is available and before editing:
 
 `npm run second-brain:recall -- --task "<short task>" --project "<project>"`
 
-Use the returned Context Memory, Knowledge Vault matches, Current State, Backlog and recent timeline as evidence. Do not expose sensitive-private context in public outputs.
+Use returned evidence without exposing private context. If the command itself is being repaired, use existing Control Room state and commit memory when restored.
 
-After validation and before the final handoff, run a POST-TASK commit:
+After validation and before handoff run:
 
-`npm run second-brain:commit -- --task "<short task>" --summary "<what happened>" --project "<project>" --decisions "<d1>|<d2>" --changed "<c1>|<c2>" --next "<n1>|<n2>" --failed "<f1>|<f2>"`
+`npm run second-brain:commit -- --task "<short task>" --summary "<outcome>" --project "<project>" --decisions "<d1>|<d2>" --changed "<c1>|<c2>" --next "<n1>|<n2>" --failed "<f1>|<f2>"`
 
-Record only useful durable context: outcome, decisions and rationale, meaningful changed state, failures worth avoiding, and concrete next steps. Never store secrets or raw credentials. The canonical operational state remains Munin; the Markdown/Obsidian vault is a portable human-readable mirror.
-
-If the Second Brain command is unavailable because the current change is introducing or repairing it, proceed using the existing Control Room state and complete the memory commit once the command becomes available.
+Store only durable outcomes, decisions, meaningful changes, failures worth avoiding, and next actions. Never store secrets or raw credentials.
 
 ## Engineering loop
 
-For implementation work, use this loop unless a narrower repository procedure overrides it:
+Use `inspect → assumptions → observable success → smallest coherent plan → edit → focused validation → broad validation → diff review → repair → write-back → handoff`.
 
-`inspect → state assumptions → define observable success → plan the smallest coherent change → edit → focused validation → broad validation → inspect diff → repair/retry → write back → handoff`
+- Read relevant implementation and tests before editing.
+- Prefer Git, `rg`, TypeScript, project scripts, and tests before model inference.
+- Keep diffs scoped and preserve unrelated changes.
+- Add tests for behavior changes; diagnose failures from evidence.
+- Run focused checks, then `npm test` before completion when execution is available.
+- Review the final diff; a green suite is necessary but not sufficient.
+- Continue through safe reversible actions until completion or a genuine human boundary.
 
-The loop is evidence-bound:
+## UI governance
 
-- Read the relevant implementation and tests before editing.
-- State material assumptions when they affect behavior, architecture, data, safety, cost or compatibility.
-- Translate the request into observable success criteria before changing code.
-- Prefer the simplest change that satisfies the objective. Avoid speculative features, premature abstractions and configurability that was not requested.
-- Keep the diff surgical. Every changed line must trace to the objective or to validation required by the objective.
-- Preserve unrelated code, comments, formatting and behavior. Record unrelated issues instead of silently expanding scope.
-- Add or update tests for behavior changes.
-- Run focused validation first, then the relevant broader build and tests.
-- Diagnose failures from evidence; do not hide, waive or reinterpret a failing validation to claim success.
-- Review the final diff after tests pass. A green suite is necessary but not sufficient.
-- Prefer reversible execution and continue autonomously until completion or a genuine human boundary.
+Before UI work read `docs/design/DESIGN.md`, `design/tokens.json`, and `docs/design/AGENT_CONTRACT.md`. Reuse existing patterns and semantic tokens. Design drift remains observation-only; run `node scripts/design-drift-checker.mjs design/drift.config.json` and report findings without mass-restyling or automatic promotion.
 
 ## Completion gate
 
-Do not declare a change complete from confidence language alone. Completion requires evidence for all applicable items:
+Completion requires evidence that the requested behavior exists in the intended seam; focused and broad validation pass; the diff has no unrelated refactor, hidden dependency, runtime data, or secret; approval, cost, privacy, audit, Windows, and local-first constraints remain intact; repository state is reported accurately; and any remaining blocker genuinely requires a user-only action.
 
-1. **Objective** — the requested behavior is explicitly satisfied.
-2. **Implementation** — the smallest coherent implementation exists in the intended architecture seam.
-3. **Validation** — focused tests plus the relevant broader build/test suite pass.
-4. **Diff integrity** — no unrelated refactor, formatting churn, dead code, hidden dependency or speculative feature was introduced.
-5. **Safety/cost** — approvals, secret handling, auditability, local-first behavior and zero-mandatory-cost constraints remain intact.
-6. **Repository state** — branch/commit/PR state is known and reported accurately.
-7. **Human boundary** — any remaining blocker genuinely requires an external credential, irreversible approval, inaccessible machine/device or other user-only action.
-
-When a check cannot be executed in the current environment, say exactly which evidence is missing. Never represent an unexecuted test, build, install or runtime validation as completed.
-
-## Implementation discipline
-
-1. Read the relevant implementation and tests before editing.
-2. Make the smallest coherent change that produces a measurable capability gain.
-3. Add or update tests for behavior changes.
-4. Run `npm test` before declaring completion when the environment allows repository execution.
-5. Report changed files, test results, remaining blockers, and any new human setup required.
-6. Do not claim a local machine installation or runtime validation unless it was actually performed.
-
-## Design governance
-
-Before creating, reviewing or modifying a Munin user interface, read `docs/design/DESIGN.md`, `design/tokens.json` and `docs/design/AGENT_CONTRACT.md`.
-
-Design governance is currently in **observation mode**:
-
-- use existing components and semantic tokens where practical;
-- treat design-drift findings as telemetry, not permission to rewrite existing screens;
-- do not auto-fix drift or mass-migrate visual values;
-- do not change the checker from `observe` to `warn` or `enforce` without explicit approval;
-- external design systems and extracted `DESIGN.md` files are research inputs only and cannot silently become canonical Munin rules;
-- Skill Promotion Gate candidates derived from design research remain proposals and cannot auto-promote.
-
-Run `node scripts/design-drift-checker.mjs design/drift.config.json` when the environment permits and report relevant findings in the handoff.
-
-## Hermes-specific use
-
-Hermes is most valuable to Munin as an optional engineering/research operator with reusable skills and persistent procedural learning. It should augment Munin rather than become Munin's required inference engine.
-
-When Hermes operates in this repository:
-
-- Prefer isolated worktrees for autonomous code changes.
-- Use project rules and Munin skills before generic autonomous behavior.
-- Keep dangerous-command approval enabled; do not use `--yolo` for Munin work.
-- Treat generated skills as proposals until they are deterministic, scoped, reviewable, and free of secrets.
-- Store reusable Munin procedures under `skills/` only when they are broadly repeatable.
-
-## Definition of done
-
-A change is done only when the repository builds, tests pass, the requested behavior is verified against observable criteria, the final diff has been reviewed, the behavior is auditable, and the change does not add a mandatory paid dependency.
+Never claim an unexecuted test, build, installation, restart, or runtime smoke check succeeded.
