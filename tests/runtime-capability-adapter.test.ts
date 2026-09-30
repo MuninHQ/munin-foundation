@@ -10,12 +10,13 @@ test('runtime capability adapter stays disabled by default when explicitly false
 
 test('runtime capability adapter exposes governed capabilities only when enabled',()=>{
  const adapter=new RuntimeCapabilityAdapter(new ExecutionEngine(),{enabled:true});
- assert.deepEqual(adapter.capabilityNames(),['browser.operator','code.semantic-intelligence','engineering.autonomous-mission','engineering.independent-review','execution.autonomous-loop','intelligence.external','media.content-video','media.local-video','observability.sentry']);
+ assert.deepEqual(adapter.capabilityNames(),['browser.operator','code.semantic-intelligence','engineering.autonomous-mission','engineering.independent-review','execution.automaton-local','execution.autonomous-loop','intelligence.external','media.content-video','media.local-video','observability.sentry']);
 });
 
 test('disabled adapter fails closed before capability execution',async()=>{
  const adapter=new RuntimeCapabilityAdapter(new ExecutionEngine(),{enabled:false});
  await assert.rejects(adapter.browser({action:'health'}),/capability seam is disabled/);
+ await assert.rejects(adapter.automatonLocal({action:'health'}),/capability seam is disabled/);
  await assert.rejects(adapter.autonomousLoop({objective:'x',executor:async()=>({status:'PASS'})}),/capability seam is disabled/);
  await assert.rejects(adapter.engineeringMission({objective:'Build local feature'}),/capability seam is disabled/);
  await assert.rejects(adapter.semanticIntelligence({action:'health',backend:'native'}),/capability seam is disabled/);
