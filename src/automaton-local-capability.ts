@@ -1,6 +1,6 @@
 import type { RuntimeCapability, RuntimeCapabilityRegistry } from './runtime-capability-seam.js';
 
-export type AutomatonLocalAction = 'health' | 'submit' | 'status';
+export type AutomatonLocalAction = 'health' | 'submit' | 'status' | 'cancel';
 
 export interface AutomatonLocalInput {
   action: AutomatonLocalAction;
@@ -83,6 +83,15 @@ export function createAutomatonLocalCapability(): RuntimeCapability<AutomatonLoc
         const tasks = Array.isArray(state?.tasks) && goal ? state.tasks.filter((item: any) => item?.goal_id === goal.id) : [];
         const result = tasks.find((item: any) => item?.result != null)?.result;
         return { action: 'status', policy: p, ready: true, detail: 'Automaton task status resolved.', taskId, goalId: goal?.id, status: goal?.status || message.status, result, state: { inbox: message, goal, tasks } };
+      }
+      if (input.action === 'cancel') {
+        const taskId = input.taskId?.trim();
+        if (!taskId) throw new Error('taskId is required');
+        const cancelled = await requestJson(p.baseUrl, '/api/tasks/cancel', {
+          method: 'POST',
+          body: JSON.stringify({ id: taskId }),
+        });
+        return { action: 'cancel', policy: p, ready: Boolean(cancelled?.ok), detail: 'Automaton task cancellation requested.', taskId, goalId: cancelled?.goalId, status: cancelled?.status, result: cancelled };
       }
       if (!p.enabled) throw new Error('Automaton integration is disabled. Set MUNIN_AUTOMATON_ENABLED=1.');
       if (!p.submitEnabled) throw new Error('Automaton task submission is disabled. Set MUNIN_AUTOMATON_SUBMIT=1.');

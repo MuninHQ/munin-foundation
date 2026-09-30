@@ -20,6 +20,7 @@ test('automaton local capability is health-only until explicit submit opt-in', a
     const body=Buffer.concat(parts).toString('utf8');
     if(req.url==='/api/state'){res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({runtime:{running:true}}));return;}
     if(req.url==='/api/tasks'&&req.method==='POST'){received.push(body);res.writeHead(201,{'content-type':'application/json'});res.end(JSON.stringify({ok:true,id:'task-1'}));return;}
+    if(req.url==='/api/tasks/cancel'&&req.method==='POST'){res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({ok:true,goalId:'goal-1',status:'cancelled',cancelledTasks:1}));return;}
     if(req.url==='/api/wake'&&req.method==='POST'){res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({ok:true}));return;}
     res.writeHead(404);res.end();
   });
@@ -49,6 +50,10 @@ test('automaton local capability is health-only until explicit submit opt-in', a
     assert.equal(queued.output.taskId,'task-1');
     assert.match(received[0]??'',/\[MUNIN:/);
     assert.match(received[0]??'',/safe task/);
+    const cancelled=await registry.execute<any,any>('execution.automaton-local',{action:'cancel',taskId:'task-1'});
+    assert.equal(cancelled.output.ready,true);
+    assert.equal(cancelled.output.status,'cancelled');
+    assert.equal(cancelled.output.goalId,'goal-1');
   } finally {
     await new Promise<void>(resolve=>server.close(()=>resolve()));
     restore('MUNIN_AUTOMATON_URL',oldUrl);

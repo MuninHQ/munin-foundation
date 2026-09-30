@@ -1,3 +1,4 @@
+import { AutomatonReadOnlyRouter } from './automaton-readonly-router.js';
 import { CouncilOrchestrator } from './council.js';
 import { IntelligenceOrchestrationPlanner, type OrchestrationInput } from './intelligence-orchestration.js';
 import { defaultProviderProfiles, ProviderRegistry, type ProviderProfile } from './provider-policy.js';
@@ -12,6 +13,7 @@ export interface OrchestrationRuntimeOptions {
   tokenGovernorStore?: { append(observation: TokenGovernorObservation): Promise<void> };
   tokenGovernorTimeoutMs?: number;
   efficiencyObserver?: { observe(input: EfficiencyObservationInput): Promise<EfficiencyObservation | undefined> };
+  automatonRouter?: Pick<AutomatonReadOnlyRouter, 'tryRoute'>;
 }
 
 async function boundedObservationWrite(operation: Promise<void>, timeoutMs: number): Promise<void> {
@@ -81,6 +83,39 @@ export class OrchestrationRuntimeCore {
       expectedOutput: 'Produce a concise operational result.',
       context: input.context ?? {},
     };
+
+    if (plan.route === 'direct') {
+      const automaton = await (this.options.automatonRouter ?? new AutomatonReadOnlyRouter()).tryRoute(input);
+      if (automaton.attempted) {
+        attempts.push({
+          providerId: 'automaton-local',
+          ok: automaton.used,
+          ...(automaton.used ? {} : { error: automaton.reason }),
+        });
+      }
+      if (automaton.used && automaton.response) {
+        const tokenGovernor = await this.observe(input, request, 'automaton-local', automaton.response.output);
+        const efficiency = await this.observeEfficiency(request, automaton.response.output);
+        const decision = {
+          selectedProviderId: 'automaton-local',
+          consideredProviderIds: ['automaton-local'],
+          rejected: [],
+          rationale: ['Eligible read-only work routed to the isolated Automaton local runtime.', automaton.reason],
+        };
+        const trace: OrchestrationTrace = {
+          planId: plan.id,
+          route: plan.route,
+          attempts,
+          selectedProviderId: 'automaton-local',
+          providerDecision: decision,
+          tokenGovernor,
+          efficiency,
+          startedAt,
+          completedAt: new Date().toISOString(),
+        };
+        return { plan, providerId: 'automaton-local', decision, response: automaton.response, trace };
+      }
+    }
 
     const candidates = this.profiles
       .filter(profile => profile.enabled)

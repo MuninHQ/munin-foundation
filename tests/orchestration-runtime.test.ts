@@ -68,6 +68,66 @@ test('runtime executes council routing locally', async () => {
   }
 });
 
+test('runtime prefers Automaton for eligible read-only work when router completes', async () => {
+  const provider = new StubProvider('deterministic-local', false, 'fallback should not run');
+  const runtime = new OrchestrationRuntimeCore([{
+    id: provider.id,
+    provider,
+    capabilities: ['*'],
+    mode: 'offline',
+    estimatedCostPerCall: 0,
+    estimatedLatencyMs: 1,
+    enabled: true,
+  }], {
+    automatonRouter: {
+      async tryRoute() {
+        return {
+          used: true,
+          attempted: true,
+          reason: 'safe read-only intent',
+          elapsedMs: 10,
+          taskId: 'task-a',
+          response: { providerId: 'automaton-local', output: 'automaton result', metadata: { localOnly: true } },
+        };
+      },
+    },
+  });
+
+  const result = await runtime.run({
+    objective: 'Inspect local logs and summarize failures',
+    capability: 'research',
+    risk: 'low',
+    mode: 'direct',
+  });
+
+  assert.equal(result.providerId, 'automaton-local');
+  assert.equal(result.response?.output, 'automaton result');
+  assert.deepEqual(result.trace.attempts, [{ providerId: 'automaton-local', ok: true }]);
+});
+
+test('runtime records Automaton timeout then falls back to normal provider', async () => {
+  const runtime = new OrchestrationRuntimeCore([profile('deterministic-local')], {
+    automatonRouter: {
+      async tryRoute() {
+        return { used: false, attempted: true, reason: 'Automaton SLA exceeded; task cancelled for provider fallback', elapsedMs: 50, taskId: 'task-a', cancelled: true };
+      },
+    },
+  });
+
+  const result = await runtime.run({
+    objective: 'Inspect local logs and summarize failures',
+    capability: 'research',
+    risk: 'low',
+    mode: 'direct',
+  });
+
+  assert.equal(result.providerId, 'deterministic-local');
+  assert.deepEqual(result.trace.attempts, [
+    { providerId: 'automaton-local', ok: false, error: 'Automaton SLA exceeded; task cancelled for provider fallback' },
+    { providerId: 'deterministic-local', ok: true },
+  ]);
+});
+
 test('runtime falls back after preferred provider fails and records both attempts', async () => {
   const runtime = new OrchestrationRuntimeCore([
     profile('ollama-local', true),
