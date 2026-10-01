@@ -32,7 +32,7 @@ export interface AutomatonLocalOutput {
 function policy(): AutomatonLocalPolicy {
   const baseUrl = process.env.MUNIN_AUTOMATON_URL?.trim() || 'http://127.0.0.1:3210';
   const parsed = new URL(baseUrl);
-  const localHosts = new Set(['127.0.0.1', 'localhost', '::1']);
+  const localHosts = new Set(['127.0.0.1', 'localhost', '[::1]']);
   if (parsed.protocol !== 'http:' || !localHosts.has(parsed.hostname) || parsed.username || parsed.password) {
     throw new Error('MUNIN_AUTOMATON_URL must be an unauthenticated loopback HTTP URL.');
   }
@@ -102,7 +102,13 @@ export function createAutomatonLocalCapability(): RuntimeCapability<AutomatonLoc
         method: 'POST',
         body: JSON.stringify({ content }),
       });
-      await requestJson(p.baseUrl, '/api/wake', { method: 'POST', body: '{}' });
+      try {
+        await requestJson(p.baseUrl, '/api/wake', { method: 'POST', body: '{}' });
+      } catch (error) {
+        // Preserve accepted identity so the caller can cancel instead of orphaning queued work.
+        return { action: 'submit', policy: p, ready: false, taskId: queued.id, status: 'wake_failed',
+          detail: `Automaton wake failed: ${error instanceof Error ? error.message : String(error)}` };
+      }
       return { action: 'submit', policy: p, ready: true, detail: 'Task queued in Automaton local-only runtime.', taskId: queued.id };
     },
   };

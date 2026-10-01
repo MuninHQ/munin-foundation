@@ -77,3 +77,50 @@ test('router stays inert when automatic routing is disabled', async () => {
   assert.equal(result.attempted, false);
   assert.equal(healthChecks, 0);
 });
+
+test('router cannot accept a result delivered after the task SLA', async () => {
+  const router = new AutomatonReadOnlyRouter({ enabled: true, slaMs: 10, pollMs: 1,
+    transport: transport({ async status() {
+      await new Promise(resolve => setTimeout(resolve, 60));
+      return { status: 'completed', result: { output: 'late output' } };
+    } }),
+  });
+  const result = await router.tryRoute({ objective: 'Inspect logs', capability: 'research', risk: 'low' });
+  assert.equal(result.used, false);
+  assert.equal(result.cancelled, true);
+});
+
+test('router does not claim cancellation when executor refuses it', async () => {
+  const router = new AutomatonReadOnlyRouter({ enabled: true, slaMs: 5, pollMs: 1,
+    transport: transport({ async status() { return { status: 'active' }; },
+      async cancel() { return { ready: false, status: 'active' }; } }),
+  });
+  const result = await router.tryRoute({ objective: 'Inspect logs', capability: 'research', risk: 'low' });
+  assert.equal(result.cancelled, false);
+  assert.equal((result as { fallbackSafe?: boolean }).fallbackSafe, false);
+});
+
+test('environment auto-route opt-in stays quarantined without enforced executor read-only policy', async () => {
+  const previous = process.env.MUNIN_AUTOMATON_AUTO_ROUTE;
+  process.env.MUNIN_AUTOMATON_AUTO_ROUTE = '1';
+  try {
+    let calls = 0;
+    const router = new AutomatonReadOnlyRouter({ transport: transport({ async health() { calls++; return {}; } }) });
+    const result = await router.tryRoute({ objective: 'Inspect logs', capability: 'research', risk: 'low' });
+    assert.equal(result.attempted, false);
+    assert.equal(calls, 0);
+  } finally {
+    if (previous === undefined) delete process.env.MUNIN_AUTOMATON_AUTO_ROUTE;
+    else process.env.MUNIN_AUTOMATON_AUTO_ROUTE = previous;
+  }
+});
+
+test('stalled submission is bounded and blocks fallback when task identity is unknown', async () => {
+  const router = new AutomatonReadOnlyRouter({ enabled: true, slaMs: 10,
+    transport: transport({ async submit() { return await new Promise(() => {}); } }),
+  });
+  const result = await router.tryRoute({ objective: 'Inspect logs', capability: 'research', risk: 'low' });
+  assert.equal(result.attempted, true);
+  assert.equal(result.fallbackSafe, false);
+  assert.equal(result.cancelled, false);
+});

@@ -84,7 +84,12 @@ export class OrchestrationRuntimeCore {
       context: input.context ?? {},
     };
 
-    if (plan.route === 'direct') {
+    let automatonDecision;
+    try {
+      automatonDecision = new ProviderRegistry(this.profiles.filter(profile => profile.id === 'automaton-local'))
+        .select(request, orchestrationPolicy(plan, 'automaton-local')).decision;
+    } catch { /* No explicit eligible Automaton profile: keep the normal provider path. */ }
+    if (plan.route === 'direct' && automatonDecision) {
       const automaton = await (this.options.automatonRouter ?? new AutomatonReadOnlyRouter()).tryRoute(input);
       if (automaton.attempted) {
         attempts.push({
@@ -93,15 +98,15 @@ export class OrchestrationRuntimeCore {
           ...(automaton.used ? {} : { error: automaton.reason }),
         });
       }
+      if (automaton.fallbackSafe === false) {
+        throw new OrchestrationRuntimeError(automaton.reason, {
+          planId: plan.id, route: plan.route, attempts, startedAt, completedAt: new Date().toISOString(),
+        });
+      }
       if (automaton.used && automaton.response) {
         const tokenGovernor = await this.observe(input, request, 'automaton-local', automaton.response.output);
         const efficiency = await this.observeEfficiency(request, automaton.response.output);
-        const decision = {
-          selectedProviderId: 'automaton-local',
-          consideredProviderIds: ['automaton-local'],
-          rejected: [],
-          rationale: ['Eligible read-only work routed to the isolated Automaton local runtime.', automaton.reason],
-        };
+        const decision = automatonDecision;
         const trace: OrchestrationTrace = {
           planId: plan.id,
           route: plan.route,
@@ -118,6 +123,7 @@ export class OrchestrationRuntimeCore {
     }
 
     const candidates = this.profiles
+      .filter(profile => profile.id !== 'automaton-local')
       .filter(profile => profile.enabled)
       .filter(profile => profile.mode === 'offline')
       .filter(profile => profile.estimatedCostPerCall <= plan.maxCostPerCall)

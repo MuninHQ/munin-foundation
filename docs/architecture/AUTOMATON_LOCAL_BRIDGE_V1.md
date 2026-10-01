@@ -41,17 +41,18 @@ Keep it opt-in until repeated local smoke tests prove bounded completion,
 correct evidence handling and acceptable latency on the host.
 JEV stays shadow-only until its judgments are benchmarked against Munin's existing review gates.
 
-## Phase 2 automatic read-only routing
+## Phase 2 router quarantine after consolidation review
 
-Automatic routing is conservative and opt-in:
+Automatic runtime routing is unavailable until Automaton supplies an enforced read-only execution contract. Prompt instructions and intent regexes are insufficient isolation. Setting `MUNIN_AUTOMATON_AUTO_ROUTE=1` alone cannot activate this path. Manual submission retains its two explicit opt-ins and does not prove read-only enforcement.
 
-- `MUNIN_AUTOMATON_AUTO_ROUTE=1` enables the router.
+- Programmatic router injection is retained for controlled tests; production activation requires a separate reviewed promotion.
 - `MUNIN_AUTOMATON_PREFLIGHT_MS` controls the health/busy preflight budget (default 900 ms).
 - `MUNIN_AUTOMATON_SLA_MS` controls accepted-task completion SLA (default 90000 ms).
 - `MUNIN_AUTOMATON_POLL_MS` controls status polling (default 750 ms).
 
-The router accepts allowlisted read-only capabilities or an explicit `context.readOnly=true`.
+Controlled router evaluation accepts allowlisted read-only capabilities or an explicit `context.readOnly=true`.
 Mutation language, high-risk work and external/network intent are rejected before submission.
 Busy or slow preflight falls through without creating a task.
-After an accepted task, SLA expiry triggers task cancellation and normal Munin provider fallback.
+An explicit enabled, offline, zero-cost `automaton-local` profile supporting the capability must pass Provider Registry policy before evaluation. It is not registered or enabled by default.
+The SLA bounds submission and polling. After an accepted task, SLA expiry requests cancellation; normal provider fallback requires a confirmed `cancelled` or `cancelled_before_start` response. Unknown submission identity or uncertain cancellation blocks fallback and requires reconciliation. Wake failures retain accepted task identity.
 The fallback attempt is retained in the orchestration trace for auditability.

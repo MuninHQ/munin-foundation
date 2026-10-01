@@ -17,6 +17,7 @@ export interface AutomatonRouteResult {
   elapsedMs: number;
   taskId?: string;
   cancelled?: boolean;
+  fallbackSafe?: boolean;
   response?: ProviderResponse;
 }
 
@@ -77,10 +78,12 @@ export function automatonReadOnlyEligibility(input: OrchestrationInput): { eligi
 }
 
 async function bounded<T>(operation: Promise<T>, timeoutMs: number): Promise<T> {
-  return await Promise.race([
-    operation,
-    new Promise<never>((_resolve, reject) => setTimeout(() => reject(new Error('Automaton preflight timeout')), timeoutMs)),
-  ]);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([operation, new Promise<never>((_resolve, reject) => {
+      timer = setTimeout(() => reject(new Error('Automaton operation timeout')), Math.max(1, timeoutMs));
+    })]);
+  } finally { if (timer) clearTimeout(timer); }
 }
 
 export class AutomatonReadOnlyRouter {
@@ -91,7 +94,8 @@ export class AutomatonReadOnlyRouter {
   private readonly transport: AutomatonBridgeTransport;
 
   constructor(options: AutomatonReadOnlyRouterOptions = {}) {
-    this.enabled = options.enabled ?? process.env.MUNIN_AUTOMATON_AUTO_ROUTE === '1';
+    // Environment activation remains quarantined until the executor enforces read-only tools.
+    this.enabled = options.enabled ?? false;
     this.preflightTimeoutMs = options.preflightTimeoutMs ?? envInt('MUNIN_AUTOMATON_PREFLIGHT_MS', 900, 100, 5000);
     this.slaMs = options.slaMs ?? envInt('MUNIN_AUTOMATON_SLA_MS', 90_000, 1000, 600_000);
     this.pollMs = options.pollMs ?? envInt('MUNIN_AUTOMATON_POLL_MS', 750, 100, 5000);
@@ -105,6 +109,7 @@ export class AutomatonReadOnlyRouter {
     if (!eligibility.eligible) return { used: false, attempted: false, reason: eligibility.reason, elapsedMs: Date.now() - started };
 
     let taskId: string | undefined;
+    let submissionAttempted = false;
     try {
       const health = await bounded(this.transport.health(), this.preflightTimeoutMs);
       const state = health?.state;
@@ -118,13 +123,18 @@ export class AutomatonReadOnlyRouter {
       }
 
       const objective = `READ-ONLY MUNIN ROUTE. ${input.objective}\nDo not modify files, configuration, repositories, processes, network state, or external services. Return concise evidence only.`;
-      const submitted = await this.transport.submit(objective);
-      taskId = submitted?.taskId;
-      if (!submitted?.ready || !taskId) return { used: false, attempted: true, reason: 'Automaton rejected task submission', elapsedMs: Date.now() - started };
-
       const deadline = Date.now() + this.slaMs;
+      submissionAttempted = true;
+      const submitted = await bounded(this.transport.submit(objective), deadline - Date.now());
+      taskId = submitted?.taskId;
+      if (!submitted?.ready || !taskId) {
+        if (taskId) return await this.cancelForFallback(taskId, started, 'Automaton rejected task submission');
+        return { used: false, attempted: true, fallbackSafe: false, reason: 'Automaton submission outcome is unconfirmed', elapsedMs: Date.now() - started };
+      }
+
       while (Date.now() < deadline) {
-        const status = await this.transport.status(taskId);
+        const status = await bounded(this.transport.status(taskId), deadline - Date.now());
+        if (Date.now() >= deadline) break;
         const output = outputFromResult(status?.result);
         if (status?.status === 'completed' && output) {
           return {
@@ -139,16 +149,25 @@ export class AutomatonReadOnlyRouter {
         if (status?.status === 'failed' || status?.status === 'cancelled') {
           return { used: false, attempted: true, reason: `Automaton ended with status ${status.status}`, elapsedMs: Date.now() - started, taskId };
         }
-        await sleep(this.pollMs);
+        await sleep(Math.min(this.pollMs, Math.max(0, deadline - Date.now())));
       }
 
-      await this.transport.cancel(taskId);
-      return { used: false, attempted: true, reason: 'Automaton SLA exceeded; task cancelled for provider fallback', elapsedMs: Date.now() - started, taskId, cancelled: true };
+      return await this.cancelForFallback(taskId, started, 'Automaton SLA exceeded');
     } catch (error) {
-      if (taskId) {
-        try { await this.transport.cancel(taskId); } catch {}
-      }
-      return { used: false, attempted: Boolean(taskId), reason: error instanceof Error ? error.message : String(error), elapsedMs: Date.now() - started, taskId, cancelled: Boolean(taskId) };
+      const reason = error instanceof Error ? error.message : String(error);
+      if (taskId) return await this.cancelForFallback(taskId, started, reason);
+      return { used: false, attempted: submissionAttempted, fallbackSafe: !submissionAttempted, reason, elapsedMs: Date.now() - started, cancelled: false };
     }
+  }
+
+  private async cancelForFallback(taskId: string, started: number, reason: string): Promise<AutomatonRouteResult> {
+    let cancelled = false;
+    try {
+      const result = await bounded(this.transport.cancel(taskId), this.preflightTimeoutMs);
+      cancelled = result?.ready === true && ['cancelled', 'cancelled_before_start'].includes(result?.status);
+    } catch { /* Unconfirmed cancellation blocks fallback. */ }
+    return { used: false, attempted: true, taskId, cancelled, fallbackSafe: cancelled,
+      reason: `${reason}; ${cancelled ? 'task cancelled for provider fallback' : 'cancellation unconfirmed; fallback blocked'}`,
+      elapsedMs: Date.now() - started };
   }
 }

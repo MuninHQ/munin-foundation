@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { RuntimeCapabilityRegistry } from '../src/runtime-capability-seam.js';
-import { registerAutomatonLocalCapability } from '../src/automaton-local-capability.js';
+import { registerAutomatonLocalCapability, automatonLocalPolicy } from '../src/automaton-local-capability.js';
 
 function restore(name:string,value:string|undefined){
   if(value===undefined) delete process.env[name];
@@ -14,6 +14,7 @@ test('automaton local capability is health-only until explicit submit opt-in', a
   const oldEnabled=process.env.MUNIN_AUTOMATON_ENABLED;
   const oldSubmit=process.env.MUNIN_AUTOMATON_SUBMIT;
   const received:string[]=[];
+  let failWake = false;
   const server=http.createServer(async(req,res)=>{
     const parts:Buffer[]=[];
     for await(const chunk of req)parts.push(Buffer.from(chunk));
@@ -21,7 +22,7 @@ test('automaton local capability is health-only until explicit submit opt-in', a
     if(req.url==='/api/state'){res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({runtime:{running:true}}));return;}
     if(req.url==='/api/tasks'&&req.method==='POST'){received.push(body);res.writeHead(201,{'content-type':'application/json'});res.end(JSON.stringify({ok:true,id:'task-1'}));return;}
     if(req.url==='/api/tasks/cancel'&&req.method==='POST'){res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({ok:true,goalId:'goal-1',status:'cancelled',cancelledTasks:1}));return;}
-    if(req.url==='/api/wake'&&req.method==='POST'){res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({ok:true}));return;}
+    if(req.url==='/api/wake'&&req.method==='POST'){res.writeHead(failWake ? 503 : 200,{'content-type':'application/json'});res.end(JSON.stringify({ok: !failWake}));return;}
     res.writeHead(404);res.end();
   });
   await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));
@@ -54,12 +55,25 @@ test('automaton local capability is health-only until explicit submit opt-in', a
     assert.equal(cancelled.output.ready,true);
     assert.equal(cancelled.output.status,'cancelled');
     assert.equal(cancelled.output.goalId,'goal-1');
+    failWake = true;
+    const failedWake = await registry.execute<any,any>('execution.automaton-local',{action:'submit',objective:'safe task'});
+    assert.equal(failedWake.output.ready, false);
+    assert.equal(failedWake.output.taskId, 'task-1');
+    assert.match(failedWake.output.detail, /wake failed/);
   } finally {
     await new Promise<void>(resolve=>server.close(()=>resolve()));
     restore('MUNIN_AUTOMATON_URL',oldUrl);
     restore('MUNIN_AUTOMATON_ENABLED',oldEnabled);
     restore('MUNIN_AUTOMATON_SUBMIT',oldSubmit);
   }
+});
+
+test('automaton policy accepts the documented IPv6 loopback endpoint', () => {
+  const oldUrl = process.env.MUNIN_AUTOMATON_URL;
+  try {
+    process.env.MUNIN_AUTOMATON_URL = 'http://[::1]:3210';
+    assert.equal(automatonLocalPolicy().baseUrl, 'http://[::1]:3210');
+  } finally { restore('MUNIN_AUTOMATON_URL', oldUrl); }
 });
 
 test('automaton URL rejects non-loopback endpoints', async () => {

@@ -78,7 +78,7 @@ test('runtime prefers Automaton for eligible read-only work when router complete
     estimatedCostPerCall: 0,
     estimatedLatencyMs: 1,
     enabled: true,
-  }], {
+  }, profile('automaton-local')], {
     automatonRouter: {
       async tryRoute() {
         return {
@@ -106,7 +106,7 @@ test('runtime prefers Automaton for eligible read-only work when router complete
 });
 
 test('runtime records Automaton timeout then falls back to normal provider', async () => {
-  const runtime = new OrchestrationRuntimeCore([profile('deterministic-local')], {
+  const runtime = new OrchestrationRuntimeCore([profile('deterministic-local'), profile('automaton-local')], {
     automatonRouter: {
       async tryRoute() {
         return { used: false, attempted: true, reason: 'Automaton SLA exceeded; task cancelled for provider fallback', elapsedMs: 50, taskId: 'task-a', cancelled: true };
@@ -126,6 +126,32 @@ test('runtime records Automaton timeout then falls back to normal provider', asy
     { providerId: 'automaton-local', ok: false, error: 'Automaton SLA exceeded; task cancelled for provider fallback' },
     { providerId: 'deterministic-local', ok: true },
   ]);
+});
+
+test('Automaton cannot bypass absent, disabled, external, costly or unsupported provider profiles', async () => {
+  for (const profiles of [[], [{ ...profile('automaton-local'), enabled: false }],
+    [{ ...profile('automaton-local'), mode: 'external' as const }],
+    [{ ...profile('automaton-local'), estimatedCostPerCall: 1 }],
+    [{ ...profile('automaton-local'), capabilities: ['write'] }]]) {
+    let calls = 0;
+    const runtime = new OrchestrationRuntimeCore(profiles, { automatonRouter: {
+      async tryRoute() { calls++; return { used: true, attempted: true, reason: 'mock', elapsedMs: 0,
+        response: { providerId: 'automaton-local', output: 'unauthorized', metadata: {} } }; },
+    } });
+    await assert.rejects(runtime.run({ objective: 'Inspect logs', capability: 'research', mode: 'direct', risk: 'low' }));
+    assert.equal(calls, 0);
+  }
+});
+
+test('runtime blocks fallback when Automaton cancellation is not confirmed', async () => {
+  let fallbackCalls = 0;
+  const fallback = profile('deterministic-local');
+  fallback.provider.execute = async () => { fallbackCalls++; throw new Error('must not execute'); };
+  const runtime = new OrchestrationRuntimeCore([fallback, profile('automaton-local')], { automatonRouter: {
+    async tryRoute() { return { used: false, attempted: true, reason: 'cancellation unconfirmed', elapsedMs: 0, cancelled: false, fallbackSafe: false }; },
+  } });
+  await assert.rejects(runtime.run({ objective: 'Inspect logs', capability: 'research', mode: 'direct', risk: 'low' }), /cancellation unconfirmed/);
+  assert.equal(fallbackCalls, 0);
 });
 
 test('runtime falls back after preferred provider fails and records both attempts', async () => {
