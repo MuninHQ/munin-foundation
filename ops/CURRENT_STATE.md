@@ -1,5 +1,9 @@
 # Munin Current State
 
+## Consolidation review — 2026-10-01
+
+`consolidation/2026-10-01` reconciles local Token Efficiency v2 and Automaton with remote main `f09b4fa`; main was not merged or deployed by this task. Token Efficiency v1 is already on remote main, and both versions remain advisory. Automatic Automaton routing is quarantined pending enforced read-only execution. Connector Permission Delta Gate `da54dde` and the separately reported Skill Promotion Gate were not recovered from accessible checkouts. See `docs/reports/CONSOLIDATION_2026_10_01.md` for exact provenance, validation and residual work; older sections below retain historical context.
+
 ## Unified Mobile UI
 
 The workspace now uses one mobile navigation model (`Hoje`, `Inbox`, `Carreira`, `LinkedIn`, `Mais`), responsive Home layouts, resilient loading/error feedback, and a decision-oriented Action Inbox. View-only defer/discard controls do not create external or consequential effects.
