@@ -23,7 +23,7 @@
 - [x] Preserve accepted task identity when wake fails in src/automaton-local-capability.ts; test with loopback mock.
 - [x] Validate focused regressions, complete npm test, observer scripts, Markdown and secret/diff checks.
 - [x] Obtain independent follow-up review and document exact residual limitations.
-- [ ] Publish consolidation branch and draft PR; commit Second Brain outcome; report evidence and remaining gaps.
+- [x] Publish consolidation branch and draft PR; commit Second Brain outcome; report evidence and remaining gaps.
 
 ## Review focus
 

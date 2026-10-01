@@ -16,6 +16,7 @@ Repository: `MuninHQ/munin-foundation`. Source checkout: `D:/Dev/munin-foundatio
 - Automaton bridge and router: `4ba8ca7`, `c59fd70`.
 - `feat/automaton-local-bridge` has duplicate commits `b1aeb40` and `36608f9`. Their stable patch IDs match the selected bridge/router commits; the final trees are identical. No duplicate replay was performed.
 - Safety repair: `07b3afa`. Documentation commits are listed in the PR history.
+- Provenance/test documentation: `9ddc286`. Published branch: `consolidation/2026-10-01`. Draft PR: [#375](https://github.com/MuninHQ/munin-foundation/pull/375).
 
 ## Reconciliation and safety
 
@@ -65,6 +66,8 @@ The user did not know another storage location. These gates require the original
 - Changed Markdown: 11 files checked, zero issues. Full repository lint with markdownlint-cli2 0.23.3 reports 1,350 issues in 68 files (including the newly introduced upstream MD060 rule); none of the matched error file paths is changed by this consolidation. This existing repository-wide lint debt is not silently waived or mass-reformatted.
 - Final source diff whitespace check passes; generated `dist-web` build output was restored/removed only in the isolated integration checkout.
 - Bounded added-line credential/private-key pattern scan: zero matches. Remote main was re-fetched before publication and remained `f09b4fa`.
+- The GitHub Markdown check passed on the first published revision; other CI jobs were still running at publication. This uses the repository workflow's tool version, while the separate latest local lint result above remains recorded accurately.
+- Canonical Second Brain post-task commit completed in the original source checkout; raw private context was not published. Original uncommitted work remains outside this integration branch.
 
 Logs are local artifacts under `D:/Dev/munin-consolidation-*.log`; private Second Brain context is excluded from publication.
 
