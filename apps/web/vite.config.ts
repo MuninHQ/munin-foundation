@@ -35,6 +35,7 @@ export default defineConfig({
         intelligence: path.resolve(root, 'intelligence.html'),
         'content-studio': path.resolve(root, 'content-studio.html'),
         'viral-engine': path.resolve(root, 'viral-engine.html'),
+        'token-efficiency': path.resolve(root, 'token-efficiency.html'),
         'context-memory': path.resolve(root, 'context-memory.html'),
         council: path.resolve(root, 'council.html'),
         'executive-briefing': path.resolve(root, 'executive-briefing.html'),

@@ -2,7 +2,7 @@ import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { runtimePath } from './config.js';
 import { redactSecretText } from './secret-redaction.js';
-import type { ShadowModelTier, ShadowReasoningEffort, TokenGovernorObservation } from './token-governor.js';
+import type { EconomicModelTier, ShadowReasoningEffort, TokenGovernorObservation } from './token-governor.js';
 
 export interface TokenGovernorMetrics {
   observations: number;
@@ -12,7 +12,7 @@ export interface TokenGovernorMetrics {
   estimatedSavedTokens: number;
   estimatedSavingsRatio: number;
   appliedChanges: number;
-  byModelTier: Record<ShadowModelTier, number>;
+  byModelTier: Record<EconomicModelTier, number>;
   byEffort: Record<ShadowReasoningEffort, number>;
 }
 
@@ -61,7 +61,7 @@ export function summarizeTokenGovernorObservations(observations: TokenGovernorOb
   const estimatedOriginalTokens = observations.reduce((sum, item) => sum + item.output.estimatedOriginalTokens, 0);
   const estimatedRetainedTokens = observations.reduce((sum, item) => sum + item.output.estimatedRetainedTokens, 0);
   const estimatedSavedTokens = observations.reduce((sum, item) => sum + item.output.estimatedSavedTokens, 0);
-  const byModelTier: Record<ShadowModelTier, number> = { economy: 0, premium: 0 };
+  const byModelTier: Record<EconomicModelTier, number> = { economy: 0, standard: 0, premium: 0 };
   const byEffort: Record<ShadowReasoningEffort, number> = { low: 0, medium: 0, high: 0 };
   for (const item of observations) {
     byModelTier[item.recommendation.modelTier] += 1;

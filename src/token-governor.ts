@@ -1,6 +1,7 @@
 export type TokenGovernorSource = 'tool' | 'terminal' | 'provider';
 export type ShadowModelTier = 'economy' | 'premium';
 export type ShadowReasoningEffort = 'low' | 'medium' | 'high';
+export type EconomicModelTier = 'economy' | 'standard' | 'premium';
 
 export interface TokenGovernorOptions {
   largeOutputChars?: number;
@@ -18,6 +19,27 @@ export interface ContextSummary {
   estimatedOriginalTokens: number;
   estimatedRetainedTokens: number;
   estimatedSavedTokens: number;
+}
+
+export interface CommandOutputInput {
+  output: string;
+  exitCode: number | null;
+  kind: 'command' | 'test';
+}
+
+export interface TestFailureExtraction {
+  detected: boolean;
+  failures: string[];
+  stacks: string[];
+  summary: string[];
+}
+
+export interface ReducedCommandOutput extends ContextSummary {
+  exitCode: number | null;
+  failed: boolean;
+  truncationReason?: 'large-command-output' | 'large-test-output';
+  truncatedChars: number;
+  failureEvidence: TestFailureExtraction;
 }
 
 export interface ShadowRouteInput {
@@ -140,6 +162,73 @@ export function summarizeContext(text: string, inputOptions: TokenGovernorOption
   return metrics(text, summary, true, Math.max(0, lines.length - unique.length - 2));
 }
 
+export interface EconomicRouteInput {
+  kind: 'search' | 'triage' | 'write' | 'code' | 'review' | 'strategy';
+  risk: 'low' | 'medium' | 'high';
+  complexity: number;
+  impact: number;
+  contextTokens: number;
+  premiumAvailable: boolean;
+  selectedProviderId?: string;
+}
+
+export interface EconomicRouteRecommendation {
+  modelTier: EconomicModelTier;
+  effort: ShadowReasoningEffort;
+  applied: false;
+  selectedProviderId?: string;
+  reasonCode: 'deterministic-or-low-risk' | 'bounded-change' | 'complex-high-impact' | 'premium-unavailable';
+  reasons: string[];
+}
+
+export function extractTestFailures(text: string, limit = 20): TestFailureExtraction {
+  const safeLimit = bounded(limit, 20, 1, 100);
+  const lines = text.split(/\r?\n/).map(line => line.slice(0, MAX_INSPECTED_LINE_CHARS));
+  const failures = lines
+    .filter(line => /(?:^|\s)(?:not ok|FAIL|FAILED|✖|×)(?:\s|:|-)/i.test(line))
+    .slice(0, safeLimit);
+  const stacks = lines
+    .filter(line => /^\s*at\s+|AssertionError|Error:|Exception|Traceback/i.test(line))
+    .slice(0, safeLimit * 3);
+  const summary = lines
+    .filter(line => /^\s*#?\s*(?:tests?|pass(?:ed)?|fail(?:ed)?|skip(?:ped)?|duration|time)\b/i.test(line))
+    .slice(-12);
+  return { detected: failures.length > 0 || summary.some(line => /fail/i.test(line)), failures, stacks, summary };
+}
+
+export function reduceCommandOutput(input: CommandOutputInput, inputOptions: TokenGovernorOptions = {}): ReducedCommandOutput {
+  const safeOutput = redactSecretText(input.output);
+  const config = options(inputOptions);
+  const failureEvidence = input.kind === 'test'
+    ? extractTestFailures(safeOutput)
+    : { detected: false, failures: [], stacks: [], summary: [] };
+  let summarized = summarizeContext(safeOutput, inputOptions);
+
+  if (summarized.compressed && failureEvidence.detected) {
+    const evidence = [...new Set([...failureEvidence.failures, ...failureEvidence.stacks, ...failureEvidence.summary])].join('\n');
+    const omission = '\n… output omitted …\n';
+    const evidenceText = clipped(evidence, Math.floor(config.maxSummaryChars * 0.7));
+    const outerBudget = Math.max(0, config.maxSummaryChars - evidenceText.length - omission.length - 1);
+    const headLength = Math.min(config.prefixChars, Math.ceil(outerBudget / 2));
+    const tailLength = Math.min(config.suffixChars, Math.max(0, outerBudget - headLength));
+    const summary = `${safeOutput.slice(0, headLength)}${omission}${evidenceText}\n${tailLength ? safeOutput.slice(-tailLength) : ''}`.slice(0, config.maxSummaryChars);
+    summarized = metrics(safeOutput, summary, true, Math.max(0, safeOutput.split(/\r?\n/).length - evidenceText.split(/\r?\n/).length - 2));
+  }
+
+  const estimatedOriginalTokens = estimateTokens(input.output);
+  return {
+    ...summarized,
+    originalChars: input.output.length,
+    estimatedOriginalTokens,
+    estimatedSavedTokens: Math.max(0, estimatedOriginalTokens - summarized.estimatedRetainedTokens),
+    exitCode: input.exitCode,
+    failed: input.exitCode !== null && input.exitCode !== 0,
+    truncationReason: summarized.compressed ? (input.kind === 'test' ? 'large-test-output' : 'large-command-output') : undefined,
+    truncatedChars: Math.max(0, input.output.length - summarized.retainedChars),
+    failureEvidence,
+  };
+}
+
 export function recommendShadowRoute(input: ShadowRouteInput): ShadowRouteRecommendation {
   const totalTokens = Math.max(0, input.inputTokens) + Math.max(0, input.outputTokens);
   const highComplexity = input.risk === 'high' && totalTokens >= 20_000 && ['review', 'strategy', 'code'].includes(input.capability);
@@ -155,6 +244,27 @@ export function recommendShadowRoute(input: ShadowRouteInput): ShadowRouteRecomm
         ? ['Moderate complexity justifies medium reasoning effort.', 'Shadow recommendation only; Provider Registry selection is unchanged.']
         : ['Economy tier and low reasoning effort appear sufficient.', 'Shadow recommendation only; Provider Registry selection is unchanged.'],
   };
+}
+
+function score(value: number): number {
+  return Number.isFinite(value) ? Math.max(0, Math.min(10, Math.round(value))) : 0;
+}
+
+export function recommendEconomicRoute(input: EconomicRouteInput): EconomicRouteRecommendation {
+  const complexity = score(input.complexity);
+  const impact = score(input.impact);
+  const highDemand = complexity >= 8 && impact >= 8 && input.contextTokens >= 16_000 && ['review', 'strategy', 'code'].includes(input.kind);
+  const base = { applied: false as const, selectedProviderId: input.selectedProviderId };
+  if (highDemand && input.premiumAvailable) {
+    return { ...base, modelTier: 'premium', effort: 'high', reasonCode: 'complex-high-impact', reasons: ['High complexity, impact, and bounded context justify premium evaluation.', 'Existing provider policy remains authoritative.'] };
+  }
+  if (highDemand) {
+    return { ...base, modelTier: 'standard', effort: 'high', reasonCode: 'premium-unavailable', reasons: ['Premium work may be justified, but trustworthy availability is absent.', 'Use the strongest eligible zero-cost route.'] };
+  }
+  if (input.risk !== 'low' && complexity >= 4 && ['write', 'code', 'review', 'strategy'].includes(input.kind)) {
+    return { ...base, modelTier: 'standard', effort: 'medium', reasonCode: 'bounded-change', reasons: ['A bounded change benefits from intermediate reasoning.', 'Existing zero-cost and provider eligibility rules still apply.'] };
+  }
+  return { ...base, modelTier: 'economy', effort: 'low', reasonCode: 'deterministic-or-low-risk', reasons: ['Deterministic preparation or low-risk work fits the economy tier.', 'Existing provider policy remains authoritative.'] };
 }
 
 export function observeTokenUsage(input: TokenObservationInput, inputOptions: TokenGovernorOptions = {}): TokenGovernorObservation {
