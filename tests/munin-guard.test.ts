@@ -15,6 +15,13 @@ test('Munin Guard passes a pinned licensed low-risk candidate with sufficient ev
     maintenanceScore: 0.9,
     duplicationScore: 0.1,
     evidence: ['source reviewed', 'license verified', 'revision pinned', 'bounded permissions'],
+    github: {
+      stars: 10000,
+      forks: 1000,
+      createdAt: '2026-09-01T00:00:00Z',
+      pushedAt: '2026-10-01T00:00:00Z',
+      observedAt: '2026-10-02T00:00:00Z',
+    },
   });
   assert.equal(result.decision, 'PASS');
   assert.equal(result.risk, 'LOW');
