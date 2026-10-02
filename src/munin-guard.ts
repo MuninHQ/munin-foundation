@@ -1,4 +1,4 @@
-import { assessCapability, type CapabilityAssessment, type CapabilityCandidate } from './capability-radar.js';
+import { assessCapability, type CapabilityAssessment, type CapabilityCandidate, type GithubMomentumEvidence } from './capability-radar.js';
 import { assessCapabilitySecurity, type CapabilitySecurityAssessment } from './capability-security-gate.js';
 import { benchmarkCapabilityCandidate, type CapabilityBenchmarkResult } from './capability-promotion-benchmark.js';
 
@@ -23,6 +23,7 @@ export interface MuninGuardManifest {
   maintenanceScore?: number;
   duplicationScore?: number;
   evidence?: string[];
+  github?: GithubMomentumEvidence;
 }
 
 export interface MuninGuardResult {
@@ -84,6 +85,24 @@ function clamp(value: number | undefined, fallback: number): number {
   return Math.max(0, Math.min(1, value ?? fallback));
 }
 
+function parseGithubEvidence(value: unknown): GithubMomentumEvidence | undefined {
+  if (value === undefined) return undefined;
+  if (!isRecord(value)) throw new Error('Munin Guard manifest field "github" must be an object.');
+  const stars = optionalNumber(value, 'stars');
+  const forks = optionalNumber(value, 'forks');
+  if (stars === undefined || forks === undefined) throw new Error('Munin Guard github evidence requires numeric "stars" and "forks".');
+  const createdAt = requiredString(value, 'createdAt');
+  const pushedAt = requiredString(value, 'pushedAt');
+  return {
+    stars,
+    forks,
+    createdAt,
+    pushedAt,
+    archived: optionalBoolean(value, 'archived'),
+    observedAt: optionalString(value, 'observedAt'),
+  };
+}
+
 export function parseMuninGuardManifest(value: unknown): MuninGuardManifest {
   if (!isRecord(value)) throw new Error('Munin Guard manifest must be a JSON object.');
   const allowedKinds: MuninGuardKind[] = ['skill', 'mcp', 'agent', 'plugin', 'automation', 'repository'];
@@ -106,6 +125,7 @@ export function parseMuninGuardManifest(value: unknown): MuninGuardManifest {
     maintenanceScore: optionalNumber(value, 'maintenanceScore'),
     duplicationScore: optionalNumber(value, 'duplicationScore'),
     evidence: optionalStringArray(value, 'evidence'),
+    github: parseGithubEvidence(value.github),
   };
 }
 
@@ -140,6 +160,7 @@ export function assessMuninGuard(manifest: MuninGuardManifest): MuninGuardResult
     securityScore: security.score,
     duplicationScore: clamp(manifest.duplicationScore, 0),
     evidence: manifest.evidence ?? [],
+    github: manifest.github,
   };
 
   const capability = assessCapability(candidate);
