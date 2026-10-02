@@ -61,7 +61,7 @@ The CLI exit codes are intentional for CI/CD use:
 }
 ```
 
-Supported `kind` values: `skill`, `mcp`, `agent`, `plugin`, `automation`, `repository`.
+Supported `kind` values: `skill`, `mcp`, `agent`, `plugin`, `automation`, `repository`. GitHub sources should include the optional `github` evidence block so the existing Munin momentum gate can evaluate activity instead of forcing REVIEW.
 
 ## Product boundary
 
