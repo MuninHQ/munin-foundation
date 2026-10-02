@@ -5,8 +5,12 @@
   "source": "https://github.com/example/safe-agent",
   "pinnedRevision": "4fd1f4120a4fdb8f6dc22bfe7f41ecaf1c26b80a",
   "license": "MIT",
-  "networkDomains": ["api.example.com"],
-  "permissions": ["read project files"],
+  "networkDomains": [
+    "api.example.com"
+  ],
+  "permissions": [
+    "read project files"
+  ],
   "maintenanceScore": 0.9,
   "duplicationScore": 0.1,
   "evidence": [
@@ -14,5 +18,12 @@
     "license verified",
     "revision pinned",
     "bounded permissions"
-  ]
+  ],
+  "github": {
+    "stars": 10000,
+    "forks": 1000,
+    "createdAt": "2026-09-01T00:00:00Z",
+    "pushedAt": "2026-10-01T00:00:00Z",
+    "observedAt": "2026-10-02T00:00:00Z"
+  }
 }
