@@ -19,7 +19,7 @@ const job: ViralProductionJob = {
 function output(input: ContentVideoInput): ContentVideoOutput {
   return {
     action: input.action, ready: input.action === 'generate', detail: input.action === 'generate' ? 'generated locally' : 'planned locally',
-    policy: { enabled: input.action === 'generate', runnerConfigured: input.action === 'generate', automaticInstallAllowed: false, automaticPublishAllowed: false, paidDependencyRequired: false, humanApprovalRequired: true },
+    policy: { enabled: input.action === 'generate', runnerConfigured: input.action === 'generate', automaticInstallAllowed: false, automaticPublishAllowed: false, paidDependencyRequired: false, humanApprovalRequired: true, defaultProvider: 'local-render' },
     request: { topic: input.topic }, result: input.action === 'generate' ? { outputPath: 'draft.mp4' } : undefined,
   };
 }
