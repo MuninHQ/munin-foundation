@@ -1,9 +1,9 @@
-import { estimateTokens } from './token-governor.js';
-
 export type ContextComponentKind='system'|'steering'|'tools'|'history'|'memory'|'user'|'other';
 export interface ContextComponentInput{name:string;kind:ContextComponentKind;text?:string;chars?:number}
 export interface ContextComponentProfile{name:string;kind:ContextComponentKind;chars:number;estimatedTokens:number;sharePercent:number}
 export interface ContextProfile{totalChars:number;estimatedTokens:number;components:ContextComponentProfile[];largest?:ContextComponentProfile;recommendations:string[];rawContentReturned:false}
+
+function estimateChars(chars:number):number{return chars===0?0:Math.ceil(chars/4);}
 
 function sizeOf(input:ContextComponentInput):number{
  if(!input.name.trim())throw new Error('Context component name is required.');
@@ -17,10 +17,10 @@ function sizeOf(input:ContextComponentInput):number{
 export function profileContext(inputs:ContextComponentInput[]):ContextProfile{
  const sized=inputs.map(input=>({name:input.name.trim(),kind:input.kind,chars:sizeOf(input)}));
  const totalChars=sized.reduce((sum,item)=>sum+item.chars,0);
- const totalTokens=estimateTokens('x'.repeat(totalChars));
+ const totalTokens=estimateChars(totalChars);
  const components=sized.map(item=>({
   ...item,
-  estimatedTokens:estimateTokens('x'.repeat(item.chars)),
+  estimatedTokens:estimateChars(item.chars),
   sharePercent:totalChars===0?0:Math.round((item.chars/totalChars)*1000)/10,
  })).sort((a,b)=>b.estimatedTokens-a.estimatedTokens||a.name.localeCompare(b.name));
  const largest=components[0];
