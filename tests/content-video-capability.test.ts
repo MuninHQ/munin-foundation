@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createContentVideoCapability } from '../src/content-video-capability.js';
+import { createContentVideoCapability, type ContentVideoInput } from '../src/content-video-capability.js';
+import type { CapabilityExecutionContext } from '../src/runtime-capability-seam.js';
 
-const context={capability:'media.content-video',executionId:'test',startedAt:new Date().toISOString(),input:{action:'plan'},metadata:{}};
+const context:CapabilityExecutionContext<ContentVideoInput>={capability:'media.content-video',executionId:'test',startedAt:new Date().toISOString(),input:{action:'plan'},metadata:{}};
 
 test('content video plans governed local render work without installing or publishing',async()=>{
  const capability=createContentVideoCapability();
