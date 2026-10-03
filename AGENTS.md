@@ -2,6 +2,8 @@
 
 This repository is the canonical Munin Foundation workspace. External coding agents, including Hermes Agent, must treat the rules below as project-level operating constraints.
 
+Read `GLOSSARY.md` before substantive work. Prefer its canonical terms and pointers over repeatedly re-explaining established Munin concepts; this is a context-diet rule, not permission to omit evidence needed for the task.
+
 ## Mission
 
 Improve Munin as a local-first personal intelligence and operations system without introducing mandatory paid inference, vendor lock-in, or unnecessary duplication of existing capabilities.
