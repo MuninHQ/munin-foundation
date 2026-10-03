@@ -28,3 +28,30 @@ test('worker drains a queued job through governed executor and persists result',
   assert.equal(item.result?.status,'completed');
   assert.deepEqual(item.result?.evidence,['ok']);
 });
+
+
+test('expired read-only host job lease is recovered and retried', async () => {
+  const dir=await mkdtemp(join(tmpdir(),'munin-hostq-lease-')); const path=join(dir,'queue.json');
+  const q=new JsonHostJobQueue(path);
+  await q.enqueue({id:'lease-safe',type:'runtime-health',createdAt:new Date(0).toISOString()});
+  const first=await q.claimNext({leaseMs:5000,now:0});
+  assert.equal(first?.status,'running');
+  assert.equal(first?.attempts,1);
+  const second=await q.claimNext({leaseMs:5000,now:6000});
+  assert.equal(second?.job.id,'lease-safe');
+  assert.equal(second?.attempts,2);
+  assert.ok(second?.recoveredAt);
+});
+
+test('expired consequential host job lease blocks blind replay', async () => {
+  const dir=await mkdtemp(join(tmpdir(),'munin-hostq-reconcile-')); const path=join(dir,'queue.json');
+  const q=new JsonHostJobQueue(path);
+  await q.enqueue({id:'lease-risky',type:'deploy-main',repo:'MuninHQ/munin-foundation',branch:'main',createdAt:new Date(0).toISOString()});
+  await q.claimNext({leaseMs:5000,now:0});
+  const next=await q.claimNext({leaseMs:5000,now:6000});
+  assert.equal(next,undefined);
+  const [item]=await q.list();
+  assert.equal(item.status,'blocked');
+  assert.match(item.result?.summary ?? '',/reconciled/i);
+  assert.equal(item.attempts,1);
+});
