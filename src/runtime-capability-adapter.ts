@@ -1,3 +1,4 @@
+import { registerAutomatonLocalCapability, type AutomatonLocalInput, type AutomatonLocalOutput } from './automaton-local-capability.js';
 import { registerAutonomousLoopCapability, type AutonomousLoopCapabilityInput } from './autonomous-loop-capability.js';
 import type { AutonomousRunResult } from './autonomous-execution-loop.js';
 import { installBrowserPolicyGate, registerBrowserCapability, type BrowserCapabilityInput, type BrowserCapabilityOutput } from './browser-capability.js';
@@ -35,6 +36,7 @@ export class RuntimeCapabilityAdapter {
         registerBrowserCapability(this.registry);
         installBrowserPolicyGate(this.registry);
       }
+      if (!this.registry.has('execution.automaton-local')) registerAutomatonLocalCapability(this.registry);
       if (!this.registry.has('execution.autonomous-loop')) registerAutonomousLoopCapability(this.registry);
       if (!this.registry.has('engineering.autonomous-mission')) registerEngineeringMissionCapability(this.registry, options.engineeringRuntime);
       if (!this.registry.has('code.semantic-intelligence')) registerSemanticIntelligenceCapability(this.registry);
@@ -55,6 +57,13 @@ export class RuntimeCapabilityAdapter {
     this.assertEnabled();
     return this.registry.execute<BrowserCapabilityInput, BrowserCapabilityOutput>('browser.operator', input, {
       source: 'execution-engine-adapter', experimental: true,
+    });
+  }
+
+  async automatonLocal(input: AutomatonLocalInput): Promise<CapabilityExecutionResult<AutomatonLocalOutput>> {
+    this.assertEnabled();
+    return this.registry.execute<AutomatonLocalInput, AutomatonLocalOutput>('execution.automaton-local', input, {
+      source: 'execution-engine-adapter', local: true, experimental: true, zeroCost: true,
     });
   }
 

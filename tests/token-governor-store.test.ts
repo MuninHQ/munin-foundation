@@ -35,6 +35,7 @@ test('metrics report estimated savings and zero applied changes', () => {
   assert.equal(metrics.appliedChanges, 0);
   assert.equal(metrics.byEffort.low, 1);
   assert.equal(metrics.byEffort.medium, 1);
+  assert.equal(metrics.byModelTier.standard, 0);
 });
 
 test('store rejects invalid list bounds and missing files read as empty', async () => {

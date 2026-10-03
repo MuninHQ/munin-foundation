@@ -1,3 +1,4 @@
+import { AutomatonReadOnlyRouter } from './automaton-readonly-router.js';
 import { CouncilOrchestrator } from './council.js';
 import { IntelligenceOrchestrationPlanner, type OrchestrationInput } from './intelligence-orchestration.js';
 import { defaultProviderProfiles, ProviderRegistry, type ProviderProfile } from './provider-policy.js';
@@ -5,11 +6,14 @@ import { orchestrationPolicy } from './orchestration-provider-preference.js';
 import type { ProviderRequest } from './providers.js';
 import type { OrchestrationAttempt, OrchestrationTrace } from './orchestration-trace.js';
 import { observeTokenUsage, type TokenGovernorObservation, type TokenGovernorOptions } from './token-governor.js';
+import type { EfficiencyObservation, EfficiencyObservationInput } from './efficiency-telemetry.js';
 
 export interface OrchestrationRuntimeOptions {
   tokenGovernor?: TokenGovernorOptions;
   tokenGovernorStore?: { append(observation: TokenGovernorObservation): Promise<void> };
   tokenGovernorTimeoutMs?: number;
+  efficiencyObserver?: { observe(input: EfficiencyObservationInput): Promise<EfficiencyObservation | undefined> };
+  automatonRouter?: Pick<AutomatonReadOnlyRouter, 'tryRoute'>;
 }
 
 async function boundedObservationWrite(operation: Promise<void>, timeoutMs: number): Promise<void> {
@@ -60,6 +64,13 @@ export class OrchestrationRuntimeCore {
     }
   }
 
+  private async observeEfficiency(request: ProviderRequest, output: string): Promise<EfficiencyObservation | undefined> {
+    if (!this.options.efficiencyObserver) return undefined;
+    let requestText = request.objective;
+    try { requestText = JSON.stringify(request); } catch {}
+    try { return await this.options.efficiencyObserver.observe({ runId: request.taskId, candidateFiles: 0, selectedFiles: 0, inputChars: requestText.length, selectedChars: requestText.length, outputOriginalChars: output.length, outputRetainedChars: output.length, capabilitiesConsidered: 0, capabilitiesActive: 0, reusedHistoryChars: 0, modelTier: 'economy', reasonCode: 'orchestration-observation', zeroRiskMode: 'disabled' }); } catch { return undefined; }
+  }
+
   async run(input: OrchestrationInput) {
     const plan = new IntelligenceOrchestrationPlanner().plan(input);
     const startedAt = new Date().toISOString();
@@ -73,7 +84,46 @@ export class OrchestrationRuntimeCore {
       context: input.context ?? {},
     };
 
+    let automatonDecision;
+    try {
+      automatonDecision = new ProviderRegistry(this.profiles.filter(profile => profile.id === 'automaton-local'))
+        .select(request, orchestrationPolicy(plan, 'automaton-local')).decision;
+    } catch { /* No explicit eligible Automaton profile: keep the normal provider path. */ }
+    if (plan.route === 'direct' && automatonDecision) {
+      const automaton = await (this.options.automatonRouter ?? new AutomatonReadOnlyRouter()).tryRoute(input);
+      if (automaton.attempted) {
+        attempts.push({
+          providerId: 'automaton-local',
+          ok: automaton.used,
+          ...(automaton.used ? {} : { error: automaton.reason }),
+        });
+      }
+      if (automaton.fallbackSafe === false) {
+        throw new OrchestrationRuntimeError(automaton.reason, {
+          planId: plan.id, route: plan.route, attempts, startedAt, completedAt: new Date().toISOString(),
+        });
+      }
+      if (automaton.used && automaton.response) {
+        const tokenGovernor = await this.observe(input, request, 'automaton-local', automaton.response.output);
+        const efficiency = await this.observeEfficiency(request, automaton.response.output);
+        const decision = automatonDecision;
+        const trace: OrchestrationTrace = {
+          planId: plan.id,
+          route: plan.route,
+          attempts,
+          selectedProviderId: 'automaton-local',
+          providerDecision: decision,
+          tokenGovernor,
+          efficiency,
+          startedAt,
+          completedAt: new Date().toISOString(),
+        };
+        return { plan, providerId: 'automaton-local', decision, response: automaton.response, trace };
+      }
+    }
+
     const candidates = this.profiles
+      .filter(profile => profile.id !== 'automaton-local')
       .filter(profile => profile.enabled)
       .filter(profile => profile.mode === 'offline')
       .filter(profile => profile.estimatedCostPerCall <= plan.maxCostPerCall)
@@ -107,6 +157,7 @@ export class OrchestrationRuntimeCore {
             selectedProviderId: profile.id,
             providerDecision: choice.decision,
             tokenGovernor: await this.observe(input, request, profile.id, ''),
+            efficiency: await this.observeEfficiency(request, ''),
             startedAt,
             completedAt: new Date().toISOString(),
           };
@@ -116,6 +167,7 @@ export class OrchestrationRuntimeCore {
         const response = await choice.provider.execute(request);
         attempts.push({ providerId: profile.id, ok: true });
         const tokenGovernor = await this.observe(input, request, profile.id, response.output);
+        const efficiency = await this.observeEfficiency(request, response.output);
         const trace: OrchestrationTrace = {
           planId: plan.id,
           route: plan.route,
@@ -123,6 +175,7 @@ export class OrchestrationRuntimeCore {
           selectedProviderId: profile.id,
           providerDecision: choice.decision,
           tokenGovernor,
+          efficiency,
           startedAt,
           completedAt: new Date().toISOString(),
         };

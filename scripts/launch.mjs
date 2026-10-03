@@ -50,8 +50,8 @@ function displayExitCode(code) {
   return platform() === 'win32' && code > 0x7fffffff ? code - 0x100000000 : code;
 }
 
-function run(command, args, label) {
-  const child = spawn(command, args, { stdio: 'inherit', shell: platform() === 'win32', env: process.env });
+function run(command, args, label, options = {}) {
+  const child = spawn(command, args, { stdio: 'inherit', shell: options.shell ?? platform() === 'win32', env: process.env });
   children.push(child);
   child.on('exit', code => {
     if (!shuttingDown && code && code !== 0) console.error(`[Munin] ${label} exited with code ${displayExitCode(code)}. Other services will remain available.`);
@@ -163,7 +163,7 @@ if (await apiHealthy()) {
     process.exit(1);
   }
   await runToCompletion('npm', ['run', 'build:core'], 'TypeScript build');
-  run('node', ['dist/src/server.js'], 'Munin API');
+  run('node', ['dist/src/server.js'], 'Munin API', { shell: false });
   if (!(await waitFor(apiHealthy))) {
     console.error(`[Munin] API did not become healthy on port ${API_PORT}. The Web UI will not start without its API.`);
     shutdown(1);
