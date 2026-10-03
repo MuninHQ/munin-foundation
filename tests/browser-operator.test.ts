@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { browserHealth, browserOperatorPolicy, recommendBrowserBackend, resolveBrowserInvocation, scoreBrowserBenchmark, validateBrowserInspectionUrl } from '../src/browser-operator.js';
+import { validateReadOnlyBrowserSessionId } from '../src/browser-session.js';
 
 test('prefers Playwright CLI without requiring a paid cloud',()=>{
- const policy=browserOperatorPolicy();assert.equal(policy.preferred,'playwright-cli');assert.equal(policy.fallback,'browser-use');assert.equal(policy.cloudRequired,false);assert.equal(policy.paidDependencyRequired,false);assert.equal(policy.actionPolicyRequired,true);assert.equal(policy.benchmarkRequiredBeforePromotion,true);assert.deepEqual(policy.allowedActions,['health','inspect']);assert.equal(policy.inspectMode,'read-only-navigation-and-snapshot');
+ const policy=browserOperatorPolicy();assert.equal(policy.preferred,'playwright-cli');assert.equal(policy.fallback,'browser-use');assert.equal(policy.cloudRequired,false);assert.equal(policy.paidDependencyRequired,false);assert.equal(policy.actionPolicyRequired,true);assert.equal(policy.benchmarkRequiredBeforePromotion,true);assert.deepEqual(policy.allowedActions,['health','inspect','session_open','session_snapshot','session_close']);assert.equal(policy.inspectMode,'read-only-navigation-and-snapshot');assert.equal(policy.sessionContinuity,'named-session-until-explicit-close');assert.equal(policy.automaticInputAllowed,false);
 });
 
 test('read-only browser inspection accepts local and public http URLs',()=>{
@@ -50,4 +51,12 @@ test('browser benchmark recommends highest-scoring eligible backend',()=>{
   {backend:'browser-use',available:true,actionLog:true,replay:true,permissionGate:true,mobileTrigger:true,navigationMs:1200,formMs:1800,recoveryMs:800,contextTokens:9000,memoryMb:600},
  ]);
  assert.equal(recommendation.recommended,'playwright-cli');assert.equal(recommendation.ranked.length,2);assert.ok(recommendation.ranked[0].score>recommendation.ranked[1].score);
+});
+
+
+test('named read-only browser sessions accept only Munin-generated UUID ids',()=> {
+ const id='munin-ro-123e4567-e89b-42d3-a456-426614174000';
+ assert.equal(validateReadOnlyBrowserSessionId(id),id);
+ assert.throws(()=>validateReadOnlyBrowserSessionId('other-session'),/Invalid Munin/);
+ assert.throws(()=>validateReadOnlyBrowserSessionId('munin-ro-../../danger'),/Invalid Munin/);
 });
