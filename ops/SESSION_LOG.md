@@ -1,5 +1,30 @@
 # Munin Session Log
 
+## 2026-10-02 — Pocock delta pack (draft / host validation pending)
+
+### Decisions
+
+- Adapted patterns from Matt Pocock's repositories natively instead of installing a second orchestrator or bulk-importing third-party skills.
+- Kept `mattpocock/skills` in observe/adapt mode; no skill was installed, executed or automatically promoted.
+- Kept Playwright as the promoted browser backend and left Sandcastle/Evalite as non-required references.
+- Did not copy Course Video Manager implementation because a root license was not found during review; only architectural patterns were used.
+
+### Changes
+
+- Added `GLOSSARY.md` and agent context-diet guidance.
+- Added a raw-content-free Context Profiler plus CLI.
+- Added `money-printer-local-v1`, a zero-mandatory-cost content-video render manifest, planning CLI and tests.
+- Wired the manifest into the existing `media.content-video` capability while preserving opt-in generation and mandatory human publication review.
+- Added a read-only Windows acceptance script that never installs FFmpeg, Remotion, transcription models or other dependencies.
+
+### Evidence
+
+- Isolated TypeScript strict compilation passed for Context Profiler and the local render manifest.
+- Isolated runtime smoke assertions passed for context profiling and a 9-stage vertical render manifest.
+- `media.content-video` passed an isolated strict type-check against the capability contract.
+- Draft PR #378 records the full diff and safety/cost boundary.
+- Full repository `npm test`, local Second Brain write-back and real Windows render acceptance remain pending because Desktop Commander was offline during this session.
+
 ## 2026-08-30 — NVIDIA Nemotron 3 Ultra optional provider
 
 ### Decision
