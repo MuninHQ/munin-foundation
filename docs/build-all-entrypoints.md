@@ -33,4 +33,6 @@ The Host Worker executes BUILD ALL locally through the same `ProductionBuildAllR
 
 ## Safety boundary
 
+An optional [cross-model consensus gate](claudex-consensus-review.md) can be enabled locally with `munin cross-review gate on`. It reviews the exact integrated commit with subscription-authenticated Claude/Codex before final test verification, or reuses a matching receipt. It stays disabled by default and fails closed on unavailable reviewers, disagreement or invalid evidence; no paid API or GitHub Action is required.
+
 BUILD ALL does not mean unconditional success. Planner, engineering, reconciliation, or verification failures stop the run. The command returns DONE only when the integrated head passes independent verification with evidence.

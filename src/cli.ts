@@ -6,10 +6,12 @@ import { ExecutionEngine } from './runtime.js';
 import { AutonomousGoalRunner } from './autonomous-runner.js';
 import { MuninControlRoomOrchestrator } from './control-room-orchestrator.js';
 import { ExecutiveBuildAllRuntime } from './executive-build-all-runtime.js';
+import { runAdversarialReviewCli } from './adversarial-review-cli.js';
 import { runOperatorWorkflow, type OperatorWorkflowCommand } from './operator-workflow.js';
 import type { EntityType, JobStatus, Priority, RelationType, Status } from './types.js';
 const store = new ContextStore(); const service = new MuninService(store); const runtime = new ExecutionEngine(); const autonomousGoals = new AutonomousGoalRunner(store, runtime); const orchestrator = new MuninControlRoomOrchestrator(); const [command, subcommand, ...args] = process.argv.slice(2);
 async function main(): Promise<void> {
+  if (command === 'cross-review') { console.log(JSON.stringify(await runAdversarialReviewCli([subcommand, ...args].filter((item): item is string => Boolean(item))), null, 2)); return; }
   if (['start', 'build', 'verify', 'ship', 'doctor', 'mobile-test'].includes(command ?? '')) return console.log(JSON.stringify(await runOperatorWorkflow(command as OperatorWorkflowCommand), null, 2));
   if (command === 'build-all') { const objective = [subcommand, ...args].filter(Boolean).join(' ').trim(); if (!objective) throw new Error('Usage: munin build-all <objective>'); const result = await new ExecutiveBuildAllRuntime().run(objective); console.log(JSON.stringify(result, null, 2)); if (result.status !== 'DONE') process.exitCode = 2; return; }
   if (command === 'orchestrate') { const objective = [subcommand, ...args].filter(Boolean).join(' '); if (!objective) throw new Error('Usage: munin orchestrate <objective>'); return console.log(JSON.stringify(await orchestrator.execute({ objective }), null, 2)); }

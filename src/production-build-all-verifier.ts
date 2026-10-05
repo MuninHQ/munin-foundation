@@ -5,6 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { BuildAllPlan, BuildAllVerificationResult } from './build-all-wave-runtime.js';
+import { AdversarialReview, gitReviewSnapshot } from './adversarial-review.js';
+import { resolveNativeInvocation } from './execution-sandbox.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -12,6 +14,7 @@ export interface ProductionBuildAllVerificationContext {
   objective: string;
   plan: BuildAllPlan;
   integrationHead: string;
+  baseRef?: string;
 }
 
 export interface ProductionBuildAllVerifierLike {
@@ -25,7 +28,8 @@ export interface VerificationCommandRunner {
 class DefaultCommandRunner implements VerificationCommandRunner {
   async run(file: string, args: string[], cwd: string, timeout = 300_000) {
     try {
-      const result = await execFileAsync(file, args, { cwd, timeout, maxBuffer: 8 * 1024 * 1024, windowsHide: true });
+      const invocation = resolveNativeInvocation(file, args);
+      const result = await execFileAsync(invocation.command, invocation.args, { cwd, timeout, maxBuffer: 8 * 1024 * 1024, windowsHide: true });
       return { ok: true, stdout: String(result.stdout ?? ''), stderr: String(result.stderr ?? '') };
     } catch (error: any) {
       return {
@@ -45,6 +49,7 @@ export class GitProductionBuildAllVerifier implements ProductionBuildAllVerifier
   constructor(
     private readonly repo = process.cwd(),
     private readonly commands: VerificationCommandRunner = new DefaultCommandRunner(),
+    private readonly reviewFactory: (repo: string) => AdversarialReview = root => new AdversarialReview(root),
   ) {}
 
   async verify(context: ProductionBuildAllVerificationContext): Promise<BuildAllVerificationResult> {
@@ -57,6 +62,24 @@ export class GitProductionBuildAllVerifier implements ProductionBuildAllVerifier
     const id = randomUUID().slice(0, 8);
     const worktree = path.join(os.tmpdir(), 'munin-build-all-verify', id);
     const evidence: string[] = [`integration-head:${resolved.stdout.trim()}`];
+    const review = this.reviewFactory(root);
+    try {
+      if (await review.gateEnabled()) {
+        if (!context.baseRef) return { status: 'BLOCKED', summary: 'Consensus gate requires an explicit BUILD ALL base ref.', evidence };
+        const snapshot = await gitReviewSnapshot(root, context.baseRef, resolved.stdout.trim());
+        let gate = await review.checkGate(snapshot);
+        // Enabling the gate explicitly opts into subscription-backed reviews at this seam.
+        // Reuse an exact receipt when available; never invoke inference when gate is disabled.
+        if (!gate.allowed && gate.reason === 'No current cross-model SHIP receipt for this exact diff.') {
+          await review.run(snapshot);
+          gate = await review.checkGate(snapshot);
+        }
+        if (!gate.allowed) return { status: 'BLOCKED', summary: gate.reason, evidence };
+        evidence.push(`cross-model-consensus:${gate.evidenceId}`);
+      }
+    } catch {
+      return { status: 'BLOCKED', summary: 'Consensus gate failed closed: invalid configuration or review scope.', evidence };
+    }
     let added = false;
     try {
       await fs.mkdir(path.dirname(worktree), { recursive: true });
