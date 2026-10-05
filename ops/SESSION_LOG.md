@@ -416,3 +416,29 @@ Vault matches: 0
 ## What did not work
 
 - ^One^ full-suite^ heartbeat^ timing^ test^ failed^ once^ and^ passed^ isolated^ plus^ full^ rerun;^ no^ related^ code^ changed^
+
+## 2026-10-05T18:33:04.678Z — MEMORY PRE-TASK · munin-foundation
+
+Task: ^Audit^ BUILD^ ALL^ and^ adapt^ ClauDex^ consensus^ review^
+Consumer: assistant
+Context matches: 0
+Vault matches: 0
+
+## 2026-10-05T18:47:57.276Z — MEMORY POST-TASK · munin-foundation
+
+Implemented-subscription-only-cross-model-review-and-opt-in-BUILD-ALL-gate
+## Decisions
+
+- Reuse-EvidenceLedger-and-native-Windows-invocation
+
+## Changed
+
+- Review-service-CLI-verifier-tests-and-docs
+
+## Next steps
+
+- Claude-subscription-login-for-live-dual-consensus
+
+## What did not work
+
+- Initial-host-e2e-timing-failure-passed-isolated-and-full-rerun

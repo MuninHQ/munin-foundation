@@ -84,7 +84,7 @@ export class ProductionBuildAllRuntime {
 
     let verification: BuildAllVerificationResult;
     try {
-      verification = await this.verifier.verify({ objective, plan, integrationHead: engineering.integrationHead });
+      verification = await this.verifier.verify({ objective, plan, integrationHead: engineering.integrationHead, baseRef });
     } catch (error) {
       verification = {
         status: 'FAILED',
