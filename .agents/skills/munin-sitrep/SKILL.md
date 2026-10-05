@@ -27,12 +27,6 @@ Do not reconstruct truth from chat memory when repository/runtime evidence exist
 
 ## Command boundary
 
-Prefer workspace file reads. Do not run arbitrary terminal commands.
+For this SITREP skill, do not invoke terminal commands at all. Treat direct reads of the canonical workspace files as satisfying the pre-task context requirement for this read-only status operation; do not run the Second Brain PRE-TASK recall command.
 
-When Git evidence is needed, use only these read-only commands:
-
-- `git status --short --branch`
-- `git branch --show-current`
-- `git log -5 --oneline`
-
-Do not use PowerShell/CMD file-reading commands, network commands, package-manager commands, Git mutation commands, or shell composition for SITREP. If runtime evidence would require another command, report that evidence as unavailable rather than requesting broader permissions.
+Use workspace file-reading tools only. Read `ops/CURRENT_STATE.md`, `ops/SESSION_LOG.md`, `package.json`, and other clearly relevant canonical files as needed. If branch, runtime, worker, or host evidence cannot be obtained without a command, label that evidence unavailable rather than requesting broader permissions.
