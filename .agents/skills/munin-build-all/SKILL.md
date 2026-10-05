@@ -1,6 +1,6 @@
 ---
 name: munin-build-all
-description: Execute a bounded Munin BUILD ALL cycle: inspect state, recall durable context, implement the smallest coherent change, test, verify, and write back. Use for build all, continue implementation, fix everything in scope, or autonomous Munin engineering.
+description: "Execute a bounded Munin BUILD ALL cycle: inspect state, recall durable context, implement the smallest coherent change, test, verify, and write back. Use for build all, continue implementation, fix everything in scope, or autonomous Munin engineering."
 ---
 
 # Munin BUILD ALL
