@@ -39,6 +39,7 @@ Munin is the durable system of record. Conversational AI products are interchang
 - `PRIVATE_CONTEXT_TEMPLATE.md`: schema for local-only operator context.
 - `ANTIGRAVITY_BOOTSTRAP.md`: Windows setup/activation.
 - `SCHEDULED_TASKS.md`: migration commands for recurring tasks.
+- `FREELLMAPI_FALLBACK.md`: optional zero-cost external inference fallback and promotion gates.
 - `scripts/bootstrap-antigravity-successor.ps1`: safe local bootstrap helper.
 
 ## Privacy model
