@@ -24,3 +24,15 @@ Return:
 - one recommended next action.
 
 Do not reconstruct truth from chat memory when repository/runtime evidence exists. Do not mark a feature complete merely because code exists; distinguish repository implementation from host/device empirical acceptance.
+
+## Command boundary
+
+Prefer workspace file reads. Do not run arbitrary terminal commands.
+
+When Git evidence is needed, use only these read-only commands:
+
+- `git status --short --branch`
+- `git branch --show-current`
+- `git log -5 --oneline`
+
+Do not use PowerShell/CMD file-reading commands, network commands, package-manager commands, Git mutation commands, or shell composition for SITREP. If runtime evidence would require another command, report that evidence as unavailable rather than requesting broader permissions.
