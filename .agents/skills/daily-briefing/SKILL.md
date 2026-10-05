@@ -32,8 +32,10 @@ Every selected item must satisfy all applicable checks:
    - publication date;
    - concise verified summary;
    - why it matters;
-   - exact source title and deep-link URL(s);
-   - whether a YouTube source was used.
+   - one literal line `PRIMARY_SOURCE: https://...` pointing to the exact primary source page/release/normative act/specification;
+   - optional literal lines `SECONDARY_SOURCE: https://...` only for exact deep links;
+   - optional `YOUTUBE_SOURCE: https://www.youtube.com/watch?v=...` plus title, channel and upload date;
+   - never output a root/homepage URL. If an exact source cannot be found, omit that source or omit the item.
 5. End with practical Munin opportunities and up to two non-repetitive professional-content angles.
 6. Before recommending a Munin improvement, read relevant canonical project state to avoid presenting an already-existing capability as new. If repository evidence is insufficient, label the idea as a candidate for comparison rather than an implementation recommendation.
 7. In unattended scheduled runs, do not invoke `munin-build-all`; propose qualified improvements only.
