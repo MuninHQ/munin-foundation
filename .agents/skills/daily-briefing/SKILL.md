@@ -11,10 +11,10 @@ Read private preferences from `data/runtime/succession/operator-profile.local.md
 
 Every selected item must satisfy all applicable checks:
 
-- include an exact deep-link URL to the source; homepage/root-domain links are not acceptable evidence;
+- include an exact deep-link URL to the source; homepage/root-domain links, repository homepages, release-index pages and organization pages are not acceptable evidence;
 - include the source title/publisher and publication date;
 - distinguish publication date from the actual event/effective date when different;
-- verify the main factual claim against at least one primary source whenever an official release, documentation page, repository/release, regulator, company announcement, or specification exists;
+- verify the main factual claim, version and date against at least one primary source whenever an official release, documentation page, repository/release, regulator, company announcement, or specification exists; do not combine facts from adjacent versions/releases;
 - do not rely on search-result snippets, generic trend claims, undated summaries, or an AI-generated source label;
 - for YouTube, include the exact video URL, video title, channel and upload date, then corroborate material technical/product claims against documentation, a repository/release, or another primary source where practical;
 - default freshness window is the last 7 days. An older item may be included only when it has a current decision/deadline/effective-date consequence, and must be labeled `ONGOING/DEADLINE`;
@@ -32,7 +32,7 @@ Every selected item must satisfy all applicable checks:
    - publication date;
    - concise verified summary;
    - why it matters;
-   - one literal line `PRIMARY_SOURCE: https://...` pointing to the exact primary source page/release/normative act/specification;
+   - one literal line `PRIMARY_SOURCE: https://...` pointing to the exact primary source page/release/normative act/specification. For GitHub releases this must be the exact `/releases/tag/<tag>` page, never the repository or releases index;
    - optional literal lines `SECONDARY_SOURCE: https://...` only for exact deep links;
    - optional `YOUTUBE_SOURCE: https://www.youtube.com/watch?v=...` plus title, channel and upload date;
    - never output a root/homepage URL. If an exact source cannot be found, omit that source or omit the item.
@@ -41,3 +41,7 @@ Every selected item must satisfy all applicable checks:
 7. In unattended scheduled runs, do not invoke `munin-build-all`; propose qualified improvements only.
 
 Persist only non-sensitive deduplication identifiers and timestamps locally. Do not commit briefing history.
+
+## Scheduled verification pass
+
+For unattended scheduled runs, candidate discovery and final publication are separate stages. The final verifier must reopen each candidate's exact `PRIMARY_SOURCE`, compare the candidate's date/version/material claim to that source, and drop any item that is unsupported, conflates adjacent releases, or cannot be reverified. The verifier must not broaden research; it validates only the candidate sources. Only verifier-approved items may update deduplication state.
