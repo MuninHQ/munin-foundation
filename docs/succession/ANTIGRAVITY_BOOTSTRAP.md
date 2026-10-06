@@ -50,9 +50,11 @@ These are operational caches for deduplication/continuity, not a replacement for
 
 ## 4. Scheduling
 
-Create the four recurring tasks from `docs/succession/SCHEDULED_TASKS.md`. Keep them staggered so the free quota is not consumed by simultaneous tasks.
+Create the four recurring tasks from `docs/succession/SCHEDULED_TASKS.md`.
 
-Before enabling, verify that Antigravity is using the intended local timezone.
+For unattended Windows execution, use Windows Task Scheduler rather than a headless one-shot `/schedule` process. The local runner, prompts, state and receipts belong under gitignored `data/runtime/succession/`.
+
+Keep jobs staggered and verify the Windows timezone before enabling them.
 
 ## 5. Model/quota policy
 
@@ -60,7 +62,8 @@ Before enabling, verify that Antigravity is using the intended local timezone.
 - Escalate to a stronger free model only for complex architecture, debugging or high-stakes synthesis.
 - Let deterministic Munin code perform deduplication, hashing, sorting, state comparisons and formatting where practical.
 - Do not consume model context re-reading large static documents when a focused skill/reference is enough.
-- On quota exhaustion, preserve state and hand off rather than switching to a paid API automatically.
+- On quota exhaustion, preserve state and use only an explicitly reviewed zero-cost fallback such as the localhost FreeLLMAPI gateway.
+- If the fallback is unavailable or unsuitable for the task, write a durable handoff rather than switching to a paid API automatically.
 
 ## 6. Acceptance
 
@@ -69,9 +72,10 @@ The successor path is accepted only after all of these pass on the real host:
 1. Antigravity reads `AGENTS.md` and the portable operator rule.
 2. `munin-sitrep` returns repository/runtime evidence rather than generic prose.
 3. `munin-build-all` can create an isolated branch/worktree, make a harmless test change, run validation and stop before merge.
-4. A scheduled test task runs once and writes no private data to Git.
+4. A Windows-scheduled smoke task runs once and writes no private data to Git.
 5. Each migrated recurring task can read its local state and deduplicate.
 6. No paid API key or billing activation is required.
-7. A quota/failure simulation leaves a durable handoff instead of losing task state.
+7. A quota/failure simulation either uses an explicitly reviewed zero-cost fallback or leaves a durable handoff without losing state.
+8. Any localhost inference gateway can restart independently of an interactive CLI session.
 
 Do not mark the migration complete until host/device acceptance is observed.
