@@ -416,3 +416,24 @@ Vault matches: 0
 ## What did not work
 
 - ^One^ full-suite^ heartbeat^ timing^ test^ failed^ once^ and^ passed^ isolated^ plus^ full^ rerun;^ no^ related^ code^ changed^
+
+## 2026-10-06T12:20:04.524Z — MEMORY POST-TASK · munin
+
+^Hardened^ capability^ promotion^ against^ prompt-override,^ credential-access^ and^ secret-exfiltration^ instructions;^ promotion^ now^ requires^ immutable^ revision^ plus^ license^ provenance;^ added^ pinned^ Munin-native^ source-driven-development^ and^ security-hardening^ skills.^ Existing^ durable^ queues/ledgers^ were^ retained^ because^ they^ already^ cover^ leases,^ recovery,^ idempotency^ and^ audit^ patterns^ without^ a^ duplicate^ subsystem.^
+## Decisions
+
+- ^Adapt^ external^ patterns^ natively^ instead^ of^ installing^ third-party^ runtimes^
+- Require^ pin^ plus^ license^ before^ security^ gate^ can^ allow^ promotion^
+- Do^ not^ add^ a^ new^ queue/ledger^ because^ Munin^ already^ has^ durable^ leases,^ recovery^ and^ evidence^ ledgers^
+
+## Changed
+
+- src/capability-security-gate.ts^
+- tests/capability-security-gate.test.ts^
+- tests/curated-engineering-skills.test.ts^
+- skills/source-driven-development/SKILL.md^
+- skills/security-hardening/SKILL.md
+
+## Next steps
+
+- ^Open^ PR^ and^ let^ CI^ verify^ the^ isolated^ branch^
