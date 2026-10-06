@@ -21,9 +21,7 @@ Use the local OpenAI-compatible endpoint exposed by FreeLLMAPI (normally `http:/
 
 Do not fork or vendor FreeLLMAPI into Munin. Keep it as a separately installed optional local service.
 
-The Munin adapter should eventually expose one logical provider id such as:
-
-`freellmapi-free-pool`
+Munin already has an OpenAI-compatible provider seam, so a dedicated FreeLLMAPI adapter is unnecessary. Point the existing optional external provider at the localhost gateway through the normal base-URL/model/key configuration.
 
 Munin decides whether a task may use external inference. FreeLLMAPI decides which configured free upstream endpoint can serve that request.
 
@@ -93,10 +91,10 @@ Do not commit upstream API keys or the FreeLLMAPI unified key.
 ## Promotion path
 
 ### Phase 0 — documentation
-This succession pack only documents the boundary. No runtime routing changes.
+Document the boundary before enabling runtime use.
 
 ### Phase 1 — local shadow benchmark
-On the target Windows host:
+On a target Windows host:
 
 1. install FreeLLMAPI from its official release;
 2. bind it to localhost only;
@@ -106,19 +104,22 @@ On the target Windows host:
 6. record latency, success/failure, output quality, served model and fallback behavior;
 7. verify secrets remain outside Git.
 
-### Phase 2 — Munin optional adapter
+### Phase 2 — Munin existing-provider integration
 Only after Phase 1 passes:
 
-- add a thin OpenAI-compatible `ExecutionProvider`;
-- mark it `mode: external`, `estimatedCostPerCall: 0`;
-- keep it disabled by default;
-- require an explicit external-inference policy;
+- reuse Munin's existing OpenAI-compatible provider seam;
+- point it at the localhost FreeLLMAPI endpoint;
+- mark the route external and zero-monetary-cost only when the selected upstream is actually free;
+- keep external inference policy explicit;
 - exclude sensitive/high-risk workloads;
-- add deterministic tests using a fake localhost server;
-- do not make network calls in the test suite.
+- keep normal tests deterministic and offline.
 
 ### Phase 3 — fallback promotion
-Promote from shadow to fallback only when a representative observation window proves useful quality and reliability without weakening privacy, approvals or cost policy.
+Promote from shadow to fallback only when representative observation proves useful quality and reliability without weakening privacy, approvals or cost policy.
+
+The fallback must degrade safely when a model returns malformed structured output. For ranking/classification workflows, deterministic scoring should remain authoritative enough to produce a bounded result without the model.
+
+Before enabling a cloned gateway, audit its runtime dependencies. Prefer server-only localhost operation; do not expose optional dashboard/build tooling merely because it exists in the upstream monorepo.
 
 ## Acceptance criteria
 
