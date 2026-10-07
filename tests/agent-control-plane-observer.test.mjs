@@ -69,7 +69,7 @@ test('observer detects missing nested memory policy and forbidden action boundar
 test('repository profiles can be observed together', async () => {
   const report = await runObserver();
   assert.equal(report.mode, 'observe');
-  assert.equal(report.profiles, 3);
+  assert.equal(report.profiles, 4);
   assert.equal(typeof report.findings, 'number');
   assert.ok(Array.isArray(report.results));
 });
