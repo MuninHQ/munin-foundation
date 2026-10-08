@@ -1,5 +1,9 @@
 # Munin Current State
 
+## Multi-vacancy career alerts — 2026-10-08
+
+Career inbox now parses full Gmail/Outlook alert bodies into independently importable vacancies, canonicalizes LinkedIn job IDs, preserves imported associations across syncs and reports incomplete extraction. Body parsing is local/deterministic and raw HTML is not persisted. The existing 15-minute worker remains the execution path; LinkedIn email delivery is configured on LinkedIn. See `docs/validation/career-alert-ingestion.md`. Host/private-mailbox acceptance remains pending while Windows is offline.
+
 ## Career workbench implementation — 2026-10-08
 
 Career Command now has Opportunities, Pipeline and Agenda with search/filtering, explicit source availability, safe job links, editable stages/next actions and evidence-first preparation. Discovery identity, alert-stage isolation, legacy alert import, manual-update freshness and terminal follow-ups have regression coverage. The implementation passes 899 tests, frontend type checking and browser acceptance at 320/390/768/1440px. See `docs/validation/career-command-workbench.md`. This is repository implementation evidence, not host installation: Windows was offline and private mailbox/worker/iPhone acceptance remains pending.

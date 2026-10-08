@@ -12,7 +12,7 @@ export class EmailIntelligenceWorker {
     try{
       const sync=await syncCareerInbox();
       const intelligence=await refreshEmailIntelligence();
-      await this.health.success({providers:sync.providers,needsConnection:sync.needsConnection,summary:sync.needsConnection?'Mailbox connection required.':`${sync.totalFetched} fetched · ${sync.added} added`});
+      await this.health.success({providers:sync.providers,needsConnection:sync.needsConnection,summary:sync.needsConnection?'Mailbox connection required.':`${sync.totalFetched} emails fetched · ${sync.added} records added · ${sync.alertHealth?.vacancies??0} alert vacancies · ${sync.alertHealth?.incomplete??0} alerts to review`});
       return{sync,intelligence};
     }catch(error){
       await this.health.failure(error instanceof Error?error.message:String(error));

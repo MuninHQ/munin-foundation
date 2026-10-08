@@ -8,6 +8,10 @@ export function safeCareerLink(value?: string): string | undefined {
     for (const key of [...url.searchParams.keys()]) {
       if (/^(utm_|trackingId$|trk$|refId$|lipi$)/i.test(key)) url.searchParams.delete(key);
     }
+    if (/(^|\.)linkedin\.com$/i.test(url.hostname)) {
+      const jobId = url.pathname.match(/^\/jobs\/view\/(?:.*-)?(\d+)\/?$/)?.[1];
+      if (jobId) { url.hostname = 'www.linkedin.com'; url.pathname = `/jobs/view/${jobId}/`; url.search = ''; }
+    }
     url.hash = '';
     return url.toString();
   } catch { return undefined; }

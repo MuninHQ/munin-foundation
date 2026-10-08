@@ -13,7 +13,7 @@ function titleFrom(message: CareerEmail) {
   return message.detectedRole?.trim() || message.subject.replace(/^(fw|fwd|enc)\s*:\s*/i, '').replace(/^(job alert|new jobs|vagas para voc[eê])\s*[:\-]?\s*/i, '').trim() || message.subject;
 }
 export function extractJobDiscoveries(messages: CareerEmail[], jobs: JobOpportunity[]): JobDiscovery[] {
-  const newest = [...messages].filter(m => m.category === 'job_alert').sort((a,b) => Date.parse(b.receivedAt) - Date.parse(a.receivedAt));
+  const newest = [...messages].filter(m => m.category === 'job_alert' && !m.alertExtraction).sort((a,b) => Date.parse(b.receivedAt) - Date.parse(a.receivedAt));
   const seen = new Set<string>();
   const items: JobDiscovery[] = [];
   for (const message of newest) {
@@ -28,7 +28,7 @@ export function extractJobDiscoveries(messages: CareerEmail[], jobs: JobOpportun
     // A title alone is never evidence that the user applied at this company.
     const duplicate = jobs.find(job =>
       (link && safeCareerLink(job.link) === link) ||
-      (company && norm(company) === norm(job.company) && norm(title) === norm(job.role)));
+      (!link && company && norm(company) === norm(job.company) && norm(title) === norm(job.role)));
     const resurfaced = Boolean(duplicate && ['closed','rejected'].includes(duplicate.status) && Date.parse(message.receivedAt) > Date.parse(duplicate.updatedAt));
     items.push({id:`disc-${message.id}`, sourceMessageId:message.id, title, company,
       score:Math.min(100,45 + matched.length * 7), signals:matched, duplicateJobId:duplicate?.id,

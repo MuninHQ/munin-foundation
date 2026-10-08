@@ -13,6 +13,7 @@ export interface CareerEmail {
   fromName?: string; fromEmail?: string; subject: string; snippet: string; receivedAt: string;
   category: CareerEmailCategory; confidence: number; detectedCompany?: string; detectedRole?: string;
   suggestedStatus?: JobStatus; suggestedAction?: string; linkedJobId?: string; linkedActionId?: string; handled: boolean;
+  sourceEmailId?: string; alertExtraction?: {count:number;incomplete:boolean};
   attention?: EmailAttention; needsAction?: boolean; actionReason?: string;
 }
 export interface InboxState { messages: CareerEmail[]; syncedAt?: string; }
@@ -76,7 +77,7 @@ export class CareerInboxStore {
   async save(state:InboxState):Promise<void>{await writeJsonAtomic(this.file(),state);}
   async upsert(messages:CareerEmail[]):Promise<{added:number;duplicates:number}>{
     const state=await this.load(); const byKey=new Map(state.messages.map((m,i)=>[`${m.provider}:${m.providerMessageId}`,i])); let added=0,duplicates=0;
-    for(const message of messages){const key=`${message.provider}:${message.providerMessageId}`;const idx=byKey.get(key);const isNoise=(message.category==='other'||message.category==='job_alert')&&!message.needsAction;if(idx!==undefined){const existing=state.messages[idx];state.messages[idx]={...message,id:existing.id,handled:existing.handled||isNoise,linkedActionId:existing.linkedActionId};duplicates++;continue;}state.messages.push({...message,handled:message.handled||isNoise});byKey.set(key,state.messages.length-1);added++;}
+    for(const message of messages){const key=`${message.provider}:${message.providerMessageId}`;const idx=byKey.get(key);const isNoise=(message.category==='other'||message.category==='job_alert')&&!message.needsAction;if(idx!==undefined){const existing=state.messages[idx];state.messages[idx]={...message,id:existing.id,handled:existing.handled||isNoise,linkedActionId:existing.linkedActionId,linkedJobId:existing.linkedJobId??message.linkedJobId,detectedCompany:existing.linkedJobId?existing.detectedCompany:message.detectedCompany,detectedRole:existing.linkedJobId?existing.detectedRole:message.detectedRole};duplicates++;continue;}state.messages.push({...message,handled:message.handled||isNoise});byKey.set(key,state.messages.length-1);added++;}
     const seen=new Set<string>();
     for(const m of [...state.messages].sort((a,b)=>new Date(b.receivedAt).getTime()-new Date(a.receivedAt).getTime())){if(m.handled)continue;const process=m.linkedJobId||m.threadId; if(!process)continue;const key=`${process}:${m.category}:${m.attention??''}`;if(seen.has(key))m.handled=true;else seen.add(key);}
     state.messages.sort((a,b)=>new Date(b.receivedAt).getTime()-new Date(a.receivedAt).getTime());state.syncedAt=new Date().toISOString();await this.save(state);return{added,duplicates};

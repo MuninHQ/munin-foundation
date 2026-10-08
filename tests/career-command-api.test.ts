@@ -34,3 +34,23 @@ test('career workspace and email import preserve one canonical process, source a
 test('career links reject executable URLs, credentials and local hosts',()=>{
  for(const url of ['javascript:alert(1)','data:text/html,test','https://user:pass@example.com/jobs/1','https://localhost/jobs/1','https://127.0.0.1/jobs/1'])assert.equal(safeCareerLink(url),undefined);
 });
+
+test('digest vacancies import independently, survive resync and reuse the same canonical URL',async()=>{
+ const {expandCareerAlert}=await import('../src/career-alert-extraction.js');
+ const root=await mkdtemp(path.join(tmpdir(),'munin-career-digest-'));const previous=process.env.MUNIN_DATA_DIR;process.env.MUNIN_DATA_DIR=root;
+ const {handleApi}=await import(new URL('../src/api.js?digest-test',import.meta.url).href);const server=createServer((req,res)=>void (req.url?.startsWith('/api/career-intelligence')?handleCareerIntelligence(req,res):handleApi(req,res)));
+ const original={id:'digest',provider:'gmail' as const,providerMessageId:'digest-provider',subject:'New jobs',snippet:'Job alert',receivedAt:'2026-10-08T10:00:00Z',category:'job_alert' as const,confidence:.95,handled:true};
+ const body='<a href="https://www.linkedin.com/jobs/view/123/">Payments Manager at Bank A</a><a href="https://www.linkedin.com/jobs/view/456/">Payments Manager at Bank B</a>';
+ try{
+  const store=new CareerInboxStore(root);const expanded=expandCareerAlert(original,body,true);await store.upsert(expanded);
+  await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));const base=`http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  const post=(id:string)=>fetch(`${base}/api/career-inbox/${id}/create-job`,{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
+  assert.equal((await post(original.id)).status,400);
+  const a=await post(expanded[1].id),b=await post(expanded[2].id);assert.equal(a.status,201);assert.equal(b.status,201);
+  const first=await a.json(),second=await b.json();assert.notEqual(first.job.id,second.job.id);
+  await store.upsert(expandCareerAlert({...original,id:'different-random-id'},body,true));assert.equal((await post(expanded[1].id)).status,400);
+  const repeat=expandCareerAlert({...original,id:'repeat',providerMessageId:'another-digest'},body,true);await store.upsert(repeat);
+  const reused=await post(repeat[1].id);assert.equal(reused.status,200);assert.equal((await reused.json()).job.id,first.job.id);
+  const workspace=await fetch(`${base}/api/career-intelligence/workspace`).then(r=>r.json());assert.equal(workspace.processes.length,2);assert.equal(workspace.alertHealth.vacancies,4);assert.equal(workspace.alertHealth.incomplete,0);
+ }finally{await new Promise<void>(resolve=>server.close(()=>resolve()));if(previous===undefined)delete process.env.MUNIN_DATA_DIR;else process.env.MUNIN_DATA_DIR=previous;await rm(root,{recursive:true,force:true})}
+});

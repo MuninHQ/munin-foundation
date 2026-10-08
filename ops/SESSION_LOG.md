@@ -447,3 +447,35 @@ Delivered career workbench and discovery/lifecycle fixes; 899 tests plus browser
 ## What did not work
 
 - Windows runtime acceptance unavailable because device offline
+
+## 2026-10-08T23:04:03.546Z — MEMORY PRE-TASK · career
+
+Task: Expand job alert emails into individual opportunities with reliable ingestion
+Consumer: assistant
+Context matches: 0
+Vault matches: 2
+
+## 2026-10-08T23:10:13.258Z — MEMORY POST-TASK · career
+
+Delivered full Gmail/Outlook alert extraction, independent vacancies, stable LinkedIn URL identity, imported-association preservation, body caching and incomplete-alert health. Full suite: 914 passed; frontend types and browser acceptance passed. Windows remains offline.
+## Decisions
+
+- Keep deterministic email ingestion and existing 15-minute worker
+- Do not automate LinkedIn accounts or submit applications
+- Treat missing identity and unparsed layouts as incomplete
+
+## Changed
+
+- Career alert parser and provider integration
+- Independent imports and URL duplicate reuse
+- Career Command source health and regression coverage
+
+## Next steps
+
+- Install reviewed branch on Windows when online
+- Validate representative private LinkedIn alerts and configured daily email delivery
+
+## What did not work
+
+- Initial API fixture reused module-scoped store from previous temporary directory; isolated module corrected
+- Initial full suite redirected web build away from mobile launcher fixture; rerun with normal build passed

@@ -26,3 +26,8 @@ test('new alert for a closed process is surfaced for revalidation',()=>{
  const [d]=extractJobDiscoveries([{...alert,detectedCompany:'Bank A',detectedRole:'Product Manager'}],[{...job,status:'closed'}]);
  assert.equal(d.resurfaced,true);assert.equal(d.duplicateStatus,'closed');
 });
+
+test('different LinkedIn job ids do not collapse into the same submitted process',()=>{
+ const [d]=extractJobDiscoveries([{...alert,detectedCompany:'Bank A',detectedRole:'Product Manager',snippet:'https://www.linkedin.com/jobs/view/456/'}],[{...job,status:'applied',link:'https://www.linkedin.com/jobs/view/123/'}]);
+ assert.equal(d.duplicateJobId,undefined);
+});
