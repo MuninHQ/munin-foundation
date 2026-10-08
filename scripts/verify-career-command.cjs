@@ -46,7 +46,9 @@ const {chromium}=require(process.env.MUNIN_PLAYWRIGHT_MODULE||'playwright');
   await page.getByRole('button',{name:/Oportunidades/}).click();
   // Failure of an optional remote integration must not erase the local pipeline.
   await page.route('**/api/career-intelligence/calendar',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Calendar unavailable in test'})}));
+  await page.route('**/api/career-inbox/sync',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({added:3,totalFetched:1,alertHealth:{vacancies:2}})}));
   await page.getByRole('button',{name:'Sincronizar emails'}).click();await page.getByRole('alert').filter({hasText:'Agenda indisponível'}).waitFor();assert.equal(await page.locator('.career-card').count(),4);
+  await page.getByRole('status').filter({hasText:'Emails consultados: 1; registros novos: 3; vagas extraídas: 2.'}).waitFor();
   await page.getByRole('searchbox').fill('missing-role');await page.getByRole('heading',{name:'Nenhuma vaga com esses filtros'}).waitFor();
   await page.getByRole('button',{name:'Limpar filtros'}).click();assert.equal(await page.locator('.career-card').count(),5);
   await page.getByRole('searchbox').fill('Nova');await page.getByRole('button',{name:'Ver análise'}).click();
