@@ -38,3 +38,19 @@ test('touch and close operations update lifecycle safely', async () => {
     assert.equal(closed.closedReason, 'Role no longer accepting applications');
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
+
+test('pipeline rejects invalid stages, preserves links and clears terminal follow-ups',async()=>{
+ const dir=await mkdtemp(path.join(tmpdir(),'munin-career-stages-'));
+ try {
+  const service=new MuninService(new ContextStore(dir));
+  const job=await service.addJob('Example Bank','Product Manager','payments',{link:'https://example.com/jobs/1?utm_source=email',source:'email:gmail'});
+  assert.equal(job.link,'https://example.com/jobs/1');assert.equal(job.source,'email:gmail');
+  await assert.rejects(service.updateJob(job.id,'invalid' as any),/Invalid job status/);
+  assert.equal((await service.listJobs())[0].status,'discovered');
+  await service.updateJob(job.id,'applied');
+  assert.ok((await service.listJobs())[0].followUpAt);
+  await service.updateJob(job.id,'rejected');
+  assert.equal((await service.listJobs())[0].followUpAt,undefined);
+  await assert.rejects(service.addJob('Bad Link','Role','',{link:'javascript:alert(1)'}),/HTTPS/);
+ }finally{await rm(dir,{recursive:true,force:true});}
+});

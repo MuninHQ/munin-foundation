@@ -63,10 +63,10 @@ export function classifyCareerEmail(input: Pick<CareerEmail,'subject'|'snippet'|
   if(category==='other'&&noise.test(text)) category='other';
   const normalized=normalize(text); const subjectTokens=tokens(input.subject);
   const ranked=jobs.map(job=>{const company=normalize(job.company);const roleTokens=tokens(job.role);let score=0;if(company&&normalized.includes(company))score+=6;const hits=roleTokens.filter(t=>subjectTokens.includes(t)||normalized.includes(t)).length;score+=hits*1.5;if(roleTokens.length>=2&&hits>=Math.min(2,roleTokens.length))score+=2;return{job,score,hits};}).sort((a,b)=>b.score-a.score);
-  const best=ranked[0]; const linked=best&&(best.score>=5||(best.hits>=2&&best.score>=4))?best.job:undefined;
+  const best=ranked[0]; const linked=category==='job_alert' ? (alert.company&&alert.role ? jobs.find(job=>normalize(job.company)===normalize(alert.company!)&&normalize(job.role)===normalize(alert.role!)) : undefined) : best&&(best.score>=5||(best.hits>=2&&best.score>=4))?best.job:undefined;
   const confidence=alert.isAlert?0.95:match?0.86:0.20;
   const attention=generalAction(text,category);
-  return {subject:input.subject,snippet:input.snippet,fromEmail:input.fromEmail,category,confidence:linked?Math.min(.99,confidence+.05):confidence,detectedCompany:linked?.company??alert.company,detectedRole:linked?.role??alert.role,suggestedStatus:match?.[2],suggestedAction:category==='job_alert'?'Review job alert':match?.[3],linkedJobId:linked?.id,...attention};
+  return {subject:input.subject,snippet:input.snippet,fromEmail:input.fromEmail,category,confidence:linked?Math.min(.99,confidence+.05):confidence,detectedCompany:linked?.company??alert.company,detectedRole:linked?.role??alert.role,suggestedStatus:category==='job_alert'?undefined:match?.[2],suggestedAction:category==='job_alert'?'Review job alert':match?.[3],linkedJobId:linked?.id,...attention};
 }
 
 export class CareerInboxStore {

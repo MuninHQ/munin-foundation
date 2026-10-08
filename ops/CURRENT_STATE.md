@@ -1,5 +1,9 @@
 # Munin Current State
 
+## Career workbench implementation — 2026-10-08
+
+Career Command now has Opportunities, Pipeline and Agenda with search/filtering, explicit source availability, safe job links, editable stages/next actions and evidence-first preparation. Discovery identity, alert-stage isolation, legacy alert import, manual-update freshness and terminal follow-ups have regression coverage. The implementation passes 899 tests, frontend type checking and browser acceptance at 320/390/768/1440px. See `docs/validation/career-command-workbench.md`. This is repository implementation evidence, not host installation: Windows was offline and private mailbox/worker/iPhone acceptance remains pending.
+
 ## Unified Mobile UI
 
 The workspace now uses one mobile navigation model (`Hoje`, `Inbox`, `Carreira`, `LinkedIn`, `Mais`), responsive Home layouts, resilient loading/error feedback, and a decision-oriented Action Inbox. View-only defer/discard controls do not create external or consequential effects.

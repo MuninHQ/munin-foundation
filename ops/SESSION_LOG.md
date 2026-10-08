@@ -416,3 +416,34 @@ Vault matches: 0
 ## What did not work
 
 - ^One^ full-suite^ heartbeat^ timing^ test^ failed^ once^ and^ passed^ isolated^ plus^ full^ rerun;^ no^ related^ code^ changed^
+
+## 2026-10-08T22:41:40.210Z — MEMORY PRE-TASK · career
+
+Task: Improve career command reliability and job search UX
+Consumer: assistant
+Context matches: 0
+Vault matches: 0
+
+## 2026-10-08T22:54:28.467Z — MEMORY POST-TASK · career
+
+Delivered career workbench and discovery/lifecycle fixes; 899 tests plus browser acceptance passed; Windows device offline
+## Decisions
+
+- Keep existing local stores and free operation
+- Separate opportunity capture from application submission
+- Preserve pipeline during optional integration failure
+
+## Changed
+
+- Career Command UI
+- Job discovery and email identity
+- Lifecycle validation and activity freshness
+
+## Next steps
+
+- Review branch and deploy on Windows when connected
+- Verify private mailbox and actual iPhone
+
+## What did not work
+
+- Windows runtime acceptance unavailable because device offline

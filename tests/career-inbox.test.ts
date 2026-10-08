@@ -41,3 +41,9 @@ test('does not auto-handle general action messages classified as other', async (
   await store.upsert([message]);
   assert.equal((await store.load()).messages[0].handled,false);
 });
+
+test('a LinkedIn alert cannot inherit another company or advance a pipeline stage',()=>{
+ const result=classifyCareerEmail({subject:'Analista de Produtos Sênior Digital Assets na empresa Bank B',snippet:'Your application to digital assets: interview opportunities',fromEmail:'jobs-noreply@linkedin.com'},[job]);
+ assert.equal(result.category,'job_alert');assert.equal(result.detectedCompany,'Bank B');
+ assert.equal(result.linkedJobId,undefined);assert.equal(result.suggestedStatus,undefined);
+});
