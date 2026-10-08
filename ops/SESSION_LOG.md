@@ -479,3 +479,34 @@ Delivered full Gmail/Outlook alert extraction, independent vacancies, stable Lin
 
 - Initial API fixture reused module-scoped store from previous temporary directory; isolated module corrected
 - Initial full suite redirected web build away from mobile launcher fixture; rerun with normal build passed
+
+## 2026-10-08T23:14:30.434Z — MEMORY PRE-TASK · career
+
+Task: Add reference-led visual motion to Career Command
+Consumer: assistant
+Context matches: 0
+Vault matches: 7
+
+## 2026-10-08T23:20:46.833Z — MEMORY POST-TASK · career
+
+Implemented original animated vector header, score rings, card/detail transitions and persistent animation pause with system reduced-motion priority. Full build and 914 tests, frontend types and browser acceptance passed; design observation unchanged at 1401. Recorded synthetic-data preview; Windows install remains pending.
+## Decisions
+
+- Adapt Lusion/Linear/Rauno references without copying assets
+- Use bounded SVG/CSS motion and existing semantic tokens
+- Keep decorative art separate from real source health and job evidence
+
+## Changed
+
+- Career Command CSS/React visual motion
+- Browser checks for pause persistence and reduced motion
+- Reference and validation document
+
+## Next steps
+
+- Review actual motion preview
+- Install reviewed branch and validate native iPhone performance when host is online
+
+## What did not work
+
+- Optional Playwright recording lacked its ffmpeg path; reused existing system ffmpeg and recording passed
