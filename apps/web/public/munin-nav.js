@@ -20,6 +20,13 @@
   const tools = [
     ['/email-intelligence.html', 'Email Intelligence'],
     ['/career-inbox.html', 'Career Inbox'],
+    ['/career-intake.html', 'Analisar vaga'],
+    ['/content-studio.html', 'Content Studio'],
+    ['/linkedin-brand.html', 'Authority Engine'],
+    ['/linkedin-publisher.html', 'Publisher'],
+    ['/hud.html', 'HUD'],
+    ['/hud-mobile.html', 'HUD Mobile'],
+    ['/mobile.html', 'Mobile'],
     ['/linkedin-compose.html', 'Composer'],
     ['/linkedin-history.html', 'Editorial History'],
     ['/linkedin-assets.html', 'Visual Assets'],
@@ -33,6 +40,7 @@
   header.innerHTML = `<div class="munin-bar-inner">
     <a class="munin-bar-brand" href="/" aria-label="Munin Command Center"><span class="munin-mark" aria-hidden="true">M</span><strong>MUNIN</strong></a>
     <nav class="munin-primary" aria-label="Workspace">${sections.map(x => `<a href="${x.href}" class="${active(x.href) ? 'active' : ''}">${x.label}</a>`).join('')}</nav>
+    <button type="button" class="munin-motion-toggle" aria-pressed="false">Animações</button>
     <details class="munin-more"><summary>Tools</summary><div class="munin-menu">${tools.map(([href,label]) => `<a href="${href}" class="${active(href) ? 'active' : ''}">${label}</a>`).join('')}</div></details>
   </div>`;
   document.body.prepend(header);
@@ -58,11 +66,13 @@
     ['/career-command.html', 'Career', 'Pipeline profissional'],
     ['/context-memory.html', 'Memory', 'Contexto durável'],
     ['/viral-engine.html', 'Viral Engine', 'Descobrir, produzir e aprender com conteúdo'],
+    ...sections.filter(x=>!['/','/action-inbox.html','/operator-hub.html','/operator-chat.html','/flows.html','/radar.html','/executive-briefing.html','/career-command.html','/context-memory.html','/viral-engine.html'].includes(x.href)).map(x=>[x.href,x.label,'Abrir módulo']),
+    ...tools.map(([href,label])=>[href,label,'Ferramentas e configuração']),
   ];
   const commandButton=document.createElement('button');commandButton.className='munin-command-launch';commandButton.innerHTML='<span>＋</span><b>Ação rápida</b>';commandButton.setAttribute('aria-label','Abrir ações rápidas e comandos');
-  const palette=document.createElement('div');palette.className='munin-command-overlay';palette.innerHTML=`<section class="munin-command-sheet" role="dialog" aria-modal="true" aria-label="Paleta de comandos"><div class="munin-command-head"><strong>IR PARA</strong><button aria-label="Fechar">×</button></div><input class="munin-command-search" placeholder="Buscar módulo ou ação…" autocomplete="off"><div class="munin-command-results"></div></section>`;
+  const palette=document.createElement('dialog');palette.className='munin-command-overlay';palette.innerHTML=`<section class="munin-command-sheet" aria-label="Paleta de comandos"><div class="munin-command-head"><strong>IR PARA</strong><button aria-label="Fechar">×</button></div><input class="munin-command-search" aria-label="Buscar módulo ou ação" placeholder="Buscar módulo ou ação…" autocomplete="off"><div class="munin-command-results"></div></section>`;
   document.body.append(palette,commandButton);const search=palette.querySelector('input'),results=palette.querySelector('.munin-command-results');
   const render=()=>{const q=search.value.toLowerCase().trim();results.innerHTML=commands.filter(x=>!q||`${x[1]} ${x[2]}`.toLowerCase().includes(q)).map(([href,label,detail])=>`<a href="${href}"><b>${label}</b><span>${detail}</span></a>`).join('')||'<p>Nenhum comando encontrado.</p>'};
-  const open=()=>{palette.classList.add('open');render();setTimeout(()=>search.focus(),0)},close=()=>palette.classList.remove('open');commandButton.onclick=open;palette.onclick=e=>{if(e.target===palette)close()};palette.querySelector('button').onclick=close;search.oninput=render;
+  const open=()=>{palette.classList.add('open');render();palette.showModal();search.focus()},close=()=>{palette.classList.remove('open');palette.close()};palette.setAttribute('aria-label','Buscar telas do Munin');palette.addEventListener('cancel',()=>palette.classList.remove('open'));commandButton.onclick=open;palette.onclick=e=>{if(e.target===palette)close()};palette.querySelector('button').onclick=close;search.oninput=render;
   window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();palette.classList.contains('open')?close():open()}if(e.key==='Escape')close()});
 })();
