@@ -1,5 +1,17 @@
 # Munin Current State
 
+## Workspace interface refresh — 2026-10-09
+
+All 29 web entry points now share the Career workbench visual direction, module search and accessible motion control, including desktop/mobile HUD and React surfaces. Portfolio and Email Intelligence are explicit build entries. HUD primary context no longer waits for optional LinkedIn/memory/asset requests; Action Inbox client initialization and optional mobile service-worker failure handling were corrected. Validation: 914 tests, desktop/mobile frontend type checking, 29-route real browser acceptance at 1440/390px, and a 172-second synthetic-data walkthrough. See `docs/validation/workspace-interface-refresh.md`. Windows remains offline; host installation and private integrations are not validated by the demo.
+
+## Multi-vacancy career alerts — 2026-10-08
+
+Career inbox now parses full Gmail/Outlook alert bodies into independently importable vacancies, canonicalizes LinkedIn job IDs, preserves imported associations across syncs and reports incomplete extraction. Body parsing is local/deterministic and raw HTML is not persisted. The existing 15-minute worker remains the execution path; LinkedIn email delivery is configured on LinkedIn. See `docs/validation/career-alert-ingestion.md`. Host/private-mailbox acceptance remains pending while Windows is offline.
+
+## Career workbench implementation — 2026-10-08
+
+Career Command now has Opportunities, Pipeline and Agenda with search/filtering, explicit source availability, safe job links, editable stages/next actions and evidence-first preparation. Discovery identity, alert-stage isolation, legacy alert import, manual-update freshness and terminal follow-ups have regression coverage. The implementation passes 899 tests, frontend type checking and browser acceptance at 320/390/768/1440px. See `docs/validation/career-command-workbench.md`. This is repository implementation evidence, not host installation: Windows was offline and private mailbox/worker/iPhone acceptance remains pending.
+
 ## Unified Mobile UI
 
 The workspace now uses one mobile navigation model (`Hoje`, `Inbox`, `Carreira`, `LinkedIn`, `Mais`), responsive Home layouts, resilient loading/error feedback, and a decision-oriented Action Inbox. View-only defer/discard controls do not create external or consequential effects.
@@ -26,6 +38,7 @@ In-process AI is optional. The default runtime does not probe, start or wait for
 
 ## Completed foundations and integrations
 
+- Token Efficiency v1 is implemented on its feature branch as a disabled-by-default observation layer. It distinguishes reported, estimated and unavailable metrics, records advisory tier recommendations, evaluates non-enforcing context budgets, creates structured handoffs, generates projected reports and observes Promotion Gate decisions without routing authority. Full-suite evidence is recorded in the delivery SITREP when final verification completes.
 - Token Governor shadow mode now records deterministic context-compression opportunity, heuristic token-budget telemetry, and non-binding model/effort recommendations in redacted orchestration evidence. Provider selection, full task output, reasoning effort, and Skill Promotion Gate authority remain unchanged; no paid dependency was added.
 - Adaptive execution now ranks up to five relevant outcomes with deterministic lexical relevance, a 30-day decay half-life, and bounded operator feedback; schema-v2 outcome persistence, redacted feedback-mutation events, and the `MUNIN_MOBILE_TOKEN`-authorized local feedback endpoint are delivered without changing safety, review, zero-cost, local-only, or provider authority.
 - Control Room protocol, canonical backlog/state/session files and bounded `PLAN → BUILD → TEST → VERIFY → FIX` loop.

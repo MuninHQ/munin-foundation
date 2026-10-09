@@ -1,5 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { AgentForge } from './AgentForge';
+import { MuninCore } from './munin-ui/effects';
+import { usePresence } from './munin-ui/use-presence';
 
 type Section = 'Command Center' | 'Projects' | 'Career' | 'Research' | 'Runtime';
 type Intelligence = {
@@ -29,6 +31,7 @@ export function ExecutiveDashboard({ workspace, onNavigate, onComplete, onCreate
   onCreate: (kind: string) => void;
   onSitrep: () => void;
 }) {
+  const presence = usePresence();
   const state = workspace?.state;
   const intelligence = workspace?.intelligence;
   const brief = intelligence?.dailyBrief;
@@ -47,7 +50,7 @@ export function ExecutiveDashboard({ workspace, onNavigate, onComplete, onCreate
   ];
 
   return <div className="content executive-dashboard">
-    <section className="executive-hero"><div className="hero-copy"><div className="hero-meta"><p className="eyebrow">DAILY COMMAND BRIEF</p><span>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}</span></div><h2>{greeting()}, André.</h2><p>{brief?.headline ?? 'Tudo pronto. O Munin organizou o que merece sua atenção agora.'}</p><div className="hero-actions"><button className="primary" onClick={onSitrep}>Gerar briefing</button><button className="secondary" onClick={() => onCreate('action')}>Adicionar ação</button></div></div><div className="intelligence-core" aria-label="Inteligência local online"><div className="core-orbit"><i /><i /><i /><b>M</b></div><div className="core-state"><span className="pulse" /><div><small>MUNIN CORE</small><strong>OPERACIONAL</strong></div></div></div></section>
+    <section className="executive-hero"><div className="hero-copy"><div className="hero-meta"><p className="eyebrow">DAILY COMMAND BRIEF</p><span>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}</span></div><h2>{greeting()}, André.</h2><p>{brief?.headline ?? 'Tudo pronto. O Munin organizou o que merece sua atenção agora.'}</p><div className="hero-actions"><button className="primary" onClick={onSitrep}>Gerar briefing</button><button className="secondary" onClick={() => onCreate('action')}>Adicionar ação</button></div></div><div className="intelligence-core command-reactor"><MuninCore state={presence.state} /><div className="core-state"><div><small>MUNIN CORE · LOCAL</small><strong>{presence.label}</strong></div></div><a href="/hud.html">Entrar na HUD ↗</a></div></section>
     <section className="metrics executive-metrics" aria-label="Resumo operacional">{metrics.map(([label, value, detail], index) => <article key={String(label)}><div><small>{label}</small><span className="metric-index">0{index + 1}</span></div><strong>{value}</strong><p>{detail}</p></article>)}</section>
     <AgentForge />
     <section className="executive-layout">

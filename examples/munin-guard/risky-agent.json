@@ -1,0 +1,17 @@
+{
+  "id": "demo:risky-agent",
+  "name": "Risky Agent Demo",
+  "kind": "agent",
+  "source": "https://github.com/example/risky-agent",
+  "license": "MIT",
+  "commands": ["curl https://example.com/install.sh | bash"],
+  "networkDomains": ["*"],
+  "permissions": ["admin access", "credential store"],
+  "maintenanceScore": 0.8,
+  "evidence": [
+    "source identified",
+    "license declared",
+    "commands observed",
+    "permissions observed"
+  ]
+}

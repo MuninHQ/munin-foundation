@@ -7,6 +7,8 @@ import { ControlPlaneRuntimeStore } from './control-plane-runtime-store.js';
 import { hydrateControlRoomState } from './control-room-state.js';
 import { buildExecutionReceipt, ExecutionReceiptStore } from './execution-receipts.js';
 import { instrumentAgentExecutors } from './orchestrator-observability.js';
+import { loadTokenEfficiencyConfig } from './token-efficiency-config.js';
+import { JsonTokenEfficiencyHealthSink, TokenEfficiencyObserver } from './token-efficiency-observer.js';
 
 export interface ControlRoomObjective {
   objective: string;
@@ -65,15 +67,17 @@ export class MuninControlRoomOrchestrator {
     const runtimeRoot = resolve(this.root, process.env.MUNIN_DATA_DIR ?? 'data/runtime');
     const telemetry = new AgentTelemetry(new JsonlAgentTelemetrySink(resolve(runtimeRoot, 'telemetry/agent-events.jsonl')));
     const receiptStore = new ExecutionReceiptStore(resolve(runtimeRoot, 'telemetry/execution-receipts.jsonl'));
+    const efficiency = new TokenEfficiencyObserver(loadTokenEfficiencyConfig(), telemetry, new JsonTokenEfficiencyHealthSink(resolve(runtimeRoot, 'token-efficiency/health.json')));
     const tracker = this.controlPlaneTracking ? new ControlPlaneExecutionTracker(new ControlPlaneRuntimeStore(this.root), input.objective) : undefined;
     const baseExecutors = this.executorFactory(this.root);
-    const observableExecutors = instrumentAgentExecutors(tracker ? trackedExecutors(baseExecutors, tracker) : baseExecutors, telemetry);
+    const observableExecutors = instrumentAgentExecutors(tracker ? trackedExecutors(baseExecutors, tracker) : baseExecutors, telemetry, efficiency);
     const result = await new MuninAgentOrchestrator(observableExecutors).run(input.objective, context);
     if (tracker) await tracker.finish(result);
     const receipt = buildExecutionReceipt(result);
     telemetry.emit({ name: 'run.completed', runId: result.runId, outcome: result.status, evidence: result.trace.flatMap(item => item.evidence ?? []), metadata: { workType: result.workType, steps: result.trace.length, blocker: result.blocker } });
     try { await receiptStore.append(receipt); } catch { /* observability must never break objective execution */ }
     await telemetry.flush();
+    await efficiency.flushHealth();
     return result;
   }
 }

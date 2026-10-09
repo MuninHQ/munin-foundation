@@ -9,7 +9,7 @@ export type MuninRuntimeEvent = {
 
 export const MUNIN_STATE_EVENT = 'munin:state';
 
-export function emitMuninState(state:MuninState,label?:string,id=crypto.randomUUID()):string{
+export function emitMuninState(state:MuninState,label?:string,id:string=crypto.randomUUID()):string{
   window.dispatchEvent(new CustomEvent<MuninRuntimeEvent>(MUNIN_STATE_EVENT,{detail:{id,state,at:Date.now(),label}}));
   return id;
 }

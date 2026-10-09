@@ -11,7 +11,7 @@ import './munin-ui/visual-system.css';
 document.addEventListener('click', event => {
   const target = event.target as HTMLElement | null;
   const button = target?.closest('aside.sidebar nav > button');
-  if (button?.textContent?.trim() === 'Career') {
+  if (button?.getAttribute('data-section') === 'Career') {
     event.preventDefault();
     event.stopPropagation();
     window.location.assign('/career-command.html');

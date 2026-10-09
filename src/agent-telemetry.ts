@@ -14,7 +14,14 @@ export type AgentTelemetryEventName =
   | 'verification.failed'
   | 'retry.scheduled'
   | 'human.blocked'
-  | 'run.completed';
+  | 'run.completed'
+  | 'efficiency.usage_observed'
+  | 'efficiency.route_recommended'
+  | 'efficiency.budget_warning'
+  | 'efficiency.context_compacted'
+  | 'efficiency.checkpoint_created'
+  | 'efficiency.report_generated'
+  | 'efficiency.promotion_observed';
 export type AgentSpanType='task'|'agent'|'turn'|'generation'|'tool'|'guardrail'|'handoff'|'verification';
 
 export interface AgentTelemetryEvent {

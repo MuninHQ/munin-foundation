@@ -34,7 +34,7 @@ export function redactSecretText(value: string): string {
 export function redactSecrets<T>(value: T): T {
   const seen = new WeakSet<object>();
   const visit = (item: unknown, key?: string): unknown => {
-    if (key && SENSITIVE_FIELD.test(key)) return '[REDACTED]';
+    if (key && SENSITIVE_FIELD.test(key) && typeof item !== 'number') return '[REDACTED]';
     if (typeof item === 'string') return redactSecretText(item);
     if (!item || typeof item !== 'object') return item;
     if (seen.has(item)) return '[REDACTED:CIRCULAR]';

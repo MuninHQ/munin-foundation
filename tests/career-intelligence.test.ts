@@ -8,3 +8,16 @@ const interview:CareerEmail={id:'mail-1',provider:'gmail',providerMessageId:'gma
 test('reconstructs process and marks explicit high-confidence interview as auto',()=>{const p=buildCareerProcesses([job],[interview])[0];assert.equal(p.job.id,'job-b3');assert.equal(p.suggestedStatus,'interview');assert.equal(p.automation,'auto');assert.equal(p.signals.length,1)});
 test('career brief prioritizes interview and overdue follow-up',()=>{const b=buildCareerBrief([job],[interview],new Date('2026-08-11T20:00:00Z'));assert.equal(b.counts.interviews,1);assert.equal(b.counts.followUps,1);assert.equal(b.interviews[0].job.company,'B3')});
 test('career brief orders application candidates by fit and excludes terminal processes',()=>{const lower={...job,id:'job-lower',company:'Bank Y',fitScore:61,updatedAt:'2026-08-10T00:00:00Z'};const rejected={...job,id:'job-rejected',company:'Bank Z',fitScore:99,status:'rejected' as const};const b=buildCareerBrief([lower,rejected,job],[],new Date('2026-08-11T20:00:00Z'));assert.deepEqual(b.candidates.map(item=>item.job.id),['job-b3','job-lower'])});
+
+
+test('old or already handled emails cannot override a manual pipeline update',()=>{
+ const updated={...job,status:'applied' as const,updatedAt:'2026-08-12T12:00:00Z',nextAction:'Manual next step'};
+ const p=buildCareerProcesses([updated],[interview])[0];
+ assert.equal(p.suggestedStatus,undefined);assert.equal(p.suggestedAction,undefined);assert.equal(p.automation,'none');
+ const handled=buildCareerProcesses([job],[{...interview,handled:true}])[0];assert.equal(handled.suggestedStatus,undefined);assert.equal(handled.suggestedAction,undefined);
+});
+test('recent manual contact keeps a process out of the stale queue despite an old email',()=>{
+ const updated={...job,followUpAt:undefined,updatedAt:'2026-08-19T12:00:00Z'};
+ const brief=buildCareerBrief([updated],[interview],new Date('2026-08-20T12:00:00Z'));
+ assert.equal(brief.counts.stale,0);
+});
