@@ -16,6 +16,7 @@
     { label: 'Memory', href: '/context-memory.html' },
     { label: 'LinkedIn', href: '/linkedin.html' },
     { label: 'Viral', href: '/viral-engine.html' },
+    { label: 'Offers', href: '/offer-architect.html' },
     { label: 'Efficiency', href: '/token-efficiency.html' },
   ];
   const tools = [
@@ -59,6 +60,7 @@
     ['/career-command.html', 'Career', 'Pipeline profissional'],
     ['/context-memory.html', 'Memory', 'Contexto durável'],
     ['/viral-engine.html', 'Viral Engine', 'Descobrir, produzir e aprender com conteúdo'],
+    ['/offer-architect.html', 'Offer Architect', 'Construir e validar ofertas com Evidence Gate'],
     ['/token-efficiency.html', 'Token Efficiency', 'Contexto, rota e Zero Risk manual'],
   ];
   const commandButton=document.createElement('button');commandButton.className='munin-command-launch';commandButton.innerHTML='<span>＋</span><b>Ação rápida</b>';commandButton.setAttribute('aria-label','Abrir ações rápidas e comandos');

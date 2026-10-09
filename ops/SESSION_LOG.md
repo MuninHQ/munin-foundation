@@ -400,3 +400,94 @@ Vault matches: 0
 ## What did not work
 
 - ^One^ full-suite^ heartbeat^ timing^ test^ failed^ once^ and^ passed^ isolated^ plus^ full^ rerun;^ no^ related^ code^ changed^
+
+## 2026-09-28T16:13:36.412Z — MEMORY PRE-TASK · munin-foundation
+
+Task: ^Munin^ Token^ Efficiency^ v2^ and^ Codex^ Web^ Zero^ Risk^
+Consumer: assistant
+Context matches: 3
+Vault matches: 8
+
+## 2026-09-28T16:51:50.970Z — MEMORY POST-TASK · munin-foundation
+
+^Implemented^ bounded^ context,^ output^ reduction,^ test^ failure^ extraction,^ lazy^ capabilities,^ economic^ routing,^ compact^ Build^ State,^ diff-first^ review,^ separate^ efficiency^ telemetry,^ manual-only^ Zero^ Risk^ handoff,^ diagnostics^ and^ runtime^ verification.^
+## Decisions
+
+- ^Extend^ Token^ Governor^ through^ focused^ deterministic^ modules^
+- Keep^ Provider^ Registry^ authoritative^
+- Keep^ Codex^ Web^ copy/open^ manual-only^
+
+## Changed
+
+- ^Efficiency^ runtime^ and^ tests^
+- CLI^ API^ and^ UI^ diagnostics^
+- Scoped^ AGENTS^ guidance^
+- Supervised^ API^ child^ ownership^
+
+## Next steps
+
+- ^Collect^ representative^ local^ efficiency^ evidence^ before^ any^ routing^ promotion^
+
+## What did not work
+
+- ^Initial^ controlled^ restart^ reused^ an^ orphaned^ API;^ fixed^ direct^ child^ ownership^ and^ verified^ generation^ 5^
+
+## 2026-10-01T15:57:28.786Z — MEMORY PRE-TASK · Munin
+
+Task: ^Consolidate^ unpublished^ Munin^ changes^ safely^
+Consumer: assistant
+Context matches: 4
+Vault matches: 8
+
+## 2026-10-01T16:15:37.587Z — MEMORY POST-TASK · Munin
+
+^Recovered^ efficiency^ v2^ and^ Automaton^ consolidated^ in^ isolated^ review^ branch;^ 910^ Munin^ and^ 1657^ Automaton^ tests^ pass;^ missing^ delta^ and^ skill^ gate^ artifacts^ documented^
+## Decisions
+
+- ^Automaton^ automatic^ routing^ quarantined^
+- Observation^ remains^ advisory^
+- No^ main^ merge^
+
+## Changed
+
+- ^consolidation/2026-10-01^ published^
+- Safety^ regressions^ repaired^
+- Provenance^ SITREP^ documented^
+
+## Next steps
+
+- ^Review^ draft^ PR^ and^ CI^
+- Recover^ missing^ gate^ sources^
+- Reconcile^ Offer^ Architect^ separately^
+
+## What did not work
+
+- ^Gate^ da54dde^ not^ found^
+- Node24^ SQLite^ ABI^ mismatch^ resolved^ using^ existing^ Node22^
+- Whole^ repository^ Markdown^ debt^ persists^
+
+## 2026-10-01T16:23:55.875Z — MEMORY PRE-TASK · yt-lab
+
+Task: ^Moneyprinter^ local^ MVP^ Wan2GP^ FFmpeg^ hardware^ validation^
+Consumer: assistant
+Context matches: 0
+Vault matches: 5
+
+## 2026-10-01T16:45:10.185Z — MEMORY POST-TASK · yt-lab
+
+Offline_CPU_pilot_23.83s_ptBR_TTS_5_scenes_passed_862_Munin_tests_and_11_regressions_independent_review_pass
+## Decisions
+
+- CPU_only_zero_paid_API_no_download_no_publication_optin_existing_video_seam
+
+## Changed
+
+- scripts/moneyprinter-local,scripts/moneyprinter-local-runner.mjs,tests/moneyprinter-local.test.ts,docs/integrations/moneyprinter-local.md
+
+## Next steps
+
+- Wan2GP_live_MCP_and_model_benchmark_pending_reviewed_installation_and_free_VRAM
+
+## What did not work
+
+- Fixed_done_artifact_recovery_atomic_import_provenance_caption_bounds_atomic_JSON
