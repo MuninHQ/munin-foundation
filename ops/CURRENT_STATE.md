@@ -1,5 +1,9 @@
 # Munin Current State
 
+## Workspace interface refresh — 2026-10-09
+
+All 29 web entry points now share the Career workbench visual direction, module search and accessible motion control, including desktop/mobile HUD and React surfaces. Portfolio and Email Intelligence are explicit build entries. HUD primary context no longer waits for optional LinkedIn/memory/asset requests; Action Inbox client initialization and optional mobile service-worker failure handling were corrected. Validation: 914 tests, desktop/mobile frontend type checking, 29-route real browser acceptance at 1440/390px, and a 172-second synthetic-data walkthrough. See `docs/validation/workspace-interface-refresh.md`. Windows remains offline; host installation and private integrations are not validated by the demo.
+
 ## Multi-vacancy career alerts — 2026-10-08
 
 Career inbox now parses full Gmail/Outlook alert bodies into independently importable vacancies, canonicalizes LinkedIn job IDs, preserves imported associations across syncs and reports incomplete extraction. Body parsing is local/deterministic and raw HTML is not persisted. The existing 15-minute worker remains the execution path; LinkedIn email delivery is configured on LinkedIn. See `docs/validation/career-alert-ingestion.md`. Host/private-mailbox acceptance remains pending while Windows is offline.

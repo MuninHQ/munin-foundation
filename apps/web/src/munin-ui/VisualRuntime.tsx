@@ -23,6 +23,7 @@ function detectState(): MuninState {
 
 export function VisualRuntime() {
   const [preferences, setPreferences] = useState<VisualPreferences>(() => loadVisualPreferences());
+  const [workspacePaused, setWorkspacePaused] = useState(() => document.documentElement.dataset.workspaceMotion === 'off');
   const [domState, setDomState] = useState<MuninState>('idle');
   const [runtimeState, setRuntimeState] = useState<MuninState | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -30,13 +31,21 @@ export function VisualRuntime() {
   const [bootVisible, setBootVisible] = useState(true);
 
   const state = runtimeState ?? domState;
-  const cinematicBoot = preferences.motion === 'cinematic' && preferences.ambient && preferences.gpu && !preferences.reduceMotion;
+  const cinematicBoot = preferences.motion === 'cinematic' && preferences.ambient && preferences.gpu && !preferences.reduceMotion && !workspacePaused;
 
   useEffect(() => {
-    applyVisualPreferences(preferences);
+    const update = () => setWorkspacePaused(document.documentElement.dataset.workspaceMotion === 'off');
+    update();
+    window.addEventListener('munin:workspace-motion', update);
+    return () => window.removeEventListener('munin:workspace-motion', update);
+  }, []);
+
+  useEffect(() => {
+    const effective = workspacePaused ? { ...preferences, reduceMotion: true, ambient: false, gpu: false } : preferences;
+    applyVisualPreferences(effective);
     saveVisualPreferences(preferences);
-    return startMotionRuntime(preferences);
-  }, [preferences]);
+    return startMotionRuntime(effective);
+  }, [preferences, workspacePaused]);
 
   useEffect(() => {
     const update = () => setDomState(detectState());

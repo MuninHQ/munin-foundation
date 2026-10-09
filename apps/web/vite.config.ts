@@ -46,6 +46,8 @@ export default defineConfig({
         'linkedin-publisher': path.resolve(root, 'linkedin-publisher.html'),
         linkedin: path.resolve(root, 'linkedin.html'),
         settings: path.resolve(root, 'settings.html'),
+        portfolio: path.resolve(root, 'portfolio.html'),
+        'email-intelligence': path.resolve(root, 'email-intelligence.html'),
       },
     },
   },

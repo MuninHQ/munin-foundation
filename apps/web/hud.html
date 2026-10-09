@@ -7,7 +7,7 @@
   <title>Munin — Adaptive Command HUD</title>
   <link rel="stylesheet" href="/munin.css" />
   <link rel="stylesheet" href="/hud.css?v=20260825-agentobs1" />
-</head>
+<link rel="stylesheet" href="/munin-workspace.css" /><script defer src="/munin-workspace.js"></script></head>
 <body class="hud-body">
   <a class="hud-skip-link" href="#hud-command-input">Pular para o comando</a>
   <canvas id="hud-sphere-bg" aria-hidden="true"></canvas>
@@ -21,7 +21,7 @@
   <section class="hud-panel drag-panel" id="career-panel" data-panel="career"><span class="hud-label">CAREER PIPELINE</span><div id="hud-career"></div></section>
   <main id="hud-stage" class="hud-stage"><div id="hud-core-hit" class="hud-core-hit" title="Falar com o Munin" role="button" tabindex="0" aria-label="Falar com o Munin"></div><div id="hud-core-label" class="hud-core-label"><b>MUNIN CORE</b><small id="hud-core-sub">EXECUTIVE INTELLIGENCE</small></div></main>
   <section id="activity-panel" class="hud-activity"><span class="hud-label">ACTIVITY STREAM</span><span id="hud-wave-caption">—</span><canvas id="hud-wave"></canvas></section>
-  <section class="hud-command"><div id="hud-reply" class="hud-reply" aria-live="polite"></div><form id="hud-command-form"><span class="command-dot"></span><input id="hud-command-input" autocomplete="off" placeholder="Fale com o Munin… (prioridades · SITREP · carreira · LinkedIn)" /><button>EXECUTAR</button></form></section>
+  <section class="hud-command"><div id="hud-reply" class="hud-reply" aria-live="polite"></div><form id="hud-command-form"><span class="command-dot"></span><input id="hud-command-input" aria-label="Comando para o Munin" autocomplete="off" placeholder="Fale com o Munin… (prioridades · SITREP · carreira · LinkedIn)" /><button>EXECUTAR</button></form></section>
   <div id="hud-readout" class="hud-readout" aria-hidden="true"></div><div id="hud-toast" class="hud-toast" role="status" aria-live="polite"></div><div id="hud-reticle" class="hud-reticle" aria-hidden="true"><div></div><i></i></div><div id="hud-boot" class="hud-boot"><div><div class="boot-word">MUNIN</div><div id="hud-boot-lines" class="boot-lines"></div><div class="boot-bar"><i id="hud-boot-bar"></i></div></div></div>
   <script src="/munin-client.js"></script>
   <script>if(window.MuninClient?.request){const request=window.MuninClient.request.bind(window.MuninClient);window.MuninClient.request=(path,options={})=>{if(path!=='/api/chat')return request(path,options);let payload={};try{payload=JSON.parse(options.body||'{}')}catch{}return request('/api/assistant',{...options,headers:{'content-type':'application/json',...(options.headers||{})},body:JSON.stringify({command:payload.message||payload.command||''})})}}</script>

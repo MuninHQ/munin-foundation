@@ -57,7 +57,7 @@ export function CountUp({ value, suffix = '' }: { value: number; suffix?: string
       onUpdate: () => { if (ref.current) ref.current.textContent = `${Math.round(proxy.value)}${suffix}`; },
       onComplete: () => { previous.current = value; },
     });
-    return () => tween.kill();
+    return () => { tween.kill(); };
   }, [value, suffix]);
   return <span ref={ref}>{Math.round(value)}{suffix}</span>;
 }

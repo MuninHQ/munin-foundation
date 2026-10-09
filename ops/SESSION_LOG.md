@@ -510,3 +510,35 @@ Implemented original animated vector header, score rings, card/detail transition
 ## What did not work
 
 - Optional Playwright recording lacked its ffmpeg path; reused existing system ffmpeg and recording passed
+
+## 2026-10-08T23:45:56.086Z — MEMORY PRE-TASK · Munin
+
+Task: Repaginar toda interface e gravar navegação real
+Consumer: assistant
+Context matches: 0
+Vault matches: 8
+
+## 2026-10-09T00:06:39.656Z — MEMORY POST-TASK · Munin
+
+29 telas repaginadas; 914 testes e aceitação real no navegador; vídeo de 172 segundos com dados fictícios
+## Decisions
+
+- Reutilizar tokens e componentes existentes
+- Movimento global acessível sem dependência paga
+- Preservar integrações e aprovações
+
+## Changed
+
+- Interface compartilhada e HUD
+- Navegação completa e rotas de build
+- Correções de carregamento e tipagem
+- Validação e roteiro de gravação
+
+## Next steps
+
+- Instalar no Windows quando estiver online
+- Validar contas privadas e iPhone físico
+
+## What did not work
+
+- Windows offline; aceitação no host pendente
