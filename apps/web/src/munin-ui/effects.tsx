@@ -5,7 +5,7 @@ export type MuninState = 'idle' | 'listening' | 'thinking' | 'searching' | 'exec
 
 const stateLabels: Record<MuninState, string> = {
   idle: 'READY',
-  listening: 'LISTENING',
+  listening: 'COMMAND INPUT',
   thinking: 'THINKING',
   searching: 'SEARCHING',
   executing: 'EXECUTING',

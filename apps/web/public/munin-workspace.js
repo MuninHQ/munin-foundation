@@ -1,4 +1,5 @@
 /* Shared presentation only: no API calls or operational state changes. */
+// Presence is loaded before clients by the page script below.
 (() => {
   const root = document.documentElement;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -41,6 +42,23 @@
       const link = document.createElement('a'); link.className = 'workspace-hud-home';
       link.href = '/'; link.textContent = '← Workspace'; document.body.append(link);
     }
+    const presence = document.createElement('a');
+    presence.className = 'workspace-presence';
+    presence.href = '/hud.html';
+    presence.setAttribute('aria-label', 'Abrir HUD — estado das solicitações');
+    const mark = document.createElement('i'); mark.setAttribute('aria-hidden','true');
+    const text = document.createElement('span');
+    presence.append(mark, text);
+    document.body.append(presence);
+    const updatePresence = detail => {
+      if (!detail) return;
+      presence.dataset.state = detail.state;
+      text.textContent = detail.label + (detail.pending > 1 ? ` · ${detail.pending} solicitações` : '');
+      const hudStatus = document.getElementById('hud-core-sub');
+      if (hudStatus) hudStatus.textContent = text.textContent;
+    };
+    window.addEventListener('munin:presence', event => updatePresence(event.detail));
+    updatePresence(window.MuninPresence?.snapshot());
     apply();
   };
   reduced.addEventListener('change', apply);

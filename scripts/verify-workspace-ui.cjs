@@ -1,5 +1,5 @@
 // Optional browser acceptance suite. Uses isolated synthetic data only.
-// npm run build, then MUNIN_PLAYWRIGHT_MODULE=/path/to/playwright node scripts/verify-career-command.cjs
+// npm run build, then MUNIN_PLAYWRIGHT_MODULE=/path/to/playwright node scripts/verify-workspace-ui.cjs
 const assert=require('node:assert/strict');
 const {spawn}=require('node:child_process');
 const {mkdtemp,writeFile,mkdir,rm}=require('node:fs/promises');
@@ -14,6 +14,11 @@ const {chromium}=require(process.env.MUNIN_PLAYWRIGHT_MODULE||'playwright');
  messages.push({id:'unreadable-digest',provider:'gmail',providerMessageId:'unreadable-digest',subject:'New jobs',snippet:'Job alert',receivedAt:now,category:'job_alert',confidence:.95,handled:true,alertExtraction:{count:0,incomplete:true}});
  await writeFile(path.join(root,'state.json'),JSON.stringify({jobs,projects:[],actions:[],decisions:[],research:[],goals:[],relations:[]}));
  await writeFile(path.join(root,'career-inbox.json'),JSON.stringify({messages,syncedAt:now}));
+ await writeFile(path.join(root,'context-memory.json'),JSON.stringify({schemaVersion:1,updatedAt:now,imports:[],sections:Object.fromEntries([
+  ['career_demo','Carreira · preparação de entrevistas',{nextAction:'Demo: preparar casos de pagamentos.'}],
+  ['project_demo','Projeto · portfólio',{objective:'Demo: revisar projeto de Open Finance.'}],
+  ['research_demo','Pesquisa · Open Finance',{topic:'Demo: integrações bancárias.'}],
+ ].map(([key,title,value])=>[key,{key:title,value,scope:'private-operational',source:'synthetic-browser-test',confidence:'confirmed',freshness:'durable',version:1,updatedAt:now,importedAt:now}]).concat([['secret',{key:'SECRET_GRAPH_MARKER',value:'PRIVATE_GRAPH_MARKER',scope:'sensitive-private',source:'synthetic-test',version:1,updatedAt:now}]]))}));
  await mkdir('.artifacts',{recursive:true});
  const env={...process.env,MUNIN_DATA_DIR:root,MUNIN_API_PORT:'4321',MUNIN_MOBILE_TOKEN:'munin-synthetic-walkthrough-token'};
  const apiServer=spawn(process.execPath,['dist/src/server.js'],{env,stdio:['ignore','ignore','inherit']});
@@ -24,13 +29,15 @@ const {chromium}=require(process.env.MUNIN_PLAYWRIGHT_MODULE||'playwright');
   for(let i=0;i<100;i++){try{await fetch('http://127.0.0.1:5181/career-command.html',{signal:AbortSignal.timeout(1000)});await fetch('http://127.0.0.1:4321/api/career-intelligence/workspace',{signal:AbortSignal.timeout(1000)});ready=true;break;}catch{await new Promise(r=>setTimeout(r,100));}}
   if(!ready)throw new Error('Local test servers did not start; check ports 4321 and 5181.');
   for(const [endpoint,payload] of [['projects',{name:'Demo · Novo posicionamento profissional',priority:'P1'}],['actions',{title:'Demo · Revisar portfólio para entrevista',priority:'P1'}],['research',{question:'Demo · Quais tendências de Open Finance priorizar?'}]]){const response=await fetch(`http://127.0.0.1:4321/api/${endpoint}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});assert.equal(response.status,201);}
-  browser=await chromium.launch({...(process.env.MUNIN_CHROMIUM_EXECUTABLE?{executablePath:process.env.MUNIN_CHROMIUM_EXECUTABLE}:{}),headless:true});
+  browser=await chromium.launch({...(process.env.MUNIN_CHROMIUM_EXECUTABLE?{executablePath:process.env.MUNIN_CHROMIUM_EXECUTABLE}:{}),headless:true,args:['--no-sandbox','--disable-gpu','--disable-dev-shm-usage']});
 
   const record=process.env.MUNIN_RECORD_VIDEO==='1';
   const context=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:1000},...(record?{recordVideo:{dir:'.artifacts/workspace-recording',size:{width:1440,height:1000}}}:{})});
   await context.addInitScript(()=>localStorage.setItem('munin-mobile-token','munin-synthetic-walkthrough-token'));
-  const page=await context.newPage();page.setDefaultTimeout(8000);const errors=[];page.on('pageerror',e=>errors.push({url:page.url(),message:e.message}));
-  const routes=['hud','index','operator-hub','action-inbox','radar','manus','flows','operator-chat','portfolio','executive-briefing','intelligence','council','career-command','career-inbox','career-intake','email-intelligence','context-memory','content-studio','viral-engine','linkedin','linkedin-brand','linkedin-compose','linkedin-assets','linkedin-history','linkedin-publisher','settings','image-settings','mobile','hud-mobile'];
+  const page=await context.newPage();page.setDefaultTimeout(30000);const errors=[];page.on('pageerror',e=>errors.push({url:page.url(),message:e.message}));
+  const allRoutes=['hud','index','operator-hub','action-inbox','radar','manus','flows','operator-chat','portfolio','executive-briefing','intelligence','council','career-command','career-inbox','career-intake','email-intelligence','context-memory','content-studio','viral-engine','linkedin','linkedin-brand','linkedin-compose','linkedin-assets','linkedin-history','linkedin-publisher','settings','image-settings','mobile','hud-mobile'];
+  const routes=process.env.MUNIN_IMMERSIVE_TOUR==='1'?allRoutes.filter(route=>['hud','index','context-memory','career-command'].includes(route)):allRoutes;
+  const validationPath=process.env.MUNIN_IMMERSIVE_TOUR==='1'?'.artifacts/immersive-tour-validation.json':'.artifacts/immersive-validation.json';
   const scenes=[];
   async function label(title){
    await page.addStyleTag({content:'.hud-body .hud-command{bottom:84px}.hud-body .hud-activity{bottom:170px}'});
@@ -44,7 +51,7 @@ const {chromium}=require(process.env.MUNIN_PLAYWRIGHT_MODULE||'playwright');
   }
   for(const [i,route] of routes.entries()){
    await page.setViewportSize({width:1440,height:1000});
-   console.log('Opening',route);const response=await page.goto(`http://127.0.0.1:5181/${route}.html`);assert.equal(response.status(),200,route);
+   console.log('Opening',route);const response=await page.goto(`http://127.0.0.1:5181/${route}.html`,{waitUntil:'domcontentloaded',timeout:30000});assert.equal(response.status(),200,route);
    await page.waitForTimeout(route.startsWith('hud')?3500:1200);
    if(route.startsWith('hud'))await page.waitForFunction(()=>!document.getElementById('hud-headline').textContent.includes('Carregando'));
    console.log('Loaded',route);await page.locator('body.munin-workspace').waitFor({state:'attached'});
@@ -60,7 +67,29 @@ const {chromium}=require(process.env.MUNIN_PLAYWRIGHT_MODULE||'playwright');
     await page.waitForTimeout(1500);await label('HUD · consulta de prioridades no runtime local');await page.waitForTimeout(1800);
    }
    if(record&&route==='operator-chat'){await page.getByRole('button',{name:'SITREP',exact:true}).click();await page.waitForTimeout(1500);await label('Chat operacional · resumo gerado pelo Munin local');await page.waitForTimeout(1800);}
+   if(route==='context-memory'){
+    const graph=page.locator('#memory-constellation');
+    await page.waitForFunction(()=>document.querySelectorAll('#memory-constellation svg g').length>=4);
+    assert.ok(!(await graph.textContent()).includes('PRIVATE_GRAPH_MARKER'));
+    assert.ok(!(await graph.textContent()).includes('SECRET_GRAPH_MARKER'));
+    await graph.getByRole('searchbox').fill('Carreira');
+    assert.equal(await graph.locator('svg g.context').count(),1);
+    await graph.locator('svg g.context').focus();await page.keyboard.press('Enter');
+    assert.ok((await graph.locator('[data-graph-detail]').textContent()).includes('preparar casos de pagamentos'));
+    if(record)await page.waitForTimeout(2200);
+    assert.equal(await graph.locator('svg g.context').evaluate(el=>el===document.activeElement),true);
+    await graph.getByRole('searchbox').fill('');
+    const before=await graph.locator('svg g').first().getAttribute('transform');
+    await graph.getByRole('slider').fill('90');
+    assert.notEqual(await graph.locator('svg g').first().getAttribute('transform'),before);
+    if(record)await page.waitForTimeout(1800);
+    await graph.getByRole('button',{name:'Redefinir visão'}).click();
+    await graph.scrollIntoViewIfNeeded();await page.screenshot({path:'.artifacts/immersive-memory-desktop.png'});
+    await page.setViewportSize({width:390,height:844});await page.screenshot({path:'.artifacts/immersive-memory-mobile.png'});await page.setViewportSize({width:1440,height:1000});
+   }
+   if(route==='hud') await page.screenshot({path:'.artifacts/immersive-hud-desktop.png'});
    if(route==='index'){
+    await page.screenshot({path:'.artifacts/immersive-home-desktop.png'});
     for(const name of ['Projetos','Pesquisa','Sistema']){
      await page.locator('aside.sidebar').getByRole('button',{name,exact:true}).click();await label(`Command Center · ${name}`);await page.waitForTimeout(record?1500:150);
     }
@@ -92,12 +121,13 @@ const {chromium}=require(process.env.MUNIN_PLAYWRIGHT_MODULE||'playwright');
    if(record&&!route.startsWith('hud')){await page.evaluate(()=>scrollTo({top:500,behavior:'smooth'}));await page.waitForTimeout(1000);await page.evaluate(()=>scrollTo({top:0,behavior:'smooth'}));await page.waitForTimeout(500);}
    await page.setViewportSize({width:390,height:844});await page.waitForTimeout(100);
    const dimensions=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
+   if(route==='hud')await page.screenshot({path:'.artifacts/immersive-hud-mobile.png'});
    assert.ok(dimensions.scroll<=dimensions.width+1,`${route}: horizontal overflow on mobile`);
    scenes.push({route,title,mobileOverflow:dimensions.scroll-dimensions.width});
-   await writeFile('.artifacts/workspace-validation.json',JSON.stringify({scenes,errors},null,2));
+   await writeFile(validationPath,JSON.stringify({scenes,errors},null,2));
    if(record&&['hud','career-command','mobile','hud-mobile'].includes(route)){await label(`${title} · tela compacta`);await page.waitForTimeout(1500);}
   }
-  await page.setViewportSize({width:1440,height:1000});await page.goto('http://127.0.0.1:5181/settings.html');await page.getByRole('button',{name:'Animações ativas',exact:true}).click();
+  await page.setViewportSize({width:1440,height:1000});await page.goto('http://127.0.0.1:5181/settings.html');await page.locator('body.munin-workspace').waitFor({state:'attached'});await page.getByRole('button',{name:'Animações ativas',exact:true}).click();
   assert.equal(await page.locator('html').getAttribute('data-workspace-motion'),'off');await page.reload();
   assert.equal(await page.locator('html').getAttribute('data-workspace-motion'),'off');
   await page.goto('http://127.0.0.1:5181/index.html');await page.locator('body.munin-workspace').waitFor({state:'attached'});
@@ -107,7 +137,7 @@ const {chromium}=require(process.env.MUNIN_PLAYWRIGHT_MODULE||'playwright');
   const reduced=await browser.newContext({reducedMotion:'reduce'});const reducedPage=await reduced.newPage();
   await reducedPage.goto('http://127.0.0.1:5181/radar.html');await reducedPage.locator('body.munin-workspace').waitFor();
   assert.equal(await reducedPage.locator('html').getAttribute('data-workspace-motion'),'off');await reduced.close();
-  await writeFile('.artifacts/workspace-validation.json',JSON.stringify({scenes,errors},null,2));
+  await writeFile(validationPath,JSON.stringify({scenes,errors},null,2));
   const video=record?page.video():null;await context.close();if(video)console.log('VIDEO',await video.path());
   console.log(JSON.stringify({scenes,errors},null,2));assert.deepEqual(errors,[],'Uncaught browser errors');
  }finally{if(browser)await browser.close();apiServer.kill();webServer.kill();await rm(root,{recursive:true,force:true});}

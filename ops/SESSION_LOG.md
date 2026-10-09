@@ -542,3 +542,35 @@ Vault matches: 8
 ## What did not work
 
 - Windows offline; aceitação no host pendente
+
+## 2026-10-09T01:04:06.594Z — MEMORY PRE-TASK · munin
+
+Task: HUD imersiva e constelação de memória sem voz
+Consumer: assistant
+Context matches: 0
+Vault matches: 8
+
+## 2026-10-09T10:52:20.639Z — MEMORY POST-TASK · munin
+
+Implementada presença operacional compartilhada, HUD e Home reativas e constelação de memória com busca, filtros, rotação e navegação por teclado; 918 testes e aceitação das 29 rotas desktop/mobile passaram.
+## Decisions
+
+- Reutilizar renderizador e componentes existentes
+- Relações do grafo representam fonte real, sem inferências
+- Excluir conteúdo sensitive-private da visualização
+
+## Changed
+
+- HUD, Home e camada visual compartilhada
+- Constelação de memória
+- Testes de concorrência e aceitação no navegador
+
+## Next steps
+
+- Atualizar PR 384
+- Validar instalação Windows e iPhone físico quando acessíveis
+
+## What did not work
+
+- Instalador CDN do navegador retornou payload inválido; navegador de teste obtido pelo pacote npm
+- Aceitação no host Windows não executada

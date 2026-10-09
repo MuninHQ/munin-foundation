@@ -22,15 +22,24 @@
   </style>
   <script defer src="/munin-nav.js"></script>
   <script defer src="/munin-client.js"></script>
+  <script defer src="/memory-constellation.js"></script>
   <script defer src="/context-memory.js"></script>
   <script defer src="/munin-core.js"></script>
-<link rel="stylesheet" href="/munin-workspace.css" /><script defer src="/munin-workspace.js"></script></head>
+<link rel="stylesheet" href="/munin-workspace.css" /><script src="/munin-presence.js"></script><script defer src="/munin-workspace.js"></script></head>
 <body>
 <main class="munin-page memory-shell">
   <header class="memory-hero">
     <div><div class="eyebrow">MUNIN CORE / SECOND BRAIN</div><h1>Seu centro de operações</h1><p>Prioridades, próximos passos, checkpoints e memória em uma só visão. Munin é a fonte de verdade; Obsidian permanece um espelho opcional.</p></div>
     <div class="memory-actions"><button onclick="contextMemory.load()">↻ Atualizar</button><button onclick="contextMemory.initVault()">Inicializar Vault</button><button class="primary" onclick="contextMemory.syncVault()">Sincronizar Obsidian</button></div>
   </header>
+
+  <section id="memory-constellation" class="memory-constellation" aria-labelledby="constellation-title">
+    <div class="constellation-head"><div><div class="eyebrow">MEMÓRIA / EXPLORAÇÃO ESPACIAL</div><h2 id="constellation-title">Seu contexto, conectado</h2><p>Explore registros reais. Cada linha liga um registro à sua fonte; não representa uma relação inferida.</p></div><button type="button" data-graph-reset>Redefinir visão</button></div>
+    <div class="constellation-tools"><input type="search" aria-label="Buscar registro na constelação" placeholder="Buscar contexto ou evento…"/><select aria-label="Filtrar fontes da constelação"><option value="all">Todas as fontes</option><option value="context">Contextos</option><option value="event">Atividade</option></select><label>Rotação <input type="range" min="-180" max="180" value="0" aria-label="Rotação da constelação"/></label></div>
+    <p data-graph-status class="muted" role="status">Carregando registros…</p>
+    <div class="constellation-layout"><div class="constellation-space"><svg viewBox="0 0 640 420" aria-label="Constelação de registros, selecione um ponto"></svg><span class="constellation-hint">Arraste o fundo para girar · selecione um ponto</span></div><aside data-graph-detail class="constellation-detail" aria-label="Detalhes do registro"></aside></div>
+    <details class="constellation-list"><summary>Explorar registros pela lista</summary><div data-graph-list></div></details>
+  </section>
 
   <section aria-label="Operação atual">
     <div class="row"><h2>O que precisa de atenção agora</h2><button id="coreRefresh" class="munin-button" type="button">Atualizar operação</button></div>

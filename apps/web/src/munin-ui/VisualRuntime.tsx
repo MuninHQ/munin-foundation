@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { BootAmbient } from './BootAmbient';
 import { DecryptedText, MiniRadar, MuninCore, type MuninState } from './effects';
 import { startMotionRuntime } from './motion-runtime';
-import { MUNIN_STATE_EVENT, type MuninRuntimeEvent } from './runtime-events';
+import { usePresence } from './use-presence';
 import {
   applyVisualPreferences,
   loadVisualPreferences,
@@ -17,7 +17,7 @@ function detectState(): MuninState {
   if (document.querySelector('.loading-dashboard')) return 'thinking';
   if (document.querySelector('.toast')) return 'done';
   if (document.querySelector('.overlay .palette')) return 'listening';
-  if (document.querySelector('.overlay .editor-modal,.overlay .report-modal')) return 'executing';
+
   return 'idle';
 }
 
@@ -25,12 +25,12 @@ export function VisualRuntime() {
   const [preferences, setPreferences] = useState<VisualPreferences>(() => loadVisualPreferences());
   const [workspacePaused, setWorkspacePaused] = useState(() => document.documentElement.dataset.workspaceMotion === 'off');
   const [domState, setDomState] = useState<MuninState>('idle');
-  const [runtimeState, setRuntimeState] = useState<MuninState | null>(null);
+  const presence = usePresence();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [portalHost, setPortalHost] = useState<HTMLElement | null>(null);
   const [bootVisible, setBootVisible] = useState(true);
 
-  const state = runtimeState ?? domState;
+  const state = presence.state === 'idle' ? domState : presence.state;
   const cinematicBoot = preferences.motion === 'cinematic' && preferences.ambient && preferences.gpu && !preferences.reduceMotion && !workspacePaused;
 
   useEffect(() => {
@@ -53,21 +53,6 @@ export function VisualRuntime() {
     const observer = new MutationObserver(update);
     observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-busy'] });
     return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    let resetTimer: number | undefined;
-    const handler = (event: Event) => {
-      const detail = (event as CustomEvent<MuninRuntimeEvent>).detail;
-      if (!detail?.state) return;
-      if (resetTimer) window.clearTimeout(resetTimer);
-      setRuntimeState(detail.state);
-      if (detail.state === 'done' || detail.state === 'warning') {
-        resetTimer = window.setTimeout(() => setRuntimeState(null), detail.state === 'done' ? 900 : 1800);
-      }
-    };
-    window.addEventListener(MUNIN_STATE_EVENT, handler);
-    return () => { if (resetTimer) window.clearTimeout(resetTimer); window.removeEventListener(MUNIN_STATE_EVENT, handler); };
   }, []);
 
   useEffect(() => {
@@ -96,7 +81,7 @@ export function VisualRuntime() {
   }, [cinematicBoot]);
 
   const statusText = useMemo(() => ({
-    idle: 'SYSTEM READY', listening: 'LISTENING', thinking: 'SYNCHRONIZING', searching: 'SEARCHING', executing: 'EXECUTING', warning: 'ATTENTION', done: 'COMPLETE',
+    idle: 'SYSTEM READY', listening: 'COMMAND INPUT', thinking: 'SYNCHRONIZING', searching: 'SEARCHING', executing: 'EXECUTING', warning: 'ATTENTION', done: 'COMPLETE',
   } satisfies Record<MuninState, string>)[state], [state]);
 
   const patch = (next: Partial<VisualPreferences>) => setPreferences(current => ({ ...current, ...next }));
