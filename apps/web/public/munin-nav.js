@@ -68,7 +68,8 @@
     ['/career-command.html', 'Career', 'Pipeline profissional'],
     ['/context-memory.html', 'Memory', 'Contexto durável'],
     ['/viral-engine.html', 'Viral Engine', 'Descobrir, produzir e aprender com conteúdo'],
-    ...sections.filter(x=>!['/','/action-inbox.html','/operator-hub.html','/operator-chat.html','/flows.html','/radar.html','/executive-briefing.html','/career-command.html','/context-memory.html','/viral-engine.html'].includes(x.href)).map(x=>[x.href,x.label,'Abrir módulo']),
+    ['/offer-architect.html', 'Offer Architect', 'Construir e validar ofertas com Evidence Gate'],
+    ...sections.filter(x=>!['/','/action-inbox.html','/operator-hub.html','/operator-chat.html','/flows.html','/radar.html','/executive-briefing.html','/career-command.html','/context-memory.html','/viral-engine.html','/offer-architect.html'].includes(x.href)).map(x=>[x.href,x.label,'Abrir módulo']),
     ...tools.map(([href,label])=>[href,label,'Ferramentas e configuração']),
   ];
   const commandButton=document.createElement('button');commandButton.className='munin-command-launch';commandButton.innerHTML='<span>＋</span><b>Ação rápida</b>';commandButton.setAttribute('aria-label','Abrir ações rápidas e comandos');
