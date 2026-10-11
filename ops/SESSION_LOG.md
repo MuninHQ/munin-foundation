@@ -416,3 +416,34 @@ Vault matches: 0
 ## What did not work
 
 - ^One^ full-suite^ heartbeat^ timing^ test^ failed^ once^ and^ passed^ isolated^ plus^ full^ rerun;^ no^ related^ code^ changed^
+
+## 2026-10-11T15:42:47.700Z — MEMORY PRE-TASK · Munin
+
+Task: OpenDots selective adoption build all
+Consumer: assistant
+Context matches: 0
+Vault matches: 0
+
+## 2026-10-11T15:46:04.449Z — MEMORY POST-TASK · Munin
+
+Compared three OpenDots projects; adopted content-bound LinkedIn review in the existing publisher. Core and web build plus 889 tests passed.
+## Decisions
+
+- Reuse existing local-first orchestration and persistent stores
+- Bind approval to publication payload; changed or legacy drafts require reapproval
+
+## Changed
+
+- src/linkedin-publisher.ts
+- tests/opendots-review-binding.test.ts
+- docs/research/opendots-selective-adoption-2026-10.md
+
+## Next steps
+
+- Deliver isolated GitHub change
+- Sync and validate Windows host when reachable
+
+## What did not work
+
+- Original regression reproduced before fix
+- Desktop Commander host offline; no host deployment performed
