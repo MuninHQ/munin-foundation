@@ -163,3 +163,10 @@ html[data-munin-theme="nordic"] .hud-top-actions [data-munin-theme-toggle] {
   html[data-munin-theme="nordic"] .hud-panel,
   html[data-munin-theme="nordic"] .hud-node { transition: none; }
 }
+/* Fit the extra theme control into the existing compact HUD toolbar. */
+@media (max-width: 1360px) {
+  .hud-top #hud-adaptive { display: none; }
+}
+@media (max-width: 900px) {
+  .hud-top-actions:before { content: none; }
+}
