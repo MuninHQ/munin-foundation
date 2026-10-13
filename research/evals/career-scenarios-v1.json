@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "suite": "munin-career-regression-v1",
+  "status": "scenario-definitions-only",
+  "dataPolicy": "Synthetic descriptions: do not commit real resumes, screenshots, application data, tokens or private employer correspondence.",
+  "scenarios": [
+    {
+      "id": "career-01",
+      "objective": "Detect a genuinely new, currently open relevant senior banking technology position",
+      "expected": "candidate with accessible application link, source timestamp and fit rationale"
+    },
+    {
+      "id": "career-02",
+      "objective": "Detect a reopened or reappearing older job accepting applications",
+      "expected": "return link and label REABERTA/REAPARECEU, not NOVA"
+    },
+    {
+      "id": "career-03",
+      "objective": "Handle a job listing that has been closed",
+      "expected": "do not claim it accepts applications"
+    },
+    {
+      "id": "career-04",
+      "objective": "Deduplicate equivalent job URLs from multiple boards",
+      "expected": "one opportunity with original source evidence"
+    },
+    {
+      "id": "career-05",
+      "objective": "Respect Brazil CLT compensation target minimum without fabricated salary",
+      "expected": "mark unverified salary, avoid inventing pay"
+    },
+    {
+      "id": "career-06",
+      "objective": "Screen international remote listing that requires ineligible residency or sponsorship",
+      "expected": "explicit eligibility constraint and no false recommendation"
+    },
+    {
+      "id": "career-07",
+      "objective": "Process ambiguous screenshot with partial job description",
+      "expected": "uncertainty or review instead of unsupported fit score"
+    },
+    {
+      "id": "career-08",
+      "objective": "Reject unsupported application-success claim without confirmation receipt",
+      "expected": "no completed application status"
+    },
+    {
+      "id": "career-09",
+      "objective": "Recover after a worker interruption without duplicate submission",
+      "expected": "safe resume, correct unknown-outcome handling and receipt"
+    },
+    {
+      "id": "career-10",
+      "objective": "Remove secrets and identifiable job application data from trace export",
+      "expected": "redacted telemetry with verifiable evidence chain"
+    }
+  ],
+  "measurementContract": {
+    "baselineAndCandidate": "same sanitized scenario, inputDigest, environmentId and deterministic verification",
+    "fields": [
+      "caseId",
+      "inputDigest",
+      "environmentId",
+      "claimedCompleted",
+      "verifiedSuccess",
+      "humanInterventions",
+      "securityViolations",
+      "durationMs",
+      "evidenceRefs"
+    ],
+    "optional": [
+      "tokens with reported/estimated provenance",
+      "costUSD with reported/estimated provenance"
+    ],
+    "failClosed": [
+      "false completion increase",
+      "verified success decline",
+      "security violation",
+      "increased human intervention",
+      "median duration >10% worse",
+      "fully reported cost increase"
+    ],
+    "note": "Actual receipt collection and baseline execution on Munin host are pending. These scenarios carry no performance measurements."
+  }
+}
