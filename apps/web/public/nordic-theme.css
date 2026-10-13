@@ -1,4 +1,4 @@
-/* Nordic Intelligence v1: opt-in scoped skin, no new animations or GPU work.
+/* Nordic Intelligence v1: reversible scoped skin, no new animations or GPU work.
    Keep canonical design/tokens.json untouched while design governance is observe-only. */
 html[data-munin-theme="nordic"] {
   --nordic-obsidian: #070c12;
@@ -145,7 +145,7 @@ html[data-munin-theme="nordic"] .hud-node {
 }
 html[data-munin-theme="nordic"] .hud-top { background: #070c12e8; }
 html[data-munin-theme="nordic"] .hud-command form {
-  background: #09141eeF;
+  background: #09141eef;
   border-color: var(--hud-line-strong);
   backdrop-filter: none;
 }
