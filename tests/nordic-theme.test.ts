@@ -69,6 +69,6 @@ test('Nordic theme stays small and introduces no new animation or rendering engi
   ]);
   assert.ok(Buffer.byteLength(script) < 3500);
   assert.ok(Buffer.byteLength(css) < 8000);
-  assert.doesNotMatch(script, /requestAnimationFrame|fetch\(|WebGL|canvas|import\(/);
+  assert.doesNotMatch(script, /requestAnimationFrame|fetch\(|WebGL|getContext\(|import\(/);
   assert.doesNotMatch(css, /@keyframes|animation\s*:/);
 });
