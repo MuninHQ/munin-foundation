@@ -1,0 +1,165 @@
+/* Nordic Intelligence v1: opt-in scoped skin, no new animations or GPU work.
+   Keep canonical design/tokens.json untouched while design governance is observe-only. */
+html[data-munin-theme="nordic"] {
+  --nordic-obsidian: #070c12;
+  --nordic-panel: #0d1721;
+  --nordic-panel-raised: #111e29;
+  --nordic-line: #2b4858;
+  --nordic-ice: #8ddae7;
+  --nordic-blue: #58b5db;
+  --nordic-silver: #bdced7;
+  --nordic-gold: #c2a77b;
+  --nordic-quiet: #8ea8b7;
+  color-scheme: dark;
+}
+html[data-munin-theme="nordic"] body {
+  color: #edf5f7;
+  background: radial-gradient(circle at 78% 0%, rgba(42, 107, 140, .13), transparent 32%), var(--nordic-obsidian);
+}
+html[data-munin-theme="nordic"] .sidebar {
+  background: #091119;
+  border-right-color: var(--nordic-line);
+}
+html[data-munin-theme="nordic"] .brand-mark {
+  border-color: var(--nordic-gold);
+  box-shadow: 0 0 18px rgba(194, 167, 123, .12);
+}
+html[data-munin-theme="nordic"] .brand strong,
+html[data-munin-theme="nordic"] .hud-brand {
+  color: #f1f4f2;
+  letter-spacing: .25em;
+}
+html[data-munin-theme="nordic"] .sidebar nav button.active {
+  border-left-color: var(--nordic-gold);
+  background: var(--nordic-panel-raised);
+}
+html[data-munin-theme="nordic"] .eyebrow,
+html[data-munin-theme="nordic"] .focus-index,
+html[data-munin-theme="nordic"] .metric-index {
+  color: var(--nordic-gold);
+}
+html[data-munin-theme="nordic"] .executive-hero {
+  background: linear-gradient(118deg, #0a141e 4%, #112432 63%, #09151d);
+  border-color: var(--nordic-line);
+  box-shadow: inset 0 1px rgba(237, 245, 247, .045);
+}
+html[data-munin-theme="nordic"] .executive-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(125deg, transparent 0 34px, rgba(141, 218, 231, .035) 35px, transparent 36px 90px);
+  mask-image: linear-gradient(90deg, transparent 50%, #000);
+  pointer-events: none;
+}
+html[data-munin-theme="nordic"] .executive-hero > * { position: relative; }
+html[data-munin-theme="nordic"] .panel,
+html[data-munin-theme="nordic"] .metrics article,
+html[data-munin-theme="nordic"] .quick-grid button {
+  background: var(--nordic-panel);
+  border-color: var(--nordic-line);
+}
+html[data-munin-theme="nordic"] .panel:hover,
+html[data-munin-theme="nordic"] .metrics article:hover { border-color: #436f82; }
+html[data-munin-theme="nordic"] .primary {
+  color: #061016;
+  border-color: var(--nordic-ice);
+  background: var(--nordic-ice);
+}
+html[data-munin-theme="nordic"] .search,
+html[data-munin-theme="nordic"] .visual-status-cluster {
+  background: var(--nordic-panel);
+  border-color: var(--nordic-line);
+}
+html[data-munin-theme="nordic"] .focus-arrow,
+html[data-munin-theme="nordic"] .text-link { color: var(--nordic-ice); }
+html[data-munin-theme="nordic"] .core-ring { border-color: rgba(141, 218, 231, .48); }
+html[data-munin-theme="nordic"] .munin-core:not(.state-warning):not(.state-done) .core-nucleus {
+  background: radial-gradient(circle, #e0f5f9, var(--nordic-ice) 39%, #367f9a 72%, transparent 75%);
+  box-shadow: 0 0 16px rgba(88, 181, 219, .30);
+}
+.nordic-legend { display: none; }
+html[data-munin-theme="nordic"] .nordic-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 15px;
+  margin-top: 16px;
+  font-size: 10px;
+  letter-spacing: .06em;
+  color: var(--nordic-quiet);
+}
+html[data-munin-theme="nordic"] .nordic-legend b {
+  color: var(--nordic-gold);
+  font-weight: 600;
+  margin-right: 5px;
+}
+html[data-munin-theme="nordic"] .nordic-subtitle {
+  display: block;
+  margin-top: 3px;
+  font-size: 7px;
+  color: var(--nordic-gold);
+  letter-spacing: .12em;
+}
+.nordic-subtitle { display: none; }
+[data-munin-theme-toggle] {
+  border: 1px solid #355466;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #0d1a25;
+  color: #b6d9e5;
+  font: 600 10px/1.2 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: .08em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+[data-munin-theme-toggle]:focus-visible {
+  outline: 2px solid #e0edf4;
+  outline-offset: 3px;
+}
+html[data-munin-theme="nordic"] [data-munin-theme-toggle] {
+  color: var(--nordic-gold);
+  border-color: var(--nordic-line);
+  background: var(--nordic-panel);
+}
+/* Adaptive HUD: re-use its existing canvas, indicators and ambient controls. */
+html[data-munin-theme="nordic"] .hud-body {
+  --hud-bg: var(--nordic-obsidian);
+  --hud-cyan: var(--nordic-blue);
+  --hud-bright: var(--nordic-ice);
+  --hud-line: rgba(141, 218, 231, .24);
+  --hud-line-strong: rgba(141, 218, 231, .54);
+  --hud-panel: rgba(10, 21, 31, .86);
+  --hud-muted: var(--nordic-quiet);
+  --hud-faint: #7792a3;
+  background: radial-gradient(circle at 50% 44%, rgba(40, 94, 122, .16), transparent 48%), var(--nordic-obsidian);
+}
+html[data-munin-theme="nordic"] .hud-panel {
+  border-color: var(--hud-line);
+  background: var(--hud-panel);
+  backdrop-filter: none;
+}
+html[data-munin-theme="nordic"] .hud-panel:before { background: var(--nordic-gold); box-shadow: none; }
+html[data-munin-theme="nordic"] .hud-label { color: var(--nordic-gold); }
+html[data-munin-theme="nordic"] .hud-node {
+  background: linear-gradient(155deg, #101f2a, #09131c);
+  border-color: var(--hud-line);
+}
+html[data-munin-theme="nordic"] .hud-top { background: #070c12e8; }
+html[data-munin-theme="nordic"] .hud-command form {
+  background: #09141eeF;
+  border-color: var(--hud-line-strong);
+  backdrop-filter: none;
+}
+html[data-munin-theme="nordic"] .hud-top-actions [data-munin-theme-toggle] {
+  font-size: 8px;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+@media (max-width: 900px) {
+  html[data-munin-theme="nordic"] .nordic-legend { gap: 6px 12px; }
+  html[data-munin-theme="nordic"] .hud-top-actions [data-munin-theme-toggle] { padding: 5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-munin-theme="nordic"] .hud-scanline { animation: none; display: none; }
+  html[data-munin-theme="nordic"] .hud-panel,
+  html[data-munin-theme="nordic"] .hud-node { transition: none; }
+}
