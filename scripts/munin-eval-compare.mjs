@@ -98,6 +98,8 @@ export function compareMuninReplays(dossier) {
   paired.sort((a,b) => a.caseId.localeCompare(b.caseId));
   const before=aggregate(baseline),after=aggregate(candidate);
   const reasons=[];
+  if (paired.some(row => row.beforeVerified && !row.afterVerified)) reasons.push('One or more individual scenarios lost verified success.');
+  if (paired.some(row => !row.beforeFalseCompletion && row.afterFalseCompletion)) reasons.push('One or more individual scenarios developed a false completion.');
   if (after.securityViolations>before.securityViolations || after.securityViolations>0) reasons.push('Candidate records security violations.');
   if (after.verifiedSuccesses<before.verifiedSuccesses) reasons.push('Verified success rate declined.');
   if (after.falseCompletions>before.falseCompletions) reasons.push('False completions increased.');
