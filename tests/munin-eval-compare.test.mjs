@@ -69,3 +69,14 @@ test('duplicates and inconsistent completion flags fail closed',()=>{
  const inconsistent=fixture();inconsistent.candidate.runs[0].claimedCompleted=false;
  assert.throws(()=>compareMuninReplays(inconsistent),/verifiedSuccess cannot/);
 });
+
+test('case-level regression cannot be hidden by improved outcomes elsewhere',()=>{
+ const data=fixture();
+ data.baseline.runs[0].verifiedSuccess=false;
+ data.candidate.runs[1].verifiedSuccess=false;
+ const result=compareMuninReplays(data);
+ assert.equal(result.baseline.verifiedSuccesses,result.candidate.verifiedSuccesses);
+ assert.equal(result.baseline.falseCompletions,result.candidate.falseCompletions);
+ assert.equal(result.verdict,'regression');
+ assert.ok(result.reasons.some(reason=>/individual scenarios/.test(reason)));
+});
