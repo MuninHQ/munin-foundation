@@ -32,7 +32,7 @@ async function pollCareerInbox(): Promise<void> {
   lastCareerSyncAt = Date.now();
   try {
     const result = await syncCareerGitHubIssues();
-    if (result.added || result.updated) process.stdout.write(JSON.stringify({ source: 'career-github-inbox', ...result }) + '\n');
+    if (result.added || result.updated) process.stdout.write(JSON.stringify({ ...result, transport: 'career-github-inbox' }) + '\n');
   } catch (error) {
     // A private inbox outage must never block other Host Worker jobs or leak credentials.
     process.stderr.write(JSON.stringify({ source: 'career-github-inbox', status: 'unavailable', summary: error instanceof Error ? error.message : 'Sync failed' }) + '\n');
