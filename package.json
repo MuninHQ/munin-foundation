@@ -54,6 +54,7 @@
     "operator:sitrep": "npm run build:core && node dist/src/operator-sitrep-cli.js",
     "capability:radar": "npm run build:core && node dist/src/capability-radar-cli.js",
     "skills:discover": "npm run build:core && node dist/src/skills-sh-discovery-cli.js",
+    "career:github:sync": "npm run build:core && node dist/src/career-github-issue-sync-cli.js",
     "career:continuity:report": "npm run build:core && node dist/src/career-continuity-report-cli.js",
     "career:continuity:audit": "npm run build:core && node dist/src/career-continuity-audit-cli.js",
     "career:continuity:evidence": "npm run build:core && node dist/src/career-continuity-evidence-cli.js",
