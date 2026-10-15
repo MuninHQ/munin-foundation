@@ -62,3 +62,5 @@ a:focus-visible,button:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 .boot-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s ease-out;pointer-events:none}.boot-art.on{opacity:.22}.hud-boot>div{position:relative}
 .hud-core-label b{color:#e6d3b8;text-shadow:0 0 18px rgba(200,149,90,.22)}
 @media(prefers-reduced-motion:reduce){.boot-art{transition:none}}
+.hud-brand{display:inline-flex;align-items:center;gap:9px}.hud-brand-mark{width:20px;height:20px}
+.boot-seal{display:block;width:132px;height:132px;margin:0 auto 22px;opacity:.92}
