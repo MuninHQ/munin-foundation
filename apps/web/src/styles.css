@@ -36,3 +36,7 @@ header{height:96px;border-bottom-color:rgba(103,216,255,.1)}header h1{font-size:
 /* Home floating controls: one right-hand cluster, clear of the sidebar and the mobile nav */
 @media(min-width:761px){body .munin-hud-return{bottom:90px;right:30px}body .munin-gpt-launch{left:auto;right:92px;bottom:34px}}
 @media(max-width:760px){body .munin-ai-launch{right:14px;bottom:calc(74px + env(safe-area-inset-bottom));width:46px;height:46px}}
+/* Apple pass: crisp type rendering and honoring transparency/contrast preferences */
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-optical-sizing:auto}
+@media(prefers-reduced-transparency:reduce){.sidebar,.mobile-home-nav,.munin-ai-dock,.munin-gpt-panel{backdrop-filter:none;background:#050b13}}
+@media(prefers-contrast:more){.sidebar{border-right-color:#3a5468}.mobile-home-nav{border-top-color:#5b7d96}}

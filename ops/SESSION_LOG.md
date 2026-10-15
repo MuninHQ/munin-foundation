@@ -464,3 +464,25 @@ Vault matches: 0
 ## What did not work
 
 - ^Hidden^ browser^ pane^ freezes^ CSS^ transitions,^ so^ layout^ measurements^ need^ finished^ transitions^
+
+## 2026-10-15T22:38:36.312Z — MEMORY POST-TASK · munin-foundation
+
+^Applied^ restrained^ Apple^ design^ pass:^ size-aware^ heading^ tracking,^ antialiased^ optical-size^ type,^ saturated^ translucent^ materials,^ scroll-edge^ bar^ border,^ anchored^ More^ menu,^ reduced-transparency^ and^ increased-contrast^ support^ across^ shared^ pages,^ home^ and^ HUD;^ PR^ 390^
+## Decisions
+
+- ^Prefer^ craft^ details^ over^ new^ visual^ elements^
+- Honor^ prefers-reduced-transparency^ and^ prefers-contrast^ everywhere^
+
+## Changed
+
+- apps/web/public/munin.css^
+- apps/web/src/styles.css^
+- apps/web/public/hud.css
+
+## Next steps
+
+- ^Review^ and^ merge^ PR^ 390^
+
+## What did not work
+
+- none

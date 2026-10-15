@@ -45,3 +45,14 @@ button,a,summary{-webkit-tap-highlight-color:transparent}
 @media(max-width:760px){input,textarea,select{font-size:16px}.munin-toast-region{top:max(10px,env(safe-area-inset-top))}.munin-command-launch:not(:disabled):active{transform:translateX(50%) scale(.97)}}
 @media(prefers-reduced-motion:reduce){.munin-skeleton:after{animation:none}:where(button:not(:disabled)):active,:where(.munin-mobile-nav a):active{transform:none}}
 @media(prefers-reduced-motion:reduce) and (max-width:760px){.munin-command-launch:not(:disabled):active{transform:translateX(50%)}}
+
+/* Apple pass: size-aware type, real materials, anchored popovers, accessibility preferences */
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-optical-sizing:auto}
+:where(h1){letter-spacing:-.022em;line-height:1.08}:where(h2){letter-spacing:-.012em;line-height:1.2}
+.munin-bar{backdrop-filter:blur(16px) saturate(170%)}.munin-mobile-nav{backdrop-filter:blur(18px) saturate(170%)}
+.munin-panel,.munin-state{box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
+@supports (animation-timeline:scroll()){.munin-bar{border-bottom-color:transparent;animation:munin-edge linear both;animation-timeline:scroll();animation-range:0 48px}@keyframes munin-edge{to{border-bottom-color:rgba(120,144,162,.14);box-shadow:0 10px 30px rgba(0,0,0,.32)}}}
+.munin-menu{transform-origin:top right}.munin-more[open] .munin-menu{animation:munin-pop 160ms var(--ease-out)}@keyframes munin-pop{from{opacity:0;transform:scale(.97) translateY(-4px)}}
+@media(prefers-reduced-motion:reduce){.munin-more[open] .munin-menu{animation:none}}
+@media(prefers-reduced-transparency:reduce){.munin-bar,.munin-mobile-nav,.munin-menu,.munin-command-sheet,.munin-toast{backdrop-filter:none;background:#070c13}}
+@media(prefers-contrast:more){:root{--border:#3a5468;--border-strong:#5b7d96;--text-muted:#a9bccb;--text-faint:#8aa0b2}.munin-panel,.munin-state,.munin-menu{border-color:var(--border-strong)}}

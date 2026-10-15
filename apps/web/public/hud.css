@@ -53,3 +53,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 .hud-top{backdrop-filter:blur(14px)}.hud-command form:focus-within{border-color:var(--hud-bright);box-shadow:0 18px 50px rgba(0,2,6,.8),0 0 32px rgba(53,200,232,.2)}
 .hud-node.alert{border-color:rgba(232,196,107,.46)}
 @media(pointer:fine){.hud-reticle{display:none}.hud-halo{display:block}}
+
+/* Apple pass: transparency/contrast preferences keep the HUD legible */
+@media(prefers-reduced-transparency:reduce){.hud-panel,.hud-activity,.hud-command form,.hud-top,.hud-node{backdrop-filter:none;background:#04101a}}
+@media(prefers-contrast:more){.hud-panel,.hud-node,.hud-activity{border-color:var(--hud-line-strong)}:root{--hud-muted:#a3cfe0;--hud-faint:#7fa9bc}}
