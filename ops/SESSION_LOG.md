@@ -416,3 +416,73 @@ Vault matches: 0
 ## What did not work
 
 - ^One^ full-suite^ heartbeat^ timing^ test^ failed^ once^ and^ passed^ isolated^ plus^ full^ rerun;^ no^ related^ code^ changed^
+
+## 2026-10-15T22:04:41.136Z — MEMORY POST-TASK · munin-foundation
+
+^Validated^ GitHub^ access^ ^(ADMIN^),^ 29^ web^ pages,^ API^ and^ Mobile^ Vault^ login;^ fixed^ Action^ Inbox^ deferred-client^ hang,^ added^ portfolio/email-intelligence^ to^ Vite^ build,^ shared^ CSS^ interaction^ polish;^ PR^ #390^
+## Decisions
+
+- ^Load^ munin-client.js^ synchronously^ in^ Action^ Inbox^
+- Use^ zero-specificity^ :where^(^)^ for^ shared^ polish^ CSS^
+
+## Changed
+
+- apps/web/action-inbox.html^
+- apps/web/public/munin.css^
+- apps/web/vite.config.ts^
+- tests/unified-mobile-ui.test.ts
+
+## Next steps
+
+- ^Review^ and^ merge^ PR^ #390^
+- Regenerate^ dist-web^ after^ merge^
+
+## What did not work
+
+- ^Service^ worker^ registration^ fails^ inside^ the^ in-app^ browser^ pane^ ^(environment,^ not^ reproduced^ elsewhere^)^
+
+## 2026-10-15T22:29:03.775Z — MEMORY POST-TASK · munin-foundation
+
+^Fixed^ HUD^ clock^ clipping^ and^ orbit^ nodes^ hidden^ under^ side^ panels;^ audited^ 28^ pages^ at^ 1366px^ and^ 375px;^ fixed^ mobile^ content^ hidden^ under^ quick-action^ button^ and^ colliding^ floating^ buttons^ on^ home;^ PR^ 390^
+## Decisions
+
+- ^Clamp^ HUD^ nodes^ to^ stage^ and^ above^ activity^ stream^
+- Mobile^ pages^ reserve^ 124px^ bottom^ space^
+- Home^ floating^ controls^ grouped^ bottom-right^
+
+## Changed
+
+- apps/web/public/hud.css^
+- apps/web/public/hud.js^
+- apps/web/public/munin.css^
+- apps/web/src/styles.css
+
+## Next steps
+
+- ^Review^ and^ merge^ PR^ 390^
+
+## What did not work
+
+- ^Hidden^ browser^ pane^ freezes^ CSS^ transitions,^ so^ layout^ measurements^ need^ finished^ transitions^
+
+## 2026-10-15T22:38:36.312Z — MEMORY POST-TASK · munin-foundation
+
+^Applied^ restrained^ Apple^ design^ pass:^ size-aware^ heading^ tracking,^ antialiased^ optical-size^ type,^ saturated^ translucent^ materials,^ scroll-edge^ bar^ border,^ anchored^ More^ menu,^ reduced-transparency^ and^ increased-contrast^ support^ across^ shared^ pages,^ home^ and^ HUD;^ PR^ 390^
+## Decisions
+
+- ^Prefer^ craft^ details^ over^ new^ visual^ elements^
+- Honor^ prefers-reduced-transparency^ and^ prefers-contrast^ everywhere^
+
+## Changed
+
+- apps/web/public/munin.css^
+- apps/web/src/styles.css^
+- apps/web/public/hud.css
+
+## Next steps
+
+- ^Review^ and^ merge^ PR^ 390^
+
+## What did not work
+
+- none

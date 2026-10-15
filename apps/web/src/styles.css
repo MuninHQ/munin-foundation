@@ -33,3 +33,10 @@ header{height:96px;border-bottom-color:rgba(103,216,255,.1)}header h1{font-size:
 @media(max-width:1100px) and (min-width:761px){.shell{grid-template-columns:210px 1fr}.sidebar{padding-inline:12px}main{padding-inline:24px}.search{width:220px}.hud-launch{font-size:0}.hud-launch span{font-size:15px}.executive-hero{padding-inline:28px}}
 @media(max-width:760px){body{background:radial-gradient(circle at 50% 0,rgba(22,139,210,.14),transparent 28%),#030810}main#main-content{padding-inline:15px}.tools{gap:6px}.hud-launch{width:40px;padding:0;justify-content:center;font-size:0}.hud-launch span{font-size:15px}.executive-hero{padding:23px 19px}.executive-hero:before{opacity:.5}.hero-meta>span{display:none}.executive-hero h2{font-size:30px}.hero-actions{margin-top:18px}.intelligence-core{position:absolute;right:14px;top:15px;min-width:0;opacity:.28}.core-orbit{width:66px;height:66px}.core-state{display:none}.hero-copy{padding-top:12px}.hero-copy>p:not(.eyebrow){max-width:82%}.executive-metrics article{min-height:105px}.mobile-home-nav a{border-radius:9px}.mobile-home-nav a.active{background:rgba(103,216,255,.08)}.panel:hover{border-color:rgba(103,216,255,.1)}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
+/* Home floating controls: one right-hand cluster, clear of the sidebar and the mobile nav */
+@media(min-width:761px){body .munin-hud-return{bottom:90px;right:30px}body .munin-gpt-launch{left:auto;right:92px;bottom:34px}}
+@media(max-width:760px){body .munin-ai-launch{right:14px;bottom:calc(74px + env(safe-area-inset-bottom));width:46px;height:46px}}
+/* Apple pass: crisp type rendering and honoring transparency/contrast preferences */
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-optical-sizing:auto}
+@media(prefers-reduced-transparency:reduce){.sidebar,.mobile-home-nav,.munin-ai-dock,.munin-gpt-panel{backdrop-filter:none;background:#050b13}}
+@media(prefers-contrast:more){.sidebar{border-right-color:#3a5468}.mobile-home-nav{border-top-color:#5b7d96}}
