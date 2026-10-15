@@ -1,5 +1,16 @@
 # Munin Canonical Backlog
 
+## Host checkpoint — 2026-10-15
+
+- [x] Publish local branch `install/immersive-windows-20261009` (head `04a44bd`) to origin.
+- [x] Verify full suite on the Windows host: 954/954 passing.
+- [x] Diagnose PR #389 CI failure on `352757a` (duplicate `source` property in `src/host-worker-cli.ts`); resolved by `b097619`, all workflows green on head.
+- [ ] Fix Prettier formatting of `.github/ISSUE_TEMPLATE/vaga-munin.md` in MuninHQ/munin-core so `main` CI passes (run 38637505861).
+- [ ] Fix mojibake in `apps/web/public/nordic-theme.js` toggle tooltips.
+- [ ] Decide whether `dist-web/` stays partially tracked or becomes ignored build output.
+- [ ] Reconcile local `main` (15 ahead / 19 behind `origin/main`) — requires explicit approval.
+- [ ] Verify workspace supervisor/API runtime and immersive UI host installation (not verified 2026-10-15).
+
 ## HUD Mobile Layout — completed 2026-08-22
 
 - [x] Replace compressed desktop HUD with a dedicated single-column mobile composition.
@@ -17,7 +28,7 @@
 
 > Repo-backed execution queue for Munin. Priorities are P0 highest to P3 lowest.
 >
-> Last updated: 2026-09-02
+> Last updated: 2026-10-15
 
 ## P0 — Execution foundation
 

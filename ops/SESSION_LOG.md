@@ -697,3 +697,26 @@ Task: ^Preserve^ local^ work,^ diagnose^ CI,^ refresh^ ops^ state^
 Consumer: assistant
 Context matches: 4
 Vault matches: 8
+
+## 2026-10-15T17:13:26.390Z — MEMORY POST-TASK · munin
+
+^Published^ install/immersive-windows-20261009^ ^(04a44bd^);^ npm^ test^ 954/954;^ PR^ 389^ CI^ failure^ fixed^ on^ head^ b097619;^ munin-core^ main^ CI^ fails^ on^ Prettier^ format^ of^ vaga-munin.md^
+## Decisions
+
+- ^Do^ not^ commit^ dist-web^ build^ output^
+- Leave^ local^ main^ untouched^
+
+## Changed
+
+- ^Nordic^ theme^ assets^ committed^
+- CURRENT_STATE^ and^ BACKLOG^ refreshed^ 2026-10-15^
+
+## Next steps
+
+- ^Fix^ Prettier^ in^ munin-core^ issue^ template^
+- Fix^ nordic-theme.js^ mojibake^
+- Decide^ dist-web^ tracking^ policy^
+
+## What did not work
+
+- none
