@@ -19,7 +19,7 @@ test('mobile home exposes clear actions with visible execution feedback', async 
 test('iPhone layout keeps composer and utility controls out of each other', async () => {
   const css = await source('apps/web/src/mobile-product.css');
   assert.match(css, /\.composer\{position:static/);
-  assert.match(css, /body \.munin-gpt-launch\{left:50%;transform:translateX\(-50%\)/);
+  assert.match(css, /body \.munin-claude-launch\{left:50%;transform:translateX\(-50%\)/);
   assert.match(css, /body \.munin-mail-launch\{left:12px/);
   assert.match(css, /body \.munin-host-launch\{right:12px/);
   assert.match(css, /font-size:16px/);
@@ -27,15 +27,15 @@ test('iPhone layout keeps composer and utility controls out of each other', asyn
 });
 
 test('mobile utility launchers are named and accessible', async () => {
-  const [mail, host, chatgpt] = await Promise.all([
+  const [mail, host, claude] = await Promise.all([
     source('apps/web/src/email-mobile-controls.ts'),
     source('apps/web/src/host-mobile-controls.ts'),
-    source('apps/web/src/chatgpt-operator-bridge.ts'),
+    source('apps/web/src/claude-operator-bridge.ts'),
   ]);
   assert.match(mail, /launch\.textContent='E-mail'/);
   assert.match(host, /launch\.textContent='PC'/);
-  assert.match(chatgpt, /launch\.textContent='ChatGPT'/);
-  for (const utility of [mail, host, chatgpt]) {
+  assert.match(claude, /launch\.textContent='Claude'/);
+  for (const utility of [mail, host, claude]) {
     assert.match(utility, /aria-label/);
     assert.match(utility, /aria-expanded/);
   }

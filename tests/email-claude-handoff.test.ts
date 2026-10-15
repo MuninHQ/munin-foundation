@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { buildEmailHandoffPrompt } from '../apps/web/src/email-chatgpt-handoff.js';
+import { buildEmailHandoffPrompt } from '../apps/web/src/email-claude-handoff.js';
 
 test('email handoff contains bounded metadata and never authorizes sending',()=>{
   const prompt=buildEmailHandoffPrompt({subject:'Interview follow-up',from:'Recruiter <r@example.com>',attention:'career',reason:'Explicit response requested'},'reply');
@@ -19,11 +19,11 @@ test('analysis handoff asks connected mailbox to resolve thread rather than embe
   assert.doesNotMatch(prompt,/snippet|body|corpo do e-mail/i);
 });
 
-test('mobile email UI preserves sync health and delegates to ChatGPT without mail send code',async()=>{
+test('mobile email UI preserves sync health and delegates to Claude without mail send code',async()=>{
   const source=await readFile(new URL('../../apps/web/src/email-mobile-controls.ts',import.meta.url),'utf8');
-  assert.match(source,/handoffEmailToChatGPT/);
-  assert.match(source,/PREPARAR NO CHATGPT/);
-  assert.match(source,/ANALISAR NO CHATGPT/);
+  assert.match(source,/handoffEmailToClaude/);
+  assert.match(source,/PREPARAR NO CLAUDE/);
+  assert.match(source,/ANALISAR NO CLAUDE/);
   assert.match(source,/SYNC:/);
   assert.doesNotMatch(source,/sendMail|messages\.send|Mail\.Send|smtp/i);
 });

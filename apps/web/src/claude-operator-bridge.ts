@@ -1,7 +1,9 @@
 type WorkspacePayload={state?:{projects?:any[];actions?:any[];jobs?:any[];research?:any[]};intelligence?:{dailyBrief?:{headline?:string;priorities?:string[];alerts?:string[]}}};
 type MobileHomePayload={generatedAt?:string;goals?:any[];pendingActions?:any[];decisions?:any[];continuityMemory?:{total?:number;active?:number};memoryReview?:{pending?:number}};
 
-const CHATGPT_URL='https://chatgpt.com/';
+const CLAUDE_URL='https://claude.ai/new';
+// claude.ai prefills a new chat from ?q=; long packets stay clipboard-only to keep the URL within browser limits.
+const claudeUrl=(prompt:string)=>{const q=encodeURIComponent(prompt);return q.length<=6000?`${CLAUDE_URL}?q=${q}`:CLAUDE_URL};
 const maxItems=5;
 const clean=(value:unknown,max=180)=>String(value??'').replace(/\s+/g,' ').trim().slice(0,max);
 const safeItems=(items:unknown)=>Array.isArray(items)?items.slice(0,maxItems):[];
@@ -39,9 +41,9 @@ async function buildContext(){
 function buildPrompt(objective:string,context:unknown){
  const request=objective.trim()||'Leia o estado atual do Munin, identifique o próximo movimento de maior valor e continue o trabalho até um bloqueio humano real.';
  return [
-  'MUNIN — CHATGPT OPERATOR HANDOFF',
+  'MUNIN — CLAUDE OPERATOR HANDOFF',
   '',
-  'Você é o cockpit de inteligência do projeto Munin. O runtime local não deve iniciar Ollama ou exigir OpenAI API por padrão.',
+  'Você é o cockpit de inteligência do projeto Munin. O runtime local não deve iniciar Ollama ou exigir API paga por padrão.',
   'Use o repositório conectado MuninHQ/munin-foundation como fonte durável de verdade para arquitetura, backlog e código.',
   'Continue trabalho seguro e reversível autonomamente; preserve os guardrails do projeto e não introduza serviço pago sem aprovação explícita.',
   '',
@@ -55,22 +57,22 @@ function buildPrompt(objective:string,context:unknown){
 }
 
 const css=`
-.munin-gpt-launch{position:fixed;left:22px;bottom:24px;z-index:70;border:1px solid #2d83b8;background:#081827;color:#c9ecff;border-radius:999px;padding:11px 15px;font:700 11px/1 system-ui;letter-spacing:.08em;box-shadow:0 12px 35px #0009;cursor:pointer}
-.munin-gpt-panel{position:fixed;left:18px;bottom:76px;z-index:70;width:min(430px,calc(100vw - 36px));background:#07131f;border:1px solid #28506b;border-radius:16px;padding:16px;box-shadow:0 30px 80px #000d;color:#d8ebf7;font-family:system-ui;display:none}
-.munin-gpt-panel.open{display:block}.munin-gpt-panel h3{font-size:13px;letter-spacing:.13em;margin:0 0 6px}.munin-gpt-panel p{font-size:11px;line-height:1.5;color:#7899ad;margin:0 0 12px}.munin-gpt-panel textarea{box-sizing:border-box;width:100%;min-height:82px;resize:vertical;background:#040d15;color:#edf8ff;border:1px solid #24445b;border-radius:10px;padding:10px;font:12px/1.45 system-ui;outline:none}.munin-gpt-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.munin-gpt-actions button{border:1px solid #2d83b8;border-radius:9px;background:#0d5f91;color:white;padding:10px 12px;font:700 10px/1 system-ui;cursor:pointer}.munin-gpt-actions button.secondary{background:transparent;color:#91b8cf}.munin-gpt-status{display:block;min-height:16px;margin-top:9px;color:#6ea8c7;font-size:10px}
-@media(max-width:640px){.munin-gpt-launch{left:14px;bottom:max(78px,calc(env(safe-area-inset-bottom) + 66px))}.munin-gpt-panel{left:10px;bottom:max(128px,calc(env(safe-area-inset-bottom) + 116px));width:calc(100vw - 20px)}}`;
+.munin-claude-launch{position:fixed;left:22px;bottom:24px;z-index:70;border:1px solid #2d83b8;background:#081827;color:#c9ecff;border-radius:999px;padding:11px 15px;font:700 11px/1 system-ui;letter-spacing:.08em;box-shadow:0 12px 35px #0009;cursor:pointer}
+.munin-claude-panel{position:fixed;left:18px;bottom:76px;z-index:70;width:min(430px,calc(100vw - 36px));background:#07131f;border:1px solid #28506b;border-radius:16px;padding:16px;box-shadow:0 30px 80px #000d;color:#d8ebf7;font-family:system-ui;display:none}
+.munin-claude-panel.open{display:block}.munin-claude-panel h3{font-size:13px;letter-spacing:.13em;margin:0 0 6px}.munin-claude-panel p{font-size:11px;line-height:1.5;color:#7899ad;margin:0 0 12px}.munin-claude-panel textarea{box-sizing:border-box;width:100%;min-height:82px;resize:vertical;background:#040d15;color:#edf8ff;border:1px solid #24445b;border-radius:10px;padding:10px;font:12px/1.45 system-ui;outline:none}.munin-claude-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.munin-claude-actions button{border:1px solid #2d83b8;border-radius:9px;background:#0d5f91;color:white;padding:10px 12px;font:700 10px/1 system-ui;cursor:pointer}.munin-claude-actions button.secondary{background:transparent;color:#91b8cf}.munin-claude-status{display:block;min-height:16px;margin-top:9px;color:#6ea8c7;font-size:10px}
+@media(max-width:640px){.munin-claude-launch{left:14px;bottom:max(78px,calc(env(safe-area-inset-bottom) + 66px))}.munin-claude-panel{left:10px;bottom:max(128px,calc(env(safe-area-inset-bottom) + 116px));width:calc(100vw - 20px)}}`;
 
 function mount(){
- if(document.querySelector('.munin-gpt-launch'))return;
+ if(document.querySelector('.munin-claude-launch'))return;
  const style=document.createElement('style');style.textContent=css;document.head.appendChild(style);
- const launch=document.createElement('button');launch.className='munin-gpt-launch';launch.textContent='ChatGPT';launch.title='Continuar no ChatGPT sem API paga';launch.setAttribute('aria-label','Abrir ponte para o ChatGPT');
- const panel=document.createElement('section');panel.className='munin-gpt-panel';panel.innerHTML=`<h3>CODEX WEB · ZERO RISK · MANUAL</h3><p>O Munin prepara um pacote sanitizado e limitado. Você cola e envia manualmente; não há automação, leitura de página ou captura da resposta.</p><textarea placeholder="O que você quer que o Codex Web analise agora?"></textarea><div class="munin-gpt-actions"><button data-action="open">COPIAR + ABRIR</button><button class="secondary" data-action="copy">SÓ COPIAR PACOTE</button><button class="secondary" data-action="close">FECHAR</button></div><span class="munin-gpt-status"></span>`;
+ const launch=document.createElement('button');launch.className='munin-claude-launch';launch.textContent='Claude';launch.title='Continuar no Claude sem API paga';launch.setAttribute('aria-label','Abrir ponte para o Claude');
+ const panel=document.createElement('section');panel.className='munin-claude-panel';panel.innerHTML=`<h3>CLAUDE · ZERO RISK · MANUAL</h3><p>O Munin prepara um pacote sanitizado e limitado. Você cola e envia manualmente; não há automação, leitura de página ou captura da resposta.</p><textarea placeholder="O que você quer que o Claude analise agora?"></textarea><div class="munin-claude-actions"><button data-action="open">COPIAR + ABRIR</button><button class="secondary" data-action="copy">SÓ COPIAR PACOTE</button><button class="secondary" data-action="close">FECHAR</button></div><span class="munin-claude-status"></span>`;
  document.body.append(panel,launch);
- const textarea=panel.querySelector('textarea') as HTMLTextAreaElement;const status=panel.querySelector('.munin-gpt-status') as HTMLSpanElement;
+ const textarea=panel.querySelector('textarea') as HTMLTextAreaElement;const status=panel.querySelector('.munin-claude-status') as HTMLSpanElement;
  launch.onclick=()=>{panel.classList.toggle('open');launch.setAttribute('aria-expanded',String(panel.classList.contains('open')));if(panel.classList.contains('open'))setTimeout(()=>textarea.focus(),0)};
  async function handoff(open:boolean){
  status.textContent='Montando contexto sanitizado…';
-  try{let prompt='';try{const response=await fetch('/api/efficiency/manual-web-packet',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({objective:textarea.value||'Continuar o trabalho no Munin',launcher:{status:open?'available':'unknown',url:open?CHATGPT_URL:undefined}})});if(!response.ok)throw new Error(`HTTP ${response.status}`);const packet=await response.json();prompt=String(packet.text??'')}catch{const context=await buildContext();prompt=buildPrompt(textarea.value,context)}await navigator.clipboard.writeText(prompt);status.textContent=open?'Pacote manual copiado. Abrindo o destino visível…':'Pacote manual copiado. Cole e envie quando quiser.';if(open)window.open(CHATGPT_URL,'_blank','noopener,noreferrer');}
+  try{let prompt='';try{const response=await fetch('/api/efficiency/manual-web-packet',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({objective:textarea.value||'Continuar o trabalho no Munin',launcher:{status:open?'available':'unknown',url:open?CLAUDE_URL:undefined}})});if(!response.ok)throw new Error(`HTTP ${response.status}`);const packet=await response.json();prompt=String(packet.text??'')}catch{const context=await buildContext();prompt=buildPrompt(textarea.value,context)}await navigator.clipboard.writeText(prompt);status.textContent=open?'Pacote manual copiado. Abrindo o destino visível…':'Pacote manual copiado. Cole e envie quando quiser.';if(open)window.open(claudeUrl(prompt),'_blank','noopener,noreferrer');}
   catch(error){status.textContent=`Não foi possível montar o handoff: ${error instanceof Error?error.message:String(error)}`;}
  }
  (panel.querySelector('[data-action="open"]') as HTMLButtonElement).onclick=()=>void handoff(true);

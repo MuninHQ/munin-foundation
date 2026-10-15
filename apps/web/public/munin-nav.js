@@ -61,7 +61,7 @@
     ['/', 'Home', 'Visão geral do workspace'],
     ['/action-inbox.html', 'Action Inbox', 'O que precisa de atenção'],
     ['/operator-hub.html', 'Today · Operator Hub', 'Agenda, follow-ups e aprovações'],
-    ['/operator-chat.html', 'Chat operacional', 'Executar comandos e continuar no ChatGPT'],
+    ['/operator-chat.html', 'Chat operacional', 'Executar comandos e perguntar ao Claude'],
     ['/flows.html', 'Fluxos', 'Acompanhar rotas e tentativas'],
     ['/radar.html', 'Radar', 'Sinais e fontes confiáveis'],
     ['/executive-briefing.html', 'Briefing', 'Prioridades adaptativas'],

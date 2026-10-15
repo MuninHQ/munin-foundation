@@ -23,10 +23,10 @@ header h1{font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:1.75rem
 .raven-nav button span{font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:1rem}
 .raven-nav button small{font-size:.56rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 body .munin-mail-launch{left:12px;bottom:max(76px,calc(env(safe-area-inset-bottom) + 64px))}
-body .munin-gpt-launch{left:50%;transform:translateX(-50%);bottom:max(76px,calc(env(safe-area-inset-bottom) + 64px));padding:10px 12px;white-space:nowrap}
+body .munin-claude-launch{left:50%;transform:translateX(-50%);bottom:max(76px,calc(env(safe-area-inset-bottom) + 64px));padding:10px 12px;white-space:nowrap}
 body .munin-host-launch{right:12px;bottom:max(76px,calc(env(safe-area-inset-bottom) + 64px))}
-body .munin-mail-panel,body .munin-gpt-panel,body .munin-host-panel{bottom:max(124px,calc(env(safe-area-inset-bottom) + 112px));max-height:68dvh;overflow:auto}
-@media(max-width:370px){.shell{padding-left:12px;padding-right:12px}.quick-grid{grid-template-columns:1fr}.quick-grid button{min-height:60px}.raven-nav button small{font-size:.5rem}body .munin-gpt-launch{font-size:0;padding:10px 13px}body .munin-gpt-launch:after{content:'GPT';font-size:10px}}
+body .munin-mail-panel,body .munin-claude-panel,body .munin-host-panel{bottom:max(124px,calc(env(safe-area-inset-bottom) + 112px));max-height:68dvh;overflow:auto}
+@media(max-width:370px){.shell{padding-left:12px;padding-right:12px}.quick-grid{grid-template-columns:1fr}.quick-grid button{min-height:60px}.raven-nav button small{font-size:.5rem}body .munin-claude-launch{font-size:0;padding:10px 13px}body .munin-claude-launch:after{content:'Claude';font-size:10px}}
 
 /* One-hand command experience, visually aligned with the desktop core. */
 :root{--core-cyan:#67d8ff;--core-blue:#168bd2;--core-amber:#f2a94b}

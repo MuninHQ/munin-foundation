@@ -12,19 +12,19 @@
   <link rel="stylesheet" href="/munin-workspace.css" /><script src="/munin-presence.js"></script><script defer src="/munin-workspace.js"></script>  <link rel="icon" href="/brand/munin-raven-icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/brand/apple-touch-icon.png"></head>
   <body>
     <main class="shell">
-      <div class="top"><div><div class="eyebrow">MUNIN CONTROL PLANE</div><h1>Settings</h1><p>ChatGPT-first é o modo padrão. Providers in-process são opcionais.</p></div><a class="btn" href="/">← Command Center</a></div>
+      <div class="top"><div><div class="eyebrow">MUNIN CONTROL PLANE</div><h1>Settings</h1><p>Claude-first é o modo padrão. Providers in-process são opcionais.</p></div><a class="btn" href="/">← Command Center</a></div>
 
       <section class="panel hero">
-        <span class="badge">PADRÃO · CHATGPT-FIRST</span>
+        <span class="badge">PADRÃO · CLAUDE-FIRST</span>
         <h2>Nenhuma API de IA é necessária</h2>
-        <p>Use o <strong>ChatGPT Cockpit</strong> no Web ou Mobile para raciocínio livre. O Munin local mantém estado, memória, automações e operações determinísticas sem iniciar Ollama e sem exigir créditos de API.</p>
+        <p>O <strong>Claude</strong> responde perguntas livres pelo Claude Code instalado neste PC, com a sua assinatura, sem ferramentas e vendo só um snapshot sanitizado. Conversas longas continuam no <strong>Claude Cockpit</strong> (claude.ai). <span id="claude-status" class="badge">VERIFICANDO CLAUDE CODE…</span> O Munin local mantém estado, memória, automações e operações determinísticas sem iniciar Ollama e sem exigir créditos de API.</p>
         <div class="buttons"><a class="btn primary" href="/">Abrir Command Center</a><a class="btn" href="/mobile.html">Abrir Mobile</a></div>
       </section>
 
       <section class="panel advanced">
         <div class="eyebrow">AVANÇADO · OPCIONAL</div>
         <h3>Provider in-process</h3>
-        <p>Configure somente se você decidir conscientemente usar uma API separada ou reativar um modelo local. Isto não é necessário para o modo ChatGPT-first.</p>
+        <p>Configure somente se você decidir conscientemente usar uma API separada ou reativar um modelo local. Isto não é necessário para o modo Claude-first.</p>
         <div id="status" class="status">DESATIVADO</div>
         <div class="toggle"><input id="enabled" type="checkbox"/><label for="enabled"><strong>Ativar provider opcional</strong><br><span class="hint">Pode gerar custo externo ou uso intensivo do hardware local, dependendo da configuração.</span></label></div>
         <div class="provider-shortcuts">
@@ -45,7 +45,7 @@
         <div class="buttons"><button id="saveProvider" class="primary">Salvar configuração opcional</button><button id="testProvider">Testar conexão</button><button id="removeProvider" class="danger">Desativar e remover</button></div>
       </section>
 
-      <section class="panel"><div class="eyebrow">GUARDRAILS</div><p class="warning">ChatGPT Plus/Pro não é tratado como crédito de API. OpenAI, Claude, Gemini e NVIDIA usam credenciais e cotas separadas. A API hospedada da NVIDIA pode operar sob cota de avaliação, mas não é assumida como gratuita ou ilimitada. O Nemotron 3 Ultra é text-only e exige no mínimo 4 GPUs de datacenter na variante NVFP4; o Munin não tentará baixá-lo ou iniciá-lo neste PC. Ollama permanece desativado por padrão e não será iniciado automaticamente pelo Munin.</p><p class="muted">Ao ativar um endpoint externo, o conteúdo das tarefas que usam IA pode sair do PC e seguir para esse serviço. Credenciais permanecem no armazenamento local de runtime e nunca entram no ChatGPT Operator Handoff.</p></section>
+      <section class="panel"><div class="eyebrow">GUARDRAILS</div><p class="warning">Claude Pro/Max e ChatGPT Plus/Pro não são tratados como crédito de API. OpenAI, Claude, Gemini e NVIDIA usam credenciais e cotas separadas. A API hospedada da NVIDIA pode operar sob cota de avaliação, mas não é assumida como gratuita ou ilimitada. O Nemotron 3 Ultra é text-only e exige no mínimo 4 GPUs de datacenter na variante NVFP4; o Munin não tentará baixá-lo ou iniciá-lo neste PC. Ollama permanece desativado por padrão e não será iniciado automaticamente pelo Munin.</p><p class="muted">Ao ativar um endpoint externo, o conteúdo das tarefas que usam IA pode sair do PC e seguir para esse serviço. Credenciais permanecem no armazenamento local de runtime e nunca entram no Claude Operator Handoff.</p></section>
     </main>
     <script>
       const presets={
@@ -60,7 +60,7 @@
       async function api(path,options){const r=await fetch(path,{headers:{'content-type':'application/json'},...options});const d=await r.json();if(!r.ok)throw new Error(d.error||'Falha');return d}
       function toast(t){const n=document.createElement('div');n.className='notice';n.textContent=t;document.body.appendChild(n);setTimeout(()=>n.remove(),4000)}
       function preset(name){const p=presets[name];ui.provider.value=p.provider;ui.baseUrl.value=p.baseUrl;ui.model.value=p.model;ui.apiKey.value=p.key;ui.reasoningMode.value=p.reasoningMode||'off';ui.enabled.checked=true;ui.presetHint.textContent=p.hint;toast(`${name.toUpperCase()} selecionado como opção avançada`)}
-      async function load(){try{const d=await api('/api/settings/llm');const s=d.settings;ui.enabled.checked=s.enabled;ui.provider.value=s.provider||'openai-compatible';ui.baseUrl.value=s.baseUrl||'';ui.model.value=s.model||'';ui.reasoningMode.value=s.reasoningMode||'off';ui.keyHint.textContent=s.hasApiKey?`Chave salva: ${s.apiKeyHint}`:'Nenhuma chave salva';ui.status.className='status '+(d.status.enabled?'on':'');ui.status.textContent=d.status.enabled?`OPCIONAL ATIVO · ${d.status.profile||d.status.provider} · ${d.status.model} · RACIOCÍNIO ${(d.status.reasoningMode||'off').toUpperCase()}`:'DESATIVADO · CHATGPT-FIRST'}catch(e){toast(e.message)}}
+      async function load(){try{const d=await api('/api/settings/llm');const s=d.settings;ui.enabled.checked=s.enabled;ui.provider.value=s.provider||'openai-compatible';ui.baseUrl.value=s.baseUrl||'';ui.model.value=s.model||'';ui.reasoningMode.value=s.reasoningMode||'off';ui.keyHint.textContent=s.hasApiKey?`Chave salva: ${s.apiKeyHint}`:'Nenhuma chave salva';ui.status.className='status '+(d.status.enabled?'on':'');ui.status.textContent=d.status.enabled?`OPCIONAL ATIVO · ${d.status.profile||d.status.provider} · ${d.status.model} · RACIOCÍNIO ${(d.status.reasoningMode||'off').toUpperCase()}`:'DESATIVADO · CLAUDE-FIRST'}catch(e){toast(e.message)}}
       async function save(){try{const payload={enabled:ui.enabled.checked,provider:ui.provider.value,baseUrl:ui.baseUrl.value,model:ui.model.value,reasoningMode:ui.reasoningMode.value};if(ui.apiKey.value.trim())payload.apiKey=ui.apiKey.value;await api('/api/settings/llm',{method:'PUT',body:JSON.stringify(payload)});ui.apiKey.value='';toast('Configuração opcional salva');await load()}catch(e){toast(e.message)}}
       async function testProvider(){const label=ui.testProvider.textContent;ui.testProvider.disabled=true;ui.testProvider.textContent='Testando conexão…';toast('Testando conexão com o provider…');try{const r=await api('/api/settings/llm/test',{method:'POST'});toast(`Conexão OK · ${r.provider} · ${r.model}`)}catch(e){toast(`Falha: ${e.message}`)}finally{ui.testProvider.disabled=false;ui.testProvider.textContent=label}}
       async function removeProvider(){if(!confirm('Desativar e remover a configuração opcional de provider?'))return;try{await api('/api/settings/llm',{method:'DELETE'});toast('Provider opcional removido');await load()}catch(e){toast(e.message)}}
@@ -69,6 +69,7 @@
       ui.testProvider.addEventListener('click',()=>void testProvider());
       ui.removeProvider.addEventListener('click',()=>void removeProvider());
       void load();
+    fetch('/api/claude/status').then(r=>r.json()).then(s=>{el('claude-status').textContent=s.available?`CLAUDE CODE ATIVO · ${s.version}`:s.disabled?'CLAUDE CODE DESLIGADO':'CLAUDE CODE NÃO ENCONTRADO'}).catch(()=>{el('claude-status').textContent='CLAUDE CODE INDISPONÍVEL'});
     </script>
   </body>
 </html>
