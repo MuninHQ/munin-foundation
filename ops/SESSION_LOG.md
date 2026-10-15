@@ -509,3 +509,32 @@ Vault matches: 0
 ## What did not work
 
 - none
+
+## 2026-10-15T23:15:52.159Z — MEMORY POST-TASK · munin-foundation
+
+^Owner-authorized^ vector^ redraw^ of^ the^ raven^ seal^ ^(full^ body,^ 48px+^)^ and^ icon^ ^(head,^ favicon/app^ icon^)^ from^ approved^ concepts;^ registered^ as^ approved^ masters;^ wired^ into^ nav^ bar,^ HUD^ brand^ and^ boot,^ home^ sidebar^ and^ assistant^ button,^ favicons^ on^ all^ pages^ and^ PWA^ manifest^ icons^
+## Decisions
+
+- ^Seal^ for^ 48px^ and^ up,^ icon^ below^
+- Exact^ ring^ geometry^ and^ mirrored^ markers,^ raven^ traced^ with^ potrace^
+- Owner^ authorized^ exception^ to^ the^ no-generated-marks^ rule^
+
+## Changed
+
+- ^assets/brand/masters^
+- assets/brand/registry.json^
+- apps/web/public/brand^
+- apps/web/*.html^ favicon^
+- munin-nav.js^
+- hud.html^
+- App.tsx^
+- assistant-dock.ts^
+
+## Next steps
+
+- ^Optional^ designer^ polish^ pass^ on^ claws^ and^ perch^
+- Light-background^ variant^ of^ the^ seal^
+
+## What did not work
+
+- none

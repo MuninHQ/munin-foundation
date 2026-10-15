@@ -6,5 +6,24 @@
   "background_color": "#050b14",
   "theme_color": "#07111f",
   "description": "Munin mobile command center",
-  "icons": []
+  "icons": [
+    {
+      "src": "/brand/munin-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/munin-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/munin-raven-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
 }
