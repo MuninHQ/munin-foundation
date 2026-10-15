@@ -51,6 +51,7 @@
     "guard": "npm run build:core && node dist/src/munin-guard-cli.js",
     "sandbox:doctor": "npm run build:core && node dist/src/execution-sandbox-cli.js",
     "control-room:state": "npm run build:core && node dist/src/control-room-state-cli.js",
+    "coordinator": "npm run build:core && node dist/src/coordinator-cli.js",
     "operator:sitrep": "npm run build:core && node dist/src/operator-sitrep-cli.js",
     "capability:radar": "npm run build:core && node dist/src/capability-radar-cli.js",
     "skills:discover": "npm run build:core && node dist/src/skills-sh-discovery-cli.js",
