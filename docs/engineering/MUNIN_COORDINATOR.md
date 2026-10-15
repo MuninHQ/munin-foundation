@@ -26,7 +26,7 @@ O Munin governa; o mod observa, apresenta e encaminha. O status vem do runtime c
 
 ## Instalar (local, reversível)
 
-```
+```powershell
 npm run build:core
 claude plugin marketplace add D:\Dev\munin-foundation-git\integrations\claude-code --scope user
 claude plugin install munin-coordenador@munin-local --scope user
@@ -36,7 +36,7 @@ Testar sem instalar: `claude --plugin-dir D:\Dev\munin-foundation-git\integratio
 
 ## Desfazer
 
-```
+```powershell
 claude plugin uninstall munin-coordenador@munin-local --scope user
 claude plugin marketplace remove munin-local
 ```
