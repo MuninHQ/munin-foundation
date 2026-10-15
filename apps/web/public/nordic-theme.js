@@ -19,7 +19,7 @@
       var enabled = theme === 'nordic';
       button.textContent = enabled ? 'NORDIC ON' : 'NORDIC OFF';
       button.setAttribute('aria-pressed', String(enabled));
-      button.setAttribute('title', enabled ? 'Voltar ao tema cl├íssico' : 'Ativar tema n├│rdico');
+      button.setAttribute('title', enabled ? 'Voltar ao tema clássico' : 'Ativar tema nórdico');
     });
   }
 
