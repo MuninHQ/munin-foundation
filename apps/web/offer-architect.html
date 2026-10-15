@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Munin — Offer Architect</title>
+  <link rel="stylesheet" href="/munin.css" />
+  <style>
+    body{margin:0;background:#050b12;color:#dceaf4;font:14px system-ui}
+    main{max-width:1180px;margin:0 auto;padding:28px 18px 80px}
+    h1{margin:0 0 6px;font-size:30px}.sub{color:#8fb0c8;margin-bottom:22px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .card{border:1px solid #1d3c52;background:#09131d;border-radius:14px;padding:16px}
+    .wide{grid-column:1/-1}.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    label{display:flex;flex-direction:column;gap:6px;color:#a9c3d5;font-size:12px}
+    input,textarea,select{box-sizing:border-box;width:100%;border:1px solid #27475d;border-radius:9px;background:#061019;color:#e9f5fb;padding:9px}
+    textarea{min-height:86px;resize:vertical}button{border:1px solid #3c718f;border-radius:9px;background:#0f2b3d;color:#e7f7ff;padding:10px 14px;cursor:pointer}
+    .actions{display:flex;gap:10px;margin:16px 0}.status{font-weight:700}.good{color:#87d8a1}.warn{color:#ffd17b}.bad{color:#ff8f8f}
+    table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #1a3345;padding:8px;text-align:left;vertical-align:top}
+    code{white-space:pre-wrap}.muted{color:#7f9caf;font-size:12px}.pill{display:inline-block;border:1px solid #315870;border-radius:999px;padding:3px 8px;margin:2px}
+    @media(max-width:800px){.grid,.fields{grid-template-columns:1fr}.wide{grid-column:auto}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Offer Architect</h1>
+  <div class="sub">Value Equation + Offer Stack + Evidence Gate + Quality Gate. Determinístico e zero-cost por padrão.</div>
+  <form id="offer-form">
+    <div class="grid">
+      <section class="card">
+        <h2>1. Cliente e resultado</h2>
+        <div class="fields">
+          <label>Produto/serviço<input id="productService" required /></label>
+          <label>Avatar / ICP<input id="avatar" required /></label>
+        </div>
+        <label>Dor principal<textarea id="pain" required></textarea></label>
+        <label>Dream outcome<textarea id="dreamOutcome" required></textarea></label>
+        <label>Mecanismo / diferenciação<input id="mechanism" /></label>
+      </section>
+      <section class="card">
+        <h2>2. Value Equation</h2>
+        <div class="fields">
+          <label>Força do resultado (1-10)<input id="dreamOutcomeStrength" type="number" min="1" max="10" value="8" /></label>
+          <label>Probabilidade percebida (1-10)<input id="perceivedLikelihood" type="number" min="1" max="10" value="5" /></label>
+          <label>Delay / tempo (1-10)<input id="timeDelay" type="number" min="1" max="10" value="5" /></label>
+          <label>Esforço/sacrifício (1-10)<input id="effortAndSacrifice" type="number" min="1" max="10" value="5" /></label>
+        </div>
+        <label>Dias estimados até primeiro valor<input id="timeToValueDays" type="number" min="0" /></label>
+        <div class="fields">
+          <label>Preço hipotético<input id="priceAmount" type="number" min="0" step="0.01" /></label>
+          <label>Moeda<input id="priceCurrency" value="BRL" /></label>
+        </div>
+        <label>Cobrança / embalagem<input id="priceBilling" placeholder="ex.: projeto, mensal, por sprint" /></label>
+      </section>
+      <section class="card">
+        <h2>3. Mapa de valor</h2>
+        <label>Tentativas atuais <span class="muted">uma por linha</span><textarea id="currentAttempts"></textarea></label>
+        <label>Objeções <span class="muted">uma por linha</span><textarea id="objections"></textarea></label>
+        <label>Core deliverables <span class="muted">um por linha</span><textarea id="coreDeliverables"></textarea></label>
+        <label>Restrições <span class="muted">uma por linha</span><textarea id="constraints"></textarea></label>
+      </section>
+      <section class="card">
+        <h2>4. Stack e reversão de risco</h2>
+        <label>Bônus <span class="muted">nome | propósito | objeção que resolve</span><textarea id="bonuses"></textarea></label>
+        <label>Garantia opcional<textarea id="guarantee"></textarea></label>
+        <label>Evidence IDs da garantia<input id="guaranteeEvidenceIds" placeholder="e1,e2" /></label>
+        <div class="fields">
+          <label>Escassez<select id="scarcityType"><option value="none">Nenhuma</option><option value="capacity">Capacidade</option><option value="deadline">Prazo</option><option value="inventory">Inventário</option></select></label>
+          <label>Evidence IDs da escassez<input id="scarcityEvidenceIds" placeholder="e1" /></label>
+        </div>
+        <label>Detalhe da escassez<input id="scarcityDetail" /></label>
+      </section>
+      <section class="card wide">
+        <h2>5. Evidence Gate</h2>
+        <div class="fields">
+          <label>Evidências <span class="muted">source | detail | url opcional. IDs viram e1, e2...</span><textarea id="evidence"></textarea></label>
+          <label>Claims <span class="muted">claim | PROVEN/ASSUMPTION/TEST/INVALID | e1,e2</span><textarea id="claims"></textarea></label>
+        </div>
+        <label>Alternativas / concorrentes <span class="muted">nome | nota | preço opcional</span><textarea id="alternatives"></textarea></label>
+      </section>
+    </div>
+    <div class="actions"><button type="submit">ANALISAR OFERTA</button><button type="button" id="example">CARREGAR EXEMPLO</button></div>
+  </form>
+  <section id="result" class="card" hidden></section>
+</main>
+<script>
+const q=id=>document.getElementById(id);
+const lines=id=>q(id).value.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
+const csv=value=>value.split(',').map(v=>v.trim()).filter(Boolean);
+const parts=line=>line.split('|').map(v=>v.trim());
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function payload(){
+  const evidence=lines('evidence').map((line,index)=>{const [source,detail,url]=parts(line);return{id:'e'+(index+1),source:source||'manual',detail:detail||source,url:url||undefined}});
+  const claims=lines('claims').map((line,index)=>{const [claim,status,refs]=parts(line);return{id:'claim-'+(index+1),claim,status:status||'ASSUMPTION',evidenceIds:csv(refs||'')}});
+  const bonuses=lines('bonuses').map(line=>{const [name,purpose,objection]=parts(line);return{name,purpose,objection:objection||undefined}});
+  const alternatives=lines('alternatives').map(line=>{const [name,note,price]=parts(line);return{name,note:note||undefined,price:price||undefined}});
+  const price=Number(q('priceAmount').value);
+  const scarcityType=q('scarcityType').value;
+  return{
+    productService:q('productService').value,avatar:q('avatar').value,pain:q('pain').value,dreamOutcome:q('dreamOutcome').value,
+    mechanism:q('mechanism').value||undefined,currentAttempts:lines('currentAttempts'),objections:lines('objections'),
+    coreDeliverables:lines('coreDeliverables'),constraints:lines('constraints'),bonuses,evidence,claims,alternatives,
+    dreamOutcomeStrength:Number(q('dreamOutcomeStrength').value),perceivedLikelihood:Number(q('perceivedLikelihood').value),
+    timeDelay:Number(q('timeDelay').value),effortAndSacrifice:Number(q('effortAndSacrifice').value),
+    timeToValueDays:q('timeToValueDays').value?Number(q('timeToValueDays').value):undefined,
+    priceHypothesis:Number.isFinite(price)&&price>0?{amount:price,currency:q('priceCurrency').value||'BRL',billing:q('priceBilling').value||undefined}:undefined,
+    guarantee:q('guarantee').value?{text:q('guarantee').value,evidenceIds:csv(q('guaranteeEvidenceIds').value)}:undefined,
+    scarcity:{type:scarcityType,detail:q('scarcityDetail').value||undefined,evidenceIds:csv(q('scarcityEvidenceIds').value)}
+  };
+}
+function render(r){
+  const cls=r.qualityGate.readiness==='BLOCKED'?'bad':r.qualityGate.readiness==='READY_TO_TEST'?'good':'warn';
+  const gates=r.evidenceGate.map(x=>'<tr><td>'+esc(x.status)+'</td><td>'+esc(x.claim)+'</td><td>'+esc(x.rationale)+'</td></tr>').join('');
+  const checks=r.qualityGate.checks.map(x=>'<tr><td>'+(x.pass?'PASS':'GAP')+'</td><td>'+esc(x.label)+'</td><td>'+esc(x.detail)+'</td></tr>').join('');
+  const experiments=r.validationExperiments.map(x=>'<li><b>'+esc(x.targetClaimId)+'</b>: '+esc(x.method)+'</li>').join('');
+  const research=r.researchPlan.queries.map(x=>'<span class="pill">'+esc(x)+'</span>').join('');
+  q('result').hidden=false;
+  q('result').innerHTML='<h2>Resultado</h2>'+
+    '<p class="status '+cls+'">'+esc(r.qualityGate.readiness)+' · '+esc(r.qualityGate.score)+'/100</p>'+
+    '<p><b>Positioning:</b> '+esc(r.positioning)+'</p>'+
+    '<p><b>Value Equation:</b> '+esc(r.valueEquation.rawValue)+' <span class="muted">(resultado × probabilidade / delay × esforço)</span></p>'+
+    '<p><b>Preço:</b> '+esc(r.pricing.status)+' — '+esc(r.pricing.note)+'</p>'+
+    '<h3>Evidence Gate</h3><table><thead><tr><th>Status</th><th>Claim</th><th>Racional</th></tr></thead><tbody>'+gates+'</tbody></table>'+
+    '<h3>Quality Gate</h3><table><thead><tr><th></th><th>Check</th><th>Detalhe</th></tr></thead><tbody>'+checks+'</tbody></table>'+
+    '<h3>Experimentos</h3><ul>'+experiments+'</ul><h3>Research hooks</h3><div>'+research+'</div>';
+  q('result').scrollIntoView({behavior:'smooth'});
+}
+q('offer-form').addEventListener('submit',async event=>{
+  event.preventDefault();
+  q('result').hidden=false;
+  q('result').textContent='Analisando…';
+  try{
+    const res=await fetch('/api/offer-architect/analyze',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify(payload())
+    });
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Falha na análise');
+    render(data);
+  }catch(error){
+    q('result').innerHTML='<p class="bad">'+esc(error.message||error)+'</p>';
+  }
+});
+q('example').addEventListener('click',()=>{
+  q('productService').value='AI Operations Sprint';
+  q('avatar').value='PMEs com operação administrativa manual';
+  q('pain').value='Equipe perde horas em tarefas repetitivas e retrabalho.';
+  q('dreamOutcome').value='Automatizar os três processos que mais consomem tempo sem trocar o stack atual.';
+  q('mechanism').value='diagnóstico + automação concierge em 14 dias';
+  q('objections').value='Não quero trocar minhas ferramentas\nTenho medo de automação quebrar processos';
+  q('coreDeliverables').value='Mapa de processos\n3 automações priorizadas\nRunbook de rollback';
+  q('bonuses').value='Rollback Pack | reduz risco operacional | Tenho medo de automação quebrar processos';
+  q('evidence').value='piloto | 2 fluxos testados manualmente em ambiente controlado';
+  q('claims').value='O método funciona sem trocar o stack atual | TEST | e1';
+  q('alternatives').value='consultoria tradicional | mais customização, maior prazo | variável';
+});
+</script>
+<script src="/munin-nav.js"></script>
+</body>
+</html>

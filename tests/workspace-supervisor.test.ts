@@ -34,6 +34,7 @@ test('supervisor and launcher avoid arbitrary process killing and shell restart'
  assert.match(launcher,/mobile-token\.txt/);assert.match(launcher,/Loaded persistent mobile authentication/);assert.match(launcher,/api\/mobile\/health/);assert.match(launcher,/Authorization:`Bearer \$\{mobileToken\}`/);
  assert.match(launcher,/The Web UI will not start without its API/);assert.match(launcher,/shutdown\(1\)/);
  assert.match(launcher,/code > 0x7fffffff \? code - 0x100000000 : code/);
+ assert.match(launcher,/run\('node', \['dist\/src\/server\.js'\], 'Munin API', \{ shell: false \}\)/);
  assert.doesNotMatch(supervisor,/taskkill|Stop-Process|exec\(/i);assert.doesNotMatch(launcher,/taskkill|Stop-Process/i);
 });
 

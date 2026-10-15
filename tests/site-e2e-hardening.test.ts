@@ -30,8 +30,8 @@ test('visual runtime uses real request events and lazy GPU loading', async () =>
   const [app, runtime, ambient] = await Promise.all([source('apps/web/src/App.tsx'), source('apps/web/src/munin-ui/VisualRuntime.tsx'), source('apps/web/src/munin-ui/BootAmbient.tsx')]);
   assert.match(app, /emitMuninState\(classifyMuninRequest/);
   assert.match(app, /emitMuninState\('done'/);
-  assert.match(runtime, /MUNIN_STATE_EVENT/);
-  assert.match(runtime, /setRuntimeState\(detail\.state\)/);
+  assert.match(runtime, /usePresence/);
+  assert.match(runtime, /presence.state === 'idle' \? domState : presence.state/);
   assert.match(ambient, /await import\('three'\)/);
   assert.doesNotMatch(ambient, /import \* as THREE from 'three'/);
 });
@@ -44,7 +44,7 @@ test('visual runtime uses real operation events and lazy-loads cinematic Three.j
   ]);
   assert.match(events, /MUNIN_STATE_EVENT = 'munin:state'/);
   assert.match(events, /career-inbox\\\/sync\|intelligence/);
-  assert.match(runtime, /runtimeState \?\? domState/);
+  assert.match(runtime, /presence.state === 'idle' \? domState : presence.state/);
   assert.match(app, /emitMuninState\(classifyMuninRequest/);
   assert.doesNotMatch(boot, /import \* as THREE from 'three'/);
   assert.match(boot, /await import\('three'\)/);

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { estimateTokens, observeTokenUsage, recommendShadowRoute, summarizeContext } from '../src/token-governor.js';
+import { estimateTokens, observeTokenUsage, recommendEconomicRoute, recommendShadowRoute, reduceCommandOutput, summarizeContext } from '../src/token-governor.js';
 
 test('estimates empty and mixed Unicode text deterministically', () => {
   assert.equal(estimateTokens(''), 0);
@@ -72,4 +72,31 @@ test('source secrets are redacted before clipping summary fragments', () => {
   const observation = observeTokenUsage({ runId: 'secret', source: 'terminal', capability: 'code', risk: 'low', selectedProviderId: providerToken, input: '', output: `password=${password}${'x'.repeat(5000)}\n${providerToken}` }, { largeOutputChars: 50, maxSummaryChars: 180 });
   assert.doesNotMatch(JSON.stringify(observation), new RegExp(`${password}|${providerToken}`));
   assert.match(JSON.stringify(observation), /REDACTED/);
+});
+
+test('failed test output retains failing cases stacks summary and exit code', () => {
+  const output = ['TAP version 13', ...Array.from({ length: 80 }, (_, i) => `ok ${i}`), 'not ok 81 - rejects unsafe packet', 'AssertionError: expected false', '    at tests/zero-risk.test.ts:21:4', '# tests 81', '# pass 80', '# fail 1'].join('\n');
+  const result = reduceCommandOutput({ output, exitCode: 1, kind: 'test' }, { largeOutputChars: 200, maxSummaryChars: 360 });
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.failed, true);
+  assert.match(result.summary, /not ok 81 - rejects unsafe packet/);
+  assert.match(result.summary, /AssertionError/);
+  assert.match(result.summary, /# fail 1/);
+  assert.ok(result.truncatedChars > 0);
+});
+
+test('large secret-bearing single line is redacted before clipping', () => {
+  const secret = `ghp_${'z'.repeat(24)}`;
+  const result = reduceCommandOutput({ output: `begin ${secret} ${'x'.repeat(5000)} end`, exitCode: 2, kind: 'command' }, { largeOutputChars: 50, maxSummaryChars: 180 });
+  assert.doesNotMatch(JSON.stringify(result), new RegExp(secret));
+  assert.match(result.summary, /REDACTED/);
+  assert.equal(result.exitCode, 2);
+});
+
+test('economic routing uses standard for bounded code and premium only with trusted availability', () => {
+  const standard = recommendEconomicRoute({ kind: 'code', risk: 'medium', complexity: 5, impact: 5, contextTokens: 3000, premiumAvailable: false });
+  const premium = recommendEconomicRoute({ kind: 'review', risk: 'high', complexity: 9, impact: 9, contextTokens: 24000, premiumAvailable: true });
+  assert.equal(standard.modelTier, 'standard');
+  assert.equal(premium.modelTier, 'premium');
+  assert.equal(standard.applied, false);
 });

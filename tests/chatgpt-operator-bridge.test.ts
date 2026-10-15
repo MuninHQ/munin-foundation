@@ -12,6 +12,10 @@ test('web and mobile expose the ChatGPT operator bridge',async()=>{
 
 test('operator bridge never places Munin tokens or API keys in the handoff payload',async()=>{
  const bridge=await text('apps/web/src/chatgpt-operator-bridge.ts');
+ assert.match(bridge,/ZERO RISK · MANUAL/);
+ assert.match(bridge,/navigator\.clipboard\.writeText/);
+ assert.match(bridge,/window\.open/);
+ assert.doesNotMatch(bridge,/querySelector\([^)]*iframe|contentDocument|contentWindow|MutationObserver|postMessage|sendPrompt|readResponse/);
  assert.match(bridge,/SNAPSHOT LOCAL SANITIZADO/);
  assert.match(bridge,/sem tokens\/credenciais/);
  assert.match(bridge,/não deve iniciar Ollama/);

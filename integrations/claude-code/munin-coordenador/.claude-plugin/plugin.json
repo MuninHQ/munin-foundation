@@ -1,0 +1,51 @@
+{
+  "name": "munin-coordenador",
+  "version": "0.1.0",
+  "description": "Painel e comandos do Munin no Claude Code: status canônico, SITREP determinístico e delegação delimitada sob o Provider Registry. O Munin governa; o mod observa, apresenta e encaminha.",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "muninRoot": {
+      "type": "string",
+      "title": "Pasta do Munin",
+      "description": "Raiz do repositório munin-foundation (onde dist/src/coordinator-cli.js existe após npm run build:core).",
+      "default": "D:/Dev/munin-foundation-git"
+    },
+    "node": {
+      "type": "string",
+      "title": "Executável do Node",
+      "description": "Comando ou caminho do Node usado para rodar a CLI do coordenador.",
+      "default": "node"
+    },
+    "pollMinutes": {
+      "type": "string",
+      "title": "Atualização automática",
+      "description": "Intervalo de leitura do status canônico (determinística, sem chamada a modelo). off desliga.",
+      "default": "5",
+      "options": [
+        "2",
+        "5",
+        "15",
+        "off"
+      ]
+    },
+    "panel": {
+      "type": "string",
+      "title": "Painel",
+      "description": "command abre o painel só com /munin; auto também o abre ao iniciar a sessão quando o terminal docka painéis.",
+      "default": "command",
+      "options": [
+        "command",
+        "auto"
+      ]
+    },
+    "habblaudPort": {
+      "type": "string",
+      "title": "Porta do Habblaud",
+      "description": "Porta local do Habblaud (observabilidade). Só leitura de GET /api/mod/summary; off desliga.",
+      "default": "4747"
+    }
+  },
+  "author": {
+    "name": "Munin (André Jardim)"
+  }
+}

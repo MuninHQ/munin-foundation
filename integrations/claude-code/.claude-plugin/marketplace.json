@@ -1,0 +1,14 @@
+{
+  "name": "munin-local",
+  "owner": {
+    "name": "Munin (André Jardim)"
+  },
+  "plugins": [
+    {
+      "name": "munin-coordenador",
+      "source": "./munin-coordenador",
+      "description": "Painel, SITREP e delegação delimitada do Munin no Claude Code."
+    }
+  ],
+  "description": "Mods locais do Munin para o Claude Code (instalação por pasta, reversível)."
+}

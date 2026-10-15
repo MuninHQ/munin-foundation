@@ -417,6 +417,305 @@ Vault matches: 0
 
 - ^One^ full-suite^ heartbeat^ timing^ test^ failed^ once^ and^ passed^ isolated^ plus^ full^ rerun;^ no^ related^ code^ changed^
 
+## 2026-09-28T16:13:36.412Z — MEMORY PRE-TASK · munin-foundation
+
+Task: ^Munin^ Token^ Efficiency^ v2^ and^ Codex^ Web^ Zero^ Risk^
+Consumer: assistant
+Context matches: 3
+Vault matches: 8
+
+## 2026-09-28T16:51:50.970Z — MEMORY POST-TASK · munin-foundation
+
+^Implemented^ bounded^ context,^ output^ reduction,^ test^ failure^ extraction,^ lazy^ capabilities,^ economic^ routing,^ compact^ Build^ State,^ diff-first^ review,^ separate^ efficiency^ telemetry,^ manual-only^ Zero^ Risk^ handoff,^ diagnostics^ and^ runtime^ verification.^
+## Decisions
+
+- ^Extend^ Token^ Governor^ through^ focused^ deterministic^ modules^
+- Keep^ Provider^ Registry^ authoritative^
+- Keep^ Codex^ Web^ copy/open^ manual-only^
+
+## Changed
+
+- ^Efficiency^ runtime^ and^ tests^
+- CLI^ API^ and^ UI^ diagnostics^
+- Scoped^ AGENTS^ guidance^
+- Supervised^ API^ child^ ownership^
+
+## Next steps
+
+- ^Collect^ representative^ local^ efficiency^ evidence^ before^ any^ routing^ promotion^
+
+## What did not work
+
+- ^Initial^ controlled^ restart^ reused^ an^ orphaned^ API;^ fixed^ direct^ child^ ownership^ and^ verified^ generation^ 5^
+
+## 2026-10-01T15:57:28.786Z — MEMORY PRE-TASK · Munin
+
+Task: ^Consolidate^ unpublished^ Munin^ changes^ safely^
+Consumer: assistant
+Context matches: 4
+Vault matches: 8
+
+## 2026-10-01T16:15:37.587Z — MEMORY POST-TASK · Munin
+
+^Recovered^ efficiency^ v2^ and^ Automaton^ consolidated^ in^ isolated^ review^ branch;^ 910^ Munin^ and^ 1657^ Automaton^ tests^ pass;^ missing^ delta^ and^ skill^ gate^ artifacts^ documented^
+## Decisions
+
+- ^Automaton^ automatic^ routing^ quarantined^
+- Observation^ remains^ advisory^
+- No^ main^ merge^
+
+## Changed
+
+- ^consolidation/2026-10-01^ published^
+- Safety^ regressions^ repaired^
+- Provenance^ SITREP^ documented^
+
+## Next steps
+
+- ^Review^ draft^ PR^ and^ CI^
+- Recover^ missing^ gate^ sources^
+- Reconcile^ Offer^ Architect^ separately^
+
+## What did not work
+
+- ^Gate^ da54dde^ not^ found^
+- Node24^ SQLite^ ABI^ mismatch^ resolved^ using^ existing^ Node22^
+- Whole^ repository^ Markdown^ debt^ persists^
+
+## 2026-10-01T16:23:55.875Z — MEMORY PRE-TASK · yt-lab
+
+Task: ^Moneyprinter^ local^ MVP^ Wan2GP^ FFmpeg^ hardware^ validation^
+Consumer: assistant
+Context matches: 0
+Vault matches: 5
+
+## 2026-10-01T16:45:10.185Z — MEMORY POST-TASK · yt-lab
+
+Offline_CPU_pilot_23.83s_ptBR_TTS_5_scenes_passed_862_Munin_tests_and_11_regressions_independent_review_pass
+## Decisions
+
+- CPU_only_zero_paid_API_no_download_no_publication_optin_existing_video_seam
+
+## Changed
+
+- scripts/moneyprinter-local,scripts/moneyprinter-local-runner.mjs,tests/moneyprinter-local.test.ts,docs/integrations/moneyprinter-local.md
+
+## Next steps
+
+- Wan2GP_live_MCP_and_model_benchmark_pending_reviewed_installation_and_free_VRAM
+
+## What did not work
+
+- Fixed_done_artifact_recovery_atomic_import_provenance_caption_bounds_atomic_JSON
+## 2026-10-08T22:41:40.210Z — MEMORY PRE-TASK · career
+
+Task: Improve career command reliability and job search UX
+Consumer: assistant
+Context matches: 0
+Vault matches: 0
+
+## 2026-10-08T22:54:28.467Z — MEMORY POST-TASK · career
+
+Delivered career workbench and discovery/lifecycle fixes; 899 tests plus browser acceptance passed; Windows device offline
+## Decisions
+
+- Keep existing local stores and free operation
+- Separate opportunity capture from application submission
+- Preserve pipeline during optional integration failure
+
+## Changed
+
+- Career Command UI
+- Job discovery and email identity
+- Lifecycle validation and activity freshness
+
+## Next steps
+
+- Review branch and deploy on Windows when connected
+- Verify private mailbox and actual iPhone
+
+## What did not work
+
+- Windows runtime acceptance unavailable because device offline
+
+## 2026-10-08T23:04:03.546Z — MEMORY PRE-TASK · career
+
+Task: Expand job alert emails into individual opportunities with reliable ingestion
+Consumer: assistant
+Context matches: 0
+Vault matches: 2
+
+## 2026-10-08T23:10:13.258Z — MEMORY POST-TASK · career
+
+Delivered full Gmail/Outlook alert extraction, independent vacancies, stable LinkedIn URL identity, imported-association preservation, body caching and incomplete-alert health. Full suite: 914 passed; frontend types and browser acceptance passed. Windows remains offline.
+## Decisions
+
+- Keep deterministic email ingestion and existing 15-minute worker
+- Do not automate LinkedIn accounts or submit applications
+- Treat missing identity and unparsed layouts as incomplete
+
+## Changed
+
+- Career alert parser and provider integration
+- Independent imports and URL duplicate reuse
+- Career Command source health and regression coverage
+
+## Next steps
+
+- Install reviewed branch on Windows when online
+- Validate representative private LinkedIn alerts and configured daily email delivery
+
+## What did not work
+
+- Initial API fixture reused module-scoped store from previous temporary directory; isolated module corrected
+- Initial full suite redirected web build away from mobile launcher fixture; rerun with normal build passed
+
+## 2026-10-08T23:14:30.434Z — MEMORY PRE-TASK · career
+
+Task: Add reference-led visual motion to Career Command
+Consumer: assistant
+Context matches: 0
+Vault matches: 7
+
+## 2026-10-08T23:20:46.833Z — MEMORY POST-TASK · career
+
+Implemented original animated vector header, score rings, card/detail transitions and persistent animation pause with system reduced-motion priority. Full build and 914 tests, frontend types and browser acceptance passed; design observation unchanged at 1401. Recorded synthetic-data preview; Windows install remains pending.
+## Decisions
+
+- Adapt Lusion/Linear/Rauno references without copying assets
+- Use bounded SVG/CSS motion and existing semantic tokens
+- Keep decorative art separate from real source health and job evidence
+
+## Changed
+
+- Career Command CSS/React visual motion
+- Browser checks for pause persistence and reduced motion
+- Reference and validation document
+
+## Next steps
+
+- Review actual motion preview
+- Install reviewed branch and validate native iPhone performance when host is online
+
+## What did not work
+
+- Optional Playwright recording lacked its ffmpeg path; reused existing system ffmpeg and recording passed
+
+## 2026-10-08T23:45:56.086Z — MEMORY PRE-TASK · Munin
+
+Task: Repaginar toda interface e gravar navegação real
+Consumer: assistant
+Context matches: 0
+Vault matches: 8
+
+## 2026-10-09T00:06:39.656Z — MEMORY POST-TASK · Munin
+
+29 telas repaginadas; 914 testes e aceitação real no navegador; vídeo de 172 segundos com dados fictícios
+## Decisions
+
+- Reutilizar tokens e componentes existentes
+- Movimento global acessível sem dependência paga
+- Preservar integrações e aprovações
+
+## Changed
+
+- Interface compartilhada e HUD
+- Navegação completa e rotas de build
+- Correções de carregamento e tipagem
+- Validação e roteiro de gravação
+
+## Next steps
+
+- Instalar no Windows quando estiver online
+- Validar contas privadas e iPhone físico
+
+## What did not work
+
+- Windows offline; aceitação no host pendente
+
+## 2026-10-09T01:04:06.594Z — MEMORY PRE-TASK · munin
+
+Task: HUD imersiva e constelação de memória sem voz
+Consumer: assistant
+Context matches: 0
+Vault matches: 8
+
+## 2026-10-09T10:52:20.639Z — MEMORY POST-TASK · munin
+
+Implementada presença operacional compartilhada, HUD e Home reativas e constelação de memória com busca, filtros, rotação e navegação por teclado; 918 testes e aceitação das 29 rotas desktop/mobile passaram.
+## Decisions
+
+- Reutilizar renderizador e componentes existentes
+- Relações do grafo representam fonte real, sem inferências
+- Excluir conteúdo sensitive-private da visualização
+
+## Changed
+
+- HUD, Home e camada visual compartilhada
+- Constelação de memória
+- Testes de concorrência e aceitação no navegador
+
+## Next steps
+
+- Atualizar PR 384
+- Validar instalação Windows e iPhone físico quando acessíveis
+
+## What did not work
+
+- Instalador CDN do navegador retornou payload inválido; navegador de teste obtido pelo pacote npm
+- Aceitação no host Windows não executada
+
+## 2026-10-09T12:20:13.554Z — MEMORY PRE-TASK · munin
+
+Task: ^Install^ immersive^ Munin^ UI^ on^ Windows^ preserving^ local^ work^
+Consumer: assistant
+Context matches: 4
+Vault matches: 8
+
+## 2026-10-09T12:24:19.162Z — MEMORY POST-TASK · munin
+
+^Installed^ immersive^ workspace^ on^ Windows;^ build^ and^ 954^ tests^ passed;^ 29^ browser^ routes^ and^ live^ UI^ smoke^ passed;^ API^ and^ supervisor^ running.^
+## Decisions
+
+- ^Preserve^ local^ Offer^ Architect^ and^ video^ runner;^ retain^ original^ data^ directory^ and^ startup^ shortcut^
+
+## Changed
+
+- ^Local^ installation^ branch^ with^ UI^ integration;^ workspace^ supervisor^ started^
+
+## Next steps
+
+- ^Use^ HUD^ and^ career^ workbench^ on^ Windows^
+
+## What did not work
+
+- ^Initial^ recall^ hit^ ENOTEMPTY;^ retry^ after^ build^ succeeded.^ Initial^ navigation^ contract^ conflict^ repaired^ and^ all^ tests^ passed.^
+
+## 2026-10-15T17:11:07.576Z — MEMORY PRE-TASK · munin
+
+Task: ^Preserve^ local^ work,^ diagnose^ CI,^ refresh^ ops^ state^
+Consumer: assistant
+Context matches: 4
+Vault matches: 8
+
+## 2026-10-15T17:13:26.390Z — MEMORY POST-TASK · munin
+
+^Published^ install/immersive-windows-20261009^ ^(04a44bd^);^ npm^ test^ 954/954;^ PR^ 389^ CI^ failure^ fixed^ on^ head^ b097619;^ munin-core^ main^ CI^ fails^ on^ Prettier^ format^ of^ vaga-munin.md^
+## Decisions
+
+- ^Do^ not^ commit^ dist-web^ build^ output^
+- Leave^ local^ main^ untouched^
+
+## Changed
+
+- ^Nordic^ theme^ assets^ committed^
+- CURRENT_STATE^ and^ BACKLOG^ refreshed^ 2026-10-15^
+
+## Next steps
+
+- ^Fix^ Prettier^ in^ munin-core^ issue^ template^
+- Fix^ nordic-theme.js^ mojibake^
+- Decide^ dist-web^ tracking^ policy^
 ## 2026-10-15T22:04:41.136Z — MEMORY POST-TASK · munin-foundation
 
 ^Validated^ GitHub^ access^ ^(ADMIN^),^ 29^ web^ pages,^ API^ and^ Mobile^ Vault^ login;^ fixed^ Action^ Inbox^ deferred-client^ hang,^ added^ portfolio/email-intelligence^ to^ Vite^ build,^ shared^ CSS^ interaction^ polish;^ PR^ #390^

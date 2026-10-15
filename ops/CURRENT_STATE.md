@@ -1,12 +1,40 @@
 # Munin Current State
 
+## Verified state — 2026-10-15 (Windows host DESKTOP-IO2HRBB)
+
+Current state, verified today:
+
+- Branch `install/immersive-windows-20261009` is published to origin (first push today, head `04a44bd`); it is 25 commits ahead of `origin/main` (`199e17c`, unchanged after `git fetch` today) and 0 behind. Local `main` is 15 ahead / 19 behind `origin/main` and was not touched.
+- `04a44bd` preserves previously uncommitted local work: Nordic theme assets (`apps/web/public/nordic-theme.{css,js}`) and their HUD/index hooks. Known defect: the theme toggle tooltips in `nordic-theme.js` contain mojibake (double-encoded Portuguese accents); not fixed.
+- `npm test` on this host: 954 tests, 954 pass, 0 fail (node test runner 14.1 s; about 23 s including build).
+- `dist-web/` is partly tracked (16 files), not ignored, and documented as reproducible build output. Its local changes remain uncommitted in the working tree.
+- CI for PR #389 (`feat/career-mobile-private-inbox-20261014`): run 38637906160 failed on `352757a` at "Build core" with TypeScript error "'source' is specified more than once" in `src/host-worker-cli.ts:35`. The branch head `b097619` fixes that line, and all four workflows (Munin CI, Quality Gates, HUD checks, Markdown checks) passed on it. The failure no longer applies to the current head.
+- `352757a`/`b097619` were not produced in any local clone or worktree under `D:/Dev`; they arrived through today's `git fetch` (commits authored as "Munin Labs HQ", 2026-10-14). Their origin session was not identified.
+- MuninHQ/munin-core `main` CI run 38637505861 (`bbaf244`) failed at `pnpm format:check`: Prettier flagged `.github/ISSUE_TEMPLATE/vaga-munin.md`. Lint, typecheck, test and build did not run. Not fixed.
+
+Not verified today: workspace supervisor/API runtime status, host installation of the immersive UI, private mailbox/worker/iPhone acceptance.
+
+Historical entries follow.
+
+## Workspace interface refresh — 2026-10-09
+
+All 29 web entry points now share the Career workbench visual direction, module search and accessible motion control, including desktop/mobile HUD and React surfaces. Portfolio and Email Intelligence are explicit build entries. HUD primary context no longer waits for optional LinkedIn/memory/asset requests; Action Inbox client initialization and optional mobile service-worker failure handling were corrected. Validation: 914 tests, desktop/mobile frontend type checking, 29-route real browser acceptance at 1440/390px, and a 172-second synthetic-data walkthrough. See `docs/validation/workspace-interface-refresh.md`. Windows remains offline; host installation and private integrations are not validated by the demo.
+
+## Multi-vacancy career alerts — 2026-10-08
+
+Career inbox now parses full Gmail/Outlook alert bodies into independently importable vacancies, canonicalizes LinkedIn job IDs, preserves imported associations across syncs and reports incomplete extraction. Body parsing is local/deterministic and raw HTML is not persisted. The existing 15-minute worker remains the execution path; LinkedIn email delivery is configured on LinkedIn. See `docs/validation/career-alert-ingestion.md`. Host/private-mailbox acceptance remains pending while Windows is offline.
+
+## Career workbench implementation — 2026-10-08
+
+Career Command now has Opportunities, Pipeline and Agenda with search/filtering, explicit source availability, safe job links, editable stages/next actions and evidence-first preparation. Discovery identity, alert-stage isolation, legacy alert import, manual-update freshness and terminal follow-ups have regression coverage. The implementation passes 899 tests, frontend type checking and browser acceptance at 320/390/768/1440px. See `docs/validation/career-command-workbench.md`. This is repository implementation evidence, not host installation: Windows was offline and private mailbox/worker/iPhone acceptance remains pending.
+
 ## Unified Mobile UI
 
 The workspace now uses one mobile navigation model (`Hoje`, `Inbox`, `Carreira`, `LinkedIn`, `Mais`), responsive Home layouts, resilient loading/error feedback, and a decision-oriented Action Inbox. View-only defer/discard controls do not create external or consequential effects.
 
 > Canonical operational snapshot. Update after meaningful execution.
 >
-> Last updated: 2026-09-02
+> Last updated: 2026-10-15
 
 ## Current objective
 

@@ -23,7 +23,7 @@ export async function manualSyncCareerInbox(now = Date.now()): Promise<ManualEma
 
   try {
     const result = await syncCareerInbox();
-    await healthStore.success({ providers: result.providers, needsConnection: result.needsConnection, summary: result.needsConnection ? 'Mailbox connection required.' : `${result.totalFetched} fetched · ${result.added} added` });
+    await healthStore.success({ providers: result.providers, needsConnection: result.needsConnection, summary: result.needsConnection ? 'Mailbox connection required.' : `${result.totalFetched} emails fetched · ${result.added} records added · ${result.alertHealth?.vacancies??0} alert vacancies · ${result.alertHealth?.incomplete??0} alerts to review` });
     return result;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

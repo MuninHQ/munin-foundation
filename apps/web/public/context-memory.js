@@ -51,6 +51,7 @@
       ['Imports', data.summary.imports ?? data.state.imports.length],
     ].map(([label,value]) => `<div class="node"><div class="value">${esc(value)}</div><div class="label">${esc(label)}</div></div>`).join('');
     renderTimeline(timeline);
+    window.dispatchEvent(new CustomEvent('munin:memory-data', {detail:{data,core}}));
   }
 
   async function loadCore(data) {
@@ -62,6 +63,7 @@
       $('coreOnline').textContent = 'MEMORY STATUS INDISPONÍVEL';
       $('coreMeta').textContent = error.message;
       renderTimeline([]);
+      if (data) window.dispatchEvent(new CustomEvent('munin:memory-data', {detail:{data,core:null}}));
       throw error;
     }
   }
@@ -133,7 +135,7 @@
         ? state.imports.slice(0,8).map(item => `<div class="card"><b>${esc(item.source)}</b><div class="meta">${new Date(item.at).toLocaleString()} · ${item.keys.length} seções</div><div>${item.keys.map(key => `<span class="tag">${esc(key)}</span>`).join('')}</div></div>`).join('')
         : '<p class="muted">Sem imports.</p>';
       await loadCore(data);
-    } catch (error) { toast(error.message, 'danger'); }
+    } catch (error) { window.dispatchEvent(new CustomEvent('munin:memory-data', {detail:{error:true}})); toast(error.message, 'danger'); }
   }
 
   async function previewSeed(value) {

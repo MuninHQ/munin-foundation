@@ -5,6 +5,12 @@
     if (options.body != null && !headers.has('content-type') && !(options.body instanceof FormData)) {
       headers.set('content-type', 'application/json');
     }
+    const id = crypto.randomUUID();
+    const method = (options.method || 'GET').toUpperCase();
+    const state = method !== 'GET' ? 'executing' : /radar|query|recall/.test(path) ? 'searching' : 'thinking';
+    const emit = state => window.dispatchEvent(new CustomEvent('munin:state', {detail:{id,state,at:Date.now()}}));
+    emit(state);
+    try {
     const response = await fetch(path, { ...options, headers });
     const contentType = response.headers.get('content-type') || '';
     const payload = contentType.includes('application/json') ? await response.json() : await response.text();
@@ -14,7 +20,9 @@
         : `Request failed (${response.status})`;
       throw new Error(String(message));
     }
+    emit('done');
     return payload;
+    } catch (error) { emit('warning'); throw error; }
   }
 
   function toast(message, tone = 'ok', timeout = 4200) {
