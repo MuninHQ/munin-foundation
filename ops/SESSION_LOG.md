@@ -664,3 +664,36 @@ Implementada presença operacional compartilhada, HUD e Home reativas e constela
 
 - Instalador CDN do navegador retornou payload inválido; navegador de teste obtido pelo pacote npm
 - Aceitação no host Windows não executada
+
+## 2026-10-09T12:20:13.554Z — MEMORY PRE-TASK · munin
+
+Task: ^Install^ immersive^ Munin^ UI^ on^ Windows^ preserving^ local^ work^
+Consumer: assistant
+Context matches: 4
+Vault matches: 8
+
+## 2026-10-09T12:24:19.162Z — MEMORY POST-TASK · munin
+
+^Installed^ immersive^ workspace^ on^ Windows;^ build^ and^ 954^ tests^ passed;^ 29^ browser^ routes^ and^ live^ UI^ smoke^ passed;^ API^ and^ supervisor^ running.^
+## Decisions
+
+- ^Preserve^ local^ Offer^ Architect^ and^ video^ runner;^ retain^ original^ data^ directory^ and^ startup^ shortcut^
+
+## Changed
+
+- ^Local^ installation^ branch^ with^ UI^ integration;^ workspace^ supervisor^ started^
+
+## Next steps
+
+- ^Use^ HUD^ and^ career^ workbench^ on^ Windows^
+
+## What did not work
+
+- ^Initial^ recall^ hit^ ENOTEMPTY;^ retry^ after^ build^ succeeded.^ Initial^ navigation^ contract^ conflict^ repaired^ and^ all^ tests^ passed.^
+
+## 2026-10-15T17:11:07.576Z — MEMORY PRE-TASK · munin
+
+Task: ^Preserve^ local^ work,^ diagnose^ CI,^ refresh^ ops^ state^
+Consumer: assistant
+Context matches: 4
+Vault matches: 8
