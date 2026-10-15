@@ -486,3 +486,26 @@ Vault matches: 0
 ## What did not work
 
 - none
+
+## 2026-10-15T22:52:00.654Z — MEMORY POST-TASK · munin-foundation
+
+^Recolored^ HUD^ from^ neon^ cyan^ to^ steel/silver^ with^ one^ bronze^ focal^ core^ per^ AJ^ Rune^ brand^ system;^ Huginn/Muninn^ copy^ in^ boot^ and^ core^ label;^ approved^ fjord^ art^ behind^ HUD^ boot;^ replaced^ literal^ rune^ on^ home^ assistant^ button^ with^ M^ monogram^
+## Decisions
+
+- ^Follow^ docs/brand/aj-rune-brand-system.md:^ no^ drawn^ ravens^ or^ literal^ runes^
+- Bronze^ only^ as^ the^ single^ focal^ accent^
+
+## Changed
+
+- apps/web/hud.html^
+- apps/web/public/hud.css^
+- apps/web/public/hud.js^
+- apps/web/src/assistant-dock.ts
+
+## Next steps
+
+- ^Supply^ owner-approved^ munin-raven-seal^ master^ to^ use^ as^ product^ mark^
+
+## What did not work
+
+- none
