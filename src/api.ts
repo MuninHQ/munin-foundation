@@ -11,6 +11,7 @@ import { beginOAuth, completeOAuth, connectionStatus, disconnect, type OAuthProv
 import { captureCareerMessage, type CaptureFormat } from './career-capture.js';
 import { CareerWatchFolder } from './watch-folder.js';
 import { executeAssistantCommand } from './assistant.js';
+import { claudeCodeStatus } from './claude-code-local.js';
 import { clearAssistantMemory, loadAssistantMemory } from './assistant-memory.js';
 import { deleteLlmSettings, loadLlmSettings, publicLlmSettings, saveLlmSettings, type LlmProviderType } from './llm-settings.js';
 import { llmProviderStatus, testLlmProvider } from './llm-provider.js';
@@ -51,6 +52,7 @@ if(request.method==='GET'&&url.pathname==='/api/proactive-operator'){let enginee
 if(request.method==='POST'&&url.pathname==='/api/manus/tasks'){const input=await body(request);return json(request,response,201,await submitManusTask({kind:text(input.kind,'kind') as ManusTaskKind,title:text(input.title,'title'),prompt:text(input.prompt,'prompt'),declaredCreditBudget:typeof input.declaredCreditBudget==='number'?input.declaredCreditBudget:undefined},manusTasks));}
 if(request.method==='POST'&&url.pathname==='/api/manus/refresh')return json(request,response,200,{items:await refreshManusTasks(manusTasks)});
 if(request.method==='GET'&&url.pathname==='/api/workspace'){const state=await store.load();const events=await store.events();const careerQueue=await service.careerQueue();return json(request,response,200,{state,events:events.slice(-20).reverse(),careerQueue,intelligence:{dailyBrief:generateDailyBrief(state),timeline:buildTimeline(state,events,30),graph:buildKnowledgeGraph(state),insights:generateInsights(state).slice(0,20)}});}
+if(request.method==='GET'&&url.pathname==='/api/claude/status')return json(request,response,200,await claudeCodeStatus());
 if(request.method==='POST'&&url.pathname==='/api/assistant'){const input=await body(request);return json(request,response,200,await executeAssistantCommand(text(input.command,'command')));}
 if(request.method==='POST'&&url.pathname==='/api/chat'){const input=await body(request);const command=typeof input.command==='string'?input.command:typeof input.message==='string'?input.message:'';return json(request,response,200,await executeAssistantCommand(text(command,'command')));}
 if(request.method==='GET'&&url.pathname==='/api/assistant/history')return json(request,response,200,await loadAssistantMemory());

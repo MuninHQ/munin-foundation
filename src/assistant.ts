@@ -5,8 +5,9 @@ import type { JobStatus, Priority } from './types.js';
 import { clearAssistantMemory, loadAssistantMemory, rememberTurn, type AssistantEntity } from './assistant-memory.js';
 import { normalizeWithLlm } from './llm-provider.js';
 import { answerFromContinuity } from './continuity-context.js';
+import { askClaudeCode } from './claude-code-local.js';
 
-export type AssistantResult = { kind:'message'|'sitrep'|'created'|'context'; message:string; data?:unknown; mutated?:boolean; entity?:AssistantEntity; interpretedBy?:'local'|'llm' };
+export type AssistantResult = { kind:'message'|'sitrep'|'created'|'context'; message:string; data?:unknown; mutated?:boolean; entity?:AssistantEntity; interpretedBy?:'local'|'llm'|'claude' };
 
 function clean(input:string){return input.trim().replace(/\s+/g,' ');}
 function priorityFrom(text:string):Priority { const match=text.match(/\bP([012])\b/i); return (match?`P${match[1]}`:'P1') as Priority; }
@@ -52,6 +53,17 @@ export async function executeAssistantCommand(raw:string,allowLlm=true,rememberU
 
   if(allowLlm){
     try{const normalized=await normalizeWithLlm(command);if(normalized?.command&&normalized.command.toLowerCase()!==command.toLowerCase()){const result=await executeAssistantCommand(normalized.command,false,false);return {...result,interpretedBy:'llm'};}if(normalized?.reply)return finish({kind:'message',message:normalized.reply,interpretedBy:'llm'});}catch(error){return finish({kind:'message',message:`Não consegui interpretar esse pedido pelo provider configurado (${error instanceof Error?error.message:String(error)}). O modo local continua disponível.`,interpretedBy:'local'});}
+  }
+  if(allowLlm){
+    // Claude-first: free-form questions go to the owner's local Claude Code with a bounded snapshot; it answers, never mutates.
+    const brief=generateDailyBrief(state);
+    const snapshot={brief:{headline:brief.headline,priorities:brief.priorities,alerts:brief.alerts},counts:{projects:state.projects.length,actions:state.actions.length,jobs:state.jobs.length,research:state.research.length},
+      projects:state.projects.slice(0,8).map(x=>({name:x.name,status:x.status,priority:x.priority,nextAction:x.nextAction})),
+      actions:state.actions.filter(x=>x.status!=='done').slice(0,8).map(x=>({title:x.title,status:x.status,priority:x.priority})),
+      jobs:state.jobs.slice(0,8).map(x=>({company:x.company,role:x.role,status:x.status,fitScore:x.fitScore,nextAction:x.nextAction})),
+      research:state.research.slice(0,5).map(x=>({question:x.question,status:x.status})),lastTopic:memory.lastEntity?.label};
+    const answer=await askClaudeCode(command,snapshot);
+    if(answer)return finish({kind:'message',message:answer,interpretedBy:'claude'});
   }
   return finish({kind:'message',message:'Ainda não consegui interpretar esse pedido. O modo local entende carreira, projetos, pesquisas, SITREP e memória de continuidade. Se um provider LLM estiver configurado, pedidos livres também serão normalizados com segurança.',interpretedBy:'local'});
 }

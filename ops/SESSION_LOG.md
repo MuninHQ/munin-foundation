@@ -837,3 +837,28 @@ Vault matches: 8
 ## What did not work
 
 - none
+
+## 2026-10-15T23:54:26.107Z — MEMORY POST-TASK · munin-foundation
+
+^Free-form^ questions^ now^ answered^ by^ local^ Claude^ Code^ ^(no^ tools,^ no^ session,^ sanitized^ snapshot,^ stdin^ prompt,^ isolated^ cwd^);^ ChatGPT^ bridge^ and^ email^ handoff^ now^ open^ claude.ai;^ settings,^ nav,^ dock^ and^ operator^ chat^ describe^ Claude-first;^ /api/claude/status^ added^
+## Decisions
+
+- ^Use^ local^ Claude^ Code^ CLI^ with^ the^ owner^ subscription,^ not^ the^ paid^ API^
+- Claude^ answers^ only;^ mutations^ stay^ deterministic^
+- ChatGPT^ memory^ import^ kept^
+
+## Changed
+
+- ^src/claude-code-local.ts^
+- src/assistant.ts^
+- src/api.ts^
+- apps/web^ bridge,^ email^ handoff,^ dock,^ settings,^ operator^ chat,^ nav^
+- tests^
+
+## Next steps
+
+- ^Restart^ the^ Munin^ API^ on^ the^ PC^ after^ merge^ so^ the^ running^ instance^ loads^ the^ new^ assistant^
+
+## What did not work
+
+- none

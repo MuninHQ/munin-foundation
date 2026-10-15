@@ -15,5 +15,5 @@ test('flow viewer renders real orchestration traces without mutation controls',a
 });
 
 test('operational chat uses local assistant and explicit sanitized ChatGPT handoff',async()=>{
- const page=await web('operator-chat.html');assert.match(page,/\/api\/assistant/);assert.match(page,/chatgpt-operator-bridge\.ts/);assert.match(page,/SEM API PAGA/);assert.doesNotMatch(page,/MANUS_API_KEY|MUNIN_MOBILE_TOKEN/);
+ const page=await web('operator-chat.html');assert.match(page,/\/api\/assistant/);assert.match(page,/claude-operator-bridge\.ts/);assert.match(page,/SEM API PAGA/);assert.doesNotMatch(page,/MANUS_API_KEY|MUNIN_MOBILE_TOKEN/);
 });
