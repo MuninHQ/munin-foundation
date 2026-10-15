@@ -22,6 +22,8 @@ test('Action Inbox explains decisions and exposes explicit Sentinel approval con
   for(const label of ['POR QUE IMPORTA','RECOMENDAÇÃO','IMPACTO','Tentar novamente','Aprovar','Rejeitar'])assert.match(page,new RegExp(label));
   assert.match(page,/munin-skeleton/);assert.match(page,/api\/mobile\/approvals/);
   assert.match(page,/munin-mobile-token/);assert.match(page,/confirm\(/);
+  // the inline script calls Munin.* synchronously, so the client must not be deferred
+  assert.match(page,/<script src="\/munin-client\.js"><\/script>/);
 });
 
 test('HUD mobile exposes bounded approval controls and reports typed execution state',async()=>{
