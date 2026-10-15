@@ -716,6 +716,123 @@ Vault matches: 8
 - ^Fix^ Prettier^ in^ munin-core^ issue^ template^
 - Fix^ nordic-theme.js^ mojibake^
 - Decide^ dist-web^ tracking^ policy^
+## 2026-10-15T22:04:41.136Z — MEMORY POST-TASK · munin-foundation
+
+^Validated^ GitHub^ access^ ^(ADMIN^),^ 29^ web^ pages,^ API^ and^ Mobile^ Vault^ login;^ fixed^ Action^ Inbox^ deferred-client^ hang,^ added^ portfolio/email-intelligence^ to^ Vite^ build,^ shared^ CSS^ interaction^ polish;^ PR^ #390^
+## Decisions
+
+- ^Load^ munin-client.js^ synchronously^ in^ Action^ Inbox^
+- Use^ zero-specificity^ :where^(^)^ for^ shared^ polish^ CSS^
+
+## Changed
+
+- apps/web/action-inbox.html^
+- apps/web/public/munin.css^
+- apps/web/vite.config.ts^
+- tests/unified-mobile-ui.test.ts
+
+## Next steps
+
+- ^Review^ and^ merge^ PR^ #390^
+- Regenerate^ dist-web^ after^ merge^
+
+## What did not work
+
+- ^Service^ worker^ registration^ fails^ inside^ the^ in-app^ browser^ pane^ ^(environment,^ not^ reproduced^ elsewhere^)^
+
+## 2026-10-15T22:29:03.775Z — MEMORY POST-TASK · munin-foundation
+
+^Fixed^ HUD^ clock^ clipping^ and^ orbit^ nodes^ hidden^ under^ side^ panels;^ audited^ 28^ pages^ at^ 1366px^ and^ 375px;^ fixed^ mobile^ content^ hidden^ under^ quick-action^ button^ and^ colliding^ floating^ buttons^ on^ home;^ PR^ 390^
+## Decisions
+
+- ^Clamp^ HUD^ nodes^ to^ stage^ and^ above^ activity^ stream^
+- Mobile^ pages^ reserve^ 124px^ bottom^ space^
+- Home^ floating^ controls^ grouped^ bottom-right^
+
+## Changed
+
+- apps/web/public/hud.css^
+- apps/web/public/hud.js^
+- apps/web/public/munin.css^
+- apps/web/src/styles.css
+
+## Next steps
+
+- ^Review^ and^ merge^ PR^ 390^
+
+## What did not work
+
+- ^Hidden^ browser^ pane^ freezes^ CSS^ transitions,^ so^ layout^ measurements^ need^ finished^ transitions^
+
+## 2026-10-15T22:38:36.312Z — MEMORY POST-TASK · munin-foundation
+
+^Applied^ restrained^ Apple^ design^ pass:^ size-aware^ heading^ tracking,^ antialiased^ optical-size^ type,^ saturated^ translucent^ materials,^ scroll-edge^ bar^ border,^ anchored^ More^ menu,^ reduced-transparency^ and^ increased-contrast^ support^ across^ shared^ pages,^ home^ and^ HUD;^ PR^ 390^
+## Decisions
+
+- ^Prefer^ craft^ details^ over^ new^ visual^ elements^
+- Honor^ prefers-reduced-transparency^ and^ prefers-contrast^ everywhere^
+
+## Changed
+
+- apps/web/public/munin.css^
+- apps/web/src/styles.css^
+- apps/web/public/hud.css
+
+## Next steps
+
+- ^Review^ and^ merge^ PR^ 390^
+
+## What did not work
+
+- none
+
+## 2026-10-15T22:52:00.654Z — MEMORY POST-TASK · munin-foundation
+
+^Recolored^ HUD^ from^ neon^ cyan^ to^ steel/silver^ with^ one^ bronze^ focal^ core^ per^ AJ^ Rune^ brand^ system;^ Huginn/Muninn^ copy^ in^ boot^ and^ core^ label;^ approved^ fjord^ art^ behind^ HUD^ boot;^ replaced^ literal^ rune^ on^ home^ assistant^ button^ with^ M^ monogram^
+## Decisions
+
+- ^Follow^ docs/brand/aj-rune-brand-system.md:^ no^ drawn^ ravens^ or^ literal^ runes^
+- Bronze^ only^ as^ the^ single^ focal^ accent^
+
+## Changed
+
+- apps/web/hud.html^
+- apps/web/public/hud.css^
+- apps/web/public/hud.js^
+- apps/web/src/assistant-dock.ts
+
+## Next steps
+
+- ^Supply^ owner-approved^ munin-raven-seal^ master^ to^ use^ as^ product^ mark^
+
+## What did not work
+
+- none
+
+## 2026-10-15T23:15:52.159Z — MEMORY POST-TASK · munin-foundation
+
+^Owner-authorized^ vector^ redraw^ of^ the^ raven^ seal^ ^(full^ body,^ 48px+^)^ and^ icon^ ^(head,^ favicon/app^ icon^)^ from^ approved^ concepts;^ registered^ as^ approved^ masters;^ wired^ into^ nav^ bar,^ HUD^ brand^ and^ boot,^ home^ sidebar^ and^ assistant^ button,^ favicons^ on^ all^ pages^ and^ PWA^ manifest^ icons^
+## Decisions
+
+- ^Seal^ for^ 48px^ and^ up,^ icon^ below^
+- Exact^ ring^ geometry^ and^ mirrored^ markers,^ raven^ traced^ with^ potrace^
+- Owner^ authorized^ exception^ to^ the^ no-generated-marks^ rule^
+
+## Changed
+
+- ^assets/brand/masters^
+- assets/brand/registry.json^
+- apps/web/public/brand^
+- apps/web/*.html^ favicon^
+- munin-nav.js^
+- hud.html^
+- App.tsx^
+- assistant-dock.ts^
+
+## Next steps
+
+- ^Optional^ designer^ polish^ pass^ on^ claws^ and^ perch^
+- Light-background^ variant^ of^ the^ seal^
 
 ## What did not work
 

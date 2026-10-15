@@ -26,15 +26,18 @@
     "munin-raven-seal": {
       "label": "Munin Raven Seal",
       "role": "product-primary",
-      "status": "awaiting-master-file",
+      "status": "approved",
       "requiredFormat": ["svg", "png-transparent"],
-      "canonicalPath": null,
+      "canonicalPath": "assets/brand/masters/munin-raven-seal.svg",
       "allowedContexts": ["munin-product", "munin-docs"],
       "placement": {
         "preserveAspectRatio": true,
         "recolor": false,
         "effects": false
-      }
+      },
+      "pngPath": "assets/brand/masters/munin-raven-seal.png",
+      "provenance": "Owner-approved concept (ChatGPT image, 2026-10-15), vector redraw authorized by the owner: exact ring geometry, mirrored markers, bronze diamond eye, traced raven.",
+      "minDisplayPx": 48
     },
     "odin-mark": {
       "label": "Odin Specialist Mark",
@@ -49,6 +52,22 @@
       "status": "reserved",
       "canonicalPath": null,
       "allowedContexts": ["formal-document-only"]
+    },
+    "munin-raven-icon": {
+      "label": "Munin Raven Icon",
+      "role": "product-icon",
+      "status": "approved",
+      "requiredFormat": ["svg", "png-transparent"],
+      "canonicalPath": "assets/brand/masters/munin-raven-icon.svg",
+      "pngPath": "assets/brand/masters/munin-raven-icon.png",
+      "provenance": "Owner-approved concept (ChatGPT image, 2026-10-15), vector redraw authorized by the owner.",
+      "allowedContexts": ["munin-product", "favicon", "app-icon", "avatar"],
+      "placement": {
+        "preserveAspectRatio": true,
+        "recolor": false,
+        "effects": false
+      },
+      "maxDisplayPx": 47
     }
   }
 }

@@ -40,7 +40,7 @@
   const header = document.createElement('header');
   header.className = 'munin-bar';
   header.innerHTML = `<div class="munin-bar-inner">
-    <a class="munin-bar-brand" href="/" aria-label="Munin Command Center"><span class="munin-mark" aria-hidden="true">M</span><strong>MUNIN</strong></a>
+    <a class="munin-bar-brand" href="/" aria-label="Munin Command Center"><span class="munin-mark" aria-hidden="true"><img src="/brand/munin-raven-icon.svg" alt="" width="28" height="28"></span><strong>MUNIN</strong></a>
     <nav class="munin-primary" aria-label="Workspace">${sections.map(x => `<a href="${x.href}" class="${active(x.href) ? 'active' : ''}">${x.label}</a>`).join('')}</nav>
     <button type="button" class="munin-motion-toggle" aria-pressed="false">Animações</button>
     <details class="munin-more"><summary>Tools</summary><div class="munin-menu">${tools.map(([href,label]) => `<a href="${href}" class="${active(href) ? 'active' : ''}">${label}</a>`).join('')}</div></details>
