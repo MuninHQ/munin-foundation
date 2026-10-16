@@ -59,12 +59,12 @@ npm start -w server
 3. Copie a chave unificada `freellmapi-…` do cabeçalho da página **Keys**.
 4. No Munin, use **Settings → Provider in-process** (provider OpenAI-compatible, Base URL `http://localhost:3001/v1`, modelo `auto`) ou:
 
-```cmd
-set MUNIN_LLM_BASE_URL=http://localhost:3001/v1
-set MUNIN_LLM_API_KEY=freellmapi-SUA_CHAVE
-set MUNIN_LLM_MODEL=auto
-npm run workspace
-```
+   ```cmd
+   set MUNIN_LLM_BASE_URL=http://localhost:3001/v1
+   set MUNIN_LLM_API_KEY=freellmapi-SUA_CHAVE
+   set MUNIN_LLM_MODEL=auto
+   npm run workspace
+   ```
 
 5. Teste em **Settings → Provider in-process → Testar conexão**. Um `503` significa que nenhuma chave de provedor foi cadastrada ainda; um `401`, chave unificada errada.
 
