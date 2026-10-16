@@ -10,6 +10,11 @@ import { askClaudeCode } from './claude-code-local.js';
 let askClaude:(question:string,snapshot:unknown)=>Promise<string|undefined>=askClaudeCode;
 /** Test seam: replace the Claude Code call so suites never spawn the real CLI. */
 export function setClaudeAsker(asker:typeof askClaude){askClaude=asker;}
+let normalize:typeof normalizeWithLlm=normalizeWithLlm;
+/** Test seam for the optional configured LLM provider. */
+export function setLlmNormalizer(normalizer:typeof normalizeWithLlm){normalize=normalizer;}
+// Read-only local commands: safe to run early and hand to Claude as context. Anything else may mutate and runs as before.
+const READ_COMMAND=/^(sitrep|status report|relat[oó]rio de status|prioridades|priorizar|foco de hoje|o que devo fazer hoje|meu dia|buscar|pesquisar|encontrar|me mostre|mostre|o que temos sobre|o que sabe sobre|detalhes|mais detalhes|lembrar|lembre de)\b/i;
 
 export type AssistantResult = { kind:'message'|'sitrep'|'created'|'context'; message:string; data?:unknown; mutated?:boolean; entity?:AssistantEntity; interpretedBy?:'local'|'llm'|'claude' };
 
@@ -58,8 +63,9 @@ export async function executeAssistantCommand(raw:string,allowLlm=true,rememberU
   const continuity=await answerFromContinuity(command);if(continuity&&!freeForm)return finish({kind:'context',message:continuity,interpretedBy:'local'});
   if(!freeForm&&memory.lastEntity&&/\b(ela|ele|isso|essa|esse|dela|dele)\b/i.test(command))return finish({kind:'context',message:`Entendi a referência como ${memory.lastEntity.label}. Diga a ação desejada — por exemplo “criar follow-up”, “mais detalhes” ou “marcar como entrevista”.`,entity:memory.lastEntity,interpretedBy:'local'});
 
+  let llmRead:AssistantResult|undefined;
   if(allowLlm){
-    try{const normalized=await normalizeWithLlm(command);if(normalized?.command&&normalized.command.toLowerCase()!==command.toLowerCase()){const result=await executeAssistantCommand(normalized.command,false,false);return {...result,interpretedBy:'llm'};}if(normalized?.reply)return finish({kind:'message',message:normalized.reply,interpretedBy:'llm'});}catch(error){return finish({kind:'message',message:`Não consegui interpretar esse pedido pelo provider configurado (${error instanceof Error?error.message:String(error)}). O modo local continua disponível.`,interpretedBy:'local'});}
+    try{const normalized=await normalize(command);if(normalized?.command&&normalized.command.toLowerCase()!==command.toLowerCase()){const result=await executeAssistantCommand(normalized.command,false,false);if(!freeForm||!READ_COMMAND.test(normalized.command.trim()))return {...result,interpretedBy:'llm'};llmRead={...result,interpretedBy:'llm'};}else if(normalized?.reply&&!freeForm)return finish({kind:'message',message:normalized.reply,interpretedBy:'llm'});}catch(error){if(!freeForm)return finish({kind:'message',message:`Não consegui interpretar esse pedido pelo provider configurado (${error instanceof Error?error.message:String(error)}). O modo local continua disponível.`,interpretedBy:'local'});}
   }
   if(allowLlm){
     // Claude-first: free-form questions go to the owner's local Claude Code with a bounded snapshot; it answers, never mutates.
@@ -69,9 +75,10 @@ export async function executeAssistantCommand(raw:string,allowLlm=true,rememberU
       actions:state.actions.filter(x=>x.status!=='done').slice(0,8).map(x=>({title:x.title,status:x.status,priority:x.priority})),
       jobs:state.jobs.slice(0,8).map(x=>({company:x.company,role:x.role,status:x.status,fitScore:x.fitScore,nextAction:x.nextAction})),
       research:state.research.slice(0,5).map(x=>({question:x.question,status:x.status})),lastTopic:memory.lastEntity?.label,
-      related:matches.slice(0,5).map(m=>m.label),continuityMemory:continuity?.slice(0,1500)};
+      related:matches.slice(0,5).map(m=>m.label),continuityMemory:continuity?.slice(0,1500),llmHint:llmRead?.message.slice(0,2000)};
     const answer=await askClaude(command,snapshot);
     if(answer)return finish({kind:'message',message:answer,interpretedBy:'claude'});
+    if(llmRead)return llmRead;
     if(matches.length)return localMatch();
     if(continuity)return finish({kind:'context',message:continuity,interpretedBy:'local'});
   }
