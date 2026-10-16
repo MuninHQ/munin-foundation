@@ -862,3 +862,26 @@ Vault matches: 8
 ## What did not work
 
 - none
+
+## 2026-10-16T20:57:24.646Z — MEMORY POST-TASK · munin-foundation
+
+FreeLLMAPI validated (MIT, no duplication, zero cost with free-tier keys) and documented as optional provider in docs/FREELLMAPI.md; smoke-tested Munin->FreeLLMAPI auth path
+## Decisions
+
+- FreeLLMAPI uses existing OpenAI-compatible MUNIN_LLM slot, no code change
+- Only free-tier keys from accounts without billing; never activate Premium
+- Do not route sensitive-private context via FreeLLMAPI
+
+## Changed
+
+- docs/FREELLMAPI.md
+- docs/LLM_SETUP.md
+
+## Next steps
+
+- User installs FreeLLMAPI on Windows with HOST=127.0.0.1 and adds free provider keys
+- Consider marking localhost gateways that forward to cloud as external in llmProviderStatus
+
+## What did not work
+
+- llmProviderStatus reports deployment local for localhost proxies that forward to cloud

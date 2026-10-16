@@ -28,6 +28,10 @@ O Munin inclui um preset opcional em **Settings → NVIDIA Nemotron 3 Ultra**. E
 
 A API hospedada usa cota e termos próprios da NVIDIA. O Munin não assume gratuidade permanente, não cria cobrança e não ativa esse caminho sozinho. Veja [NEMOTRON_3_ULTRA.md](./NEMOTRON_3_ULTRA.md) para arquitetura, limites de hardware e validação.
 
+## FreeLLMAPI (free tiers agregados)
+
+Para usar vários free tiers (Google AI Studio, Groq, Cerebras, Mistral…) por um único endpoint local, sem custo, veja [FREELLMAPI.md](./FREELLMAPI.md). Ele ocupa este mesmo slot OpenAI-compatible; não há código novo no Munin.
+
 ## Segurança
 
 - A chave fica apenas no ambiente do processo e nunca deve ser commitada.
