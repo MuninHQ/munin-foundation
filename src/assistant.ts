@@ -7,6 +7,10 @@ import { normalizeWithLlm } from './llm-provider.js';
 import { answerFromContinuity } from './continuity-context.js';
 import { askClaudeCode } from './claude-code-local.js';
 
+let askClaude:(question:string,snapshot:unknown)=>Promise<string|undefined>=askClaudeCode;
+/** Test seam: replace the Claude Code call so suites never spawn the real CLI. */
+export function setClaudeAsker(asker:typeof askClaude){askClaude=asker;}
+
 export type AssistantResult = { kind:'message'|'sitrep'|'created'|'context'; message:string; data?:unknown; mutated?:boolean; entity?:AssistantEntity; interpretedBy?:'local'|'llm'|'claude' };
 
 function clean(input:string){return input.trim().replace(/\s+/g,' ');}
@@ -47,9 +51,12 @@ export async function executeAssistantCommand(raw:string,allowLlm=true,rememberU
   if(research){const created=await service.addResearch(research[1].trim());const entity:AssistantEntity={type:'research',id:created.id,label:created.question};return finish({kind:'created',message:`Pesquisa criada: ${created.question}`,data:created,mutated:true,entity,interpretedBy:'local'});}
 
   const matches=resolveContext(state,command);
-  if(matches.length){const entity=entityFromMatch(matches[0]);return finish({kind:'context',message:`Acho que você está falando de ${entity.label}.\n${entitySummary(state,entity)}`,data:matches.slice(0,12),entity,interpretedBy:'local'});}
-  const continuity=await answerFromContinuity(command);if(continuity)return finish({kind:'context',message:continuity,interpretedBy:'local'});
-  if(memory.lastEntity&&/\b(ela|ele|isso|essa|esse|dela|dele)\b/i.test(command))return finish({kind:'context',message:`Entendi a referência como ${memory.lastEntity.label}. Diga a ação desejada — por exemplo “criar follow-up”, “mais detalhes” ou “marcar como entrevista”.`,entity:memory.lastEntity,interpretedBy:'local'});
+  // Questions and longer requests are Claude's: fuzzy local matches travel as context instead of hijacking the answer.
+  const freeForm=allowLlm&&(/\?\s*$/.test(command)||command.split(' ').length>=6);
+  const localMatch=()=>{const entity=entityFromMatch(matches[0]);return finish({kind:'context',message:`Acho que você está falando de ${entity.label}.\n${entitySummary(state,entity)}`,data:matches.slice(0,12),entity,interpretedBy:'local'});};
+  if(matches.length&&!freeForm)return localMatch();
+  const continuity=await answerFromContinuity(command);if(continuity&&!freeForm)return finish({kind:'context',message:continuity,interpretedBy:'local'});
+  if(!freeForm&&memory.lastEntity&&/\b(ela|ele|isso|essa|esse|dela|dele)\b/i.test(command))return finish({kind:'context',message:`Entendi a referência como ${memory.lastEntity.label}. Diga a ação desejada — por exemplo “criar follow-up”, “mais detalhes” ou “marcar como entrevista”.`,entity:memory.lastEntity,interpretedBy:'local'});
 
   if(allowLlm){
     try{const normalized=await normalizeWithLlm(command);if(normalized?.command&&normalized.command.toLowerCase()!==command.toLowerCase()){const result=await executeAssistantCommand(normalized.command,false,false);return {...result,interpretedBy:'llm'};}if(normalized?.reply)return finish({kind:'message',message:normalized.reply,interpretedBy:'llm'});}catch(error){return finish({kind:'message',message:`Não consegui interpretar esse pedido pelo provider configurado (${error instanceof Error?error.message:String(error)}). O modo local continua disponível.`,interpretedBy:'local'});}
@@ -61,9 +68,12 @@ export async function executeAssistantCommand(raw:string,allowLlm=true,rememberU
       projects:state.projects.slice(0,8).map(x=>({name:x.name,status:x.status,priority:x.priority,nextAction:x.nextAction})),
       actions:state.actions.filter(x=>x.status!=='done').slice(0,8).map(x=>({title:x.title,status:x.status,priority:x.priority})),
       jobs:state.jobs.slice(0,8).map(x=>({company:x.company,role:x.role,status:x.status,fitScore:x.fitScore,nextAction:x.nextAction})),
-      research:state.research.slice(0,5).map(x=>({question:x.question,status:x.status})),lastTopic:memory.lastEntity?.label};
-    const answer=await askClaudeCode(command,snapshot);
+      research:state.research.slice(0,5).map(x=>({question:x.question,status:x.status})),lastTopic:memory.lastEntity?.label,
+      related:matches.slice(0,5).map(m=>m.label),continuityMemory:continuity?.slice(0,1500)};
+    const answer=await askClaude(command,snapshot);
     if(answer)return finish({kind:'message',message:answer,interpretedBy:'claude'});
+    if(matches.length)return localMatch();
+    if(continuity)return finish({kind:'context',message:continuity,interpretedBy:'local'});
   }
   return finish({kind:'message',message:'Ainda não consegui interpretar esse pedido. O modo local entende carreira, projetos, pesquisas, SITREP e memória de continuidade. Se um provider LLM estiver configurado, pedidos livres também serão normalizados com segurança.',interpretedBy:'local'});
 }
