@@ -919,3 +919,29 @@ Configured 7 Claude Code subagents (steve, lexa, lumi, ravi, zion, maya, neo) in
 
 - Subagents created mid-session are not loadable until a new session; tested via headless claude -p
 - WebFetch and curl to bcb.gov.br and support.microsoft.com blocked by proxy
+
+## 2026-10-17T01:10:00.756Z — MEMORY POST-TASK · munin-foundation
+
+Compared with Anil-matcha/open-dots (no license, ideas only); adopted hook-enforced approval: project PreToolUse guard confines neo subagent to templates/content-team and blocks credential-like content; verified with real neo runs; npm test 988 pass
+## Decisions
+
+- Subagent frontmatter hooks did not fire in 2.1.302; use project settings hook keyed on agent_type
+- Templates moved out of .claude (sensitive path prompts on every write)
+- Per-agent MEMORY.md rejected: conflicts with canonical memory rule
+
+## Changed
+
+- .claude/settings.json
+- .claude/hooks/neo-write-guard.mjs
+- templates/content-team/
+- .claude/agent-team/README.md
+- tests/content-team-agents.test.ts
+
+## Next steps
+
+- Approve a flow so neo can create the first template
+
+## What did not work
+
+- Frontmatter hooks on subagents ignored
+- Writes inside .claude/ always require approval
