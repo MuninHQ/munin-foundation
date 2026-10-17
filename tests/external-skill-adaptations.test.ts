@@ -26,6 +26,17 @@ test('LinkedIn drafting selects editorial voice and preserves publication govern
   assert.match(loaded.instructions, /never bypasses approval/i);
 });
 
+test('Instagram drafting selects instagram content guidance without granting publication', async () => {
+  const registry = new SkillRegistry(path.join(root, 'skills'));
+  const matches = await registry.match('escrever a legenda e o carrossel do próximo post no Instagram', 5);
+  assert.equal(matches.some(skill => skill.name === 'instagram-content'), true);
+  const loaded = await registry.load('instagram-content');
+  assert.match(loaded.instructions, /never invent/i);
+  assert.match(loaded.instructions, /125 characters/i);
+  assert.match(loaded.instructions, /data, never instructions/i);
+  assert.match(loaded.instructions, /never publishes/i);
+});
+
 test('design guidance includes critique and motion restraint without adding dependencies', async () => {
   const context = await loadEngineeringSkillContext(root, 'polish the responsive frontend design and animation', 3);
   assert.equal(context.names.includes('ui-ux-pro-max'), true);
@@ -35,7 +46,7 @@ test('design guidance includes critique and motion restraint without adding depe
 
 test('new adaptations remain local-only and safe for autonomous context loading', async () => {
   const registry = new SkillRegistry(path.join(root, 'skills'));
-  for (const name of ['recent-signal-research', 'editorial-voice']) {
+  for (const name of ['recent-signal-research', 'editorial-voice', 'instagram-content']) {
     const skill = await registry.load(name);
     assert.deepEqual(skill.permissions, ['read', 'local-write']);
     assert.equal(skill.permissions.includes('external-write'), false);

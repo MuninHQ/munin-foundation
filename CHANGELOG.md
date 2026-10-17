@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added the local-only `instagram-content` skill, a Munin adaptation of `sergebulaev/instagram-skills` (MIT) for Instagram captions, carousels, Reels hooks, hashtag sizing, weekly plans and profile audits; it drafts and audits only and never publishes outside the existing approval boundary.
 - Added disabled-by-default Token Efficiency v1 shadow observation for token/context usage, advisory execution tiers, budgets, structured compaction, session checkpoints, projected savings, supervisor/worker health and Promotion Gate evidence without changing provider or executor selection.
 
 ## 1.0.0 — Foundation Bootstrap
