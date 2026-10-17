@@ -885,3 +885,37 @@ FreeLLMAPI validated (MIT, no duplication, zero cost with free-tier keys) and do
 ## What did not work
 
 - llmProviderStatus reports deployment local for localhost proxies that forward to cloud
+
+## 2026-10-17T00:49:58.773Z — MEMORY PRE-TASK · munin-foundation
+
+Task: content and product subagent team
+Consumer: assistant
+Context matches: 0
+Vault matches: 0
+
+## 2026-10-17T01:01:32.065Z — MEMORY POST-TASK · munin-foundation
+
+Configured 7 Claude Code subagents (steve, lexa, lumi, ravi, zion, maya, neo) in .claude/agents with coordinator protocol, shared briefing and MIT notice from agency-agents; headless test steve->lexa->zion produced a LinkedIn carousel on sales vs receipts reconciliation, not published; npm test 985 pass
+## Decisions
+
+- Main session is coordinator; sequential by default, max 2 parallel
+- Subagents read-only except neo (templates dir only); no Bash or external-account tools
+- Adapted, not installed, agency-agents; unverified platform claims dropped
+- Future runs saved under data/runtime/content-team (gitignored)
+
+## Changed
+
+- .claude/agents/*.md
+- .claude/agent-team/README.md, BRIEFING.md, THIRD_PARTY_NOTICES.md, templates/, examples/
+- CLAUDE.md coordinator section
+- tests/content-team-agents.test.ts
+
+## Next steps
+
+- Reopen BCB and Microsoft sources when network allows
+- User approval of the carousel flow before neo creates a template
+
+## What did not work
+
+- Subagents created mid-session are not loadable until a new session; tested via headless claude -p
+- WebFetch and curl to bcb.gov.br and support.microsoft.com blocked by proxy
