@@ -1,0 +1,38 @@
+{
+  "target": {
+    "name": "Langfuse — evaluation patterns",
+    "sourceUrl": "https://github.com/langfuse/langfuse",
+    "accessBasis": "public-behavior"
+  },
+  "patterns": [
+    {
+      "id": "comparative-trace-evaluation",
+      "feature": "Repeatable before/after evaluation datasets for agent outcomes",
+      "observation": "Langfuse publicly documents datasets, experiments and trace evaluations; no Munin benchmark has been run.",
+      "evidenceUrl": "https://github.com/langfuse/langfuse",
+      "muninModule": "src/orchestration-runtime-core.ts",
+      "overlap": "partial",
+      "replaySteps": [
+        "Identify five representative redacted Munin missions.",
+        "Replay unchanged Munin baseline under fixed inputs.",
+        "Run proposed comparison only in an isolated branch and collect the same receipts.",
+        "Compare success, false completion, duration, interventions and safety checks."
+      ],
+      "rollbackPlan": "Revert the isolated research branch; preserve baseline receipts.",
+      "hypothesis": null
+    },
+    {
+      "id": "existing-telemetry",
+      "feature": "Capture execution traces and audit events",
+      "observation": "Langfuse documents trace instrumentation; Munin already has agent telemetry and an evidence ledger.",
+      "evidenceUrl": "https://github.com/langfuse/langfuse",
+      "muninModule": "src/evidence-ledger.ts",
+      "overlap": "existing",
+      "replaySteps": [
+        "Inspect the existing Munin trace and evidence ledger tests."
+      ],
+      "rollbackPlan": "No change proposed.",
+      "hypothesis": null
+    }
+  ]
+}
