@@ -885,3 +885,26 @@ FreeLLMAPI validated (MIT, no duplication, zero cost with free-tier keys) and do
 ## What did not work
 
 - llmProviderStatus reports deployment local for localhost proxies that forward to cloud
+
+## 2026-10-20T23:57:59.729Z — MEMORY POST-TASK · munin
+
+REA do Lovable com 8 mecanismos e matriz de adoção; darkly.ai sem evidência verificável (domínio bloqueado, única fonte templated)
+## Decisions
+
+- Adotar seletor Planejar/Executar no chat operacional
+- Mensagem nova rejeita ação pendente; credencial nunca no chat
+- Ações consequentes declaram o que não pode ser desfeito
+- darkly.ai: não fabricar REA sem evidência
+
+## Changed
+
+- docs/research/lovable-darkly-rea-2026-10.md
+
+## Next steps
+
+- Implementar Planejar/Executar + sugestões no operator-chat
+- Liberar darkly.ai ou receber screenshots para REA
+
+## What did not work
+
+- lovable.dev e darkly.ai bloqueados pela rede do ambiente
