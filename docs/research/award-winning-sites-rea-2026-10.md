@@ -53,9 +53,10 @@ Nota: no grupo B, a maioria dos produtos mais citados como referência de design
 
 Evidência coletada no repositório em `49c47b8`:
 
-- `apps/web/index.html` empilha três folhas globais: `munin.css`, `munin-workspace.css`, `nordic-theme.css` (preview). Os valores de `munin.css :root` não correspondem a `design/tokens.json` (ex.: raios 7/10/14 px vs. tokens 4/8/12/16; `--accent:#5ca9d6` vs. `intelligence #3B82F6`; superfícies `#05080d/#0a1018` vs. `#07090D/#0D1117`).
-- Escala tipográfica em `munin.css`: eyebrow 10 px, small 11 px, body 13 px; `.munin-status` usa 9 px. Tokens definem `xs=12`, `sm=14`.
-- `munin.css` tem animação infinita (`munin-shimmer`) e transições sem `@media (prefers-reduced-motion)`; só `career-command.css` e `mobile-product.css` respeitam essa preferência.
+- O CSS servido é `apps/web/public/munin.css` (Vite resolve `/munin.css` a partir de `public/`). Existem cópias obsoletas e divergentes em `apps/web/munin.css` e `apps/web/munin-nav.js` que não são servidas — fonte de confusão para agentes (esta própria análise leu a cópia errada na primeira versão).
+- `apps/web/index.html` empilha três folhas globais: `munin.css`, `munin-workspace.css`, `nordic-theme.css` (preview). Os valores de `public/munin.css :root` não correspondem a `design/tokens.json` (ex.: raios 7/10/14 px vs. tokens 4/8/12/16; `--accent:#5ca9d6` vs. `intelligence #3B82F6`; superfícies `#05080d/#0a1018` vs. `#07090D/#0D1117`).
+- Tipografia abaixo de `font.size.xs` (12 px) em elementos de leitura: `.munin-status` 9 px, `.munin-hud-return` 9 px, rótulos da navegação mobile 9 px, `--text-small` 11 px (links da barra, "Tools"), detalhes da paleta 11 px, cabeçalho da paleta e rótulo "Ação rápida" 10 px. (`.eyebrow` já é sobrescrito para 12 px por `munin-workspace.css`.)
+- Movimento e preferências: `public/munin.css` **já** trata `prefers-reduced-motion`, `prefers-reduced-transparency` e `prefers-contrast`, e há um toggle "Animações" na barra. Nenhum gap de movimento foi encontrado no shell compartilhado.
 - `munin-nav.js` já tem paleta de comandos (`Ctrl/⌘+K`, `<dialog>`, busca), mas ela só **navega** entre telas — não executa ações, não mostra atalhos, não tem ranking por recência.
 - `node scripts/design-drift-checker.mjs design/drift.config.json` (observe): 95 arquivos, 1658 achados — `rawColorLiteral` 1513, `inlineVisualStyle` 54, `largeBlurShadow` 37, `largeRadius` 28, `fontFamilyLiteral` 26.
 
@@ -93,7 +94,7 @@ Evidência coletada no repositório em `49c47b8`:
 - **Hipótese de transferência**: rastreador de ciclo (fase da lua) premiado por interação — padrão de **um controle direto sobre o tempo** (arrastar para frente/trás). Possível aplicação: "replay" do estado do Control Room ao longo do dia. Validar antes de propor.
 
 #### A8. Guitar Wiz — ADA 2026, Inclusivity [cat]
-- **Transferência**: lembrete de que inclusão é um eixo premiado por si só. O Munin hoje tem textos de 9–11 px e animação sem `reduced-motion` (§3) — o achado de maior retorno deste grupo é **de acessibilidade, não estético**.
+- **Transferência**: lembrete de que inclusão é um eixo premiado por si só. O Munin já respeita reduced-motion/contraste, mas ainda tem textos de 9–11 px em status, navegação e paleta (§3) — o achado de maior retorno deste grupo é **de acessibilidade, não estético**.
 
 ### Grupo B — parecidos com o Munin
 
@@ -133,10 +134,10 @@ Evidência coletada no repositório em `49c47b8`:
 
 | # | Padrão (origem) | Decisão | Seam no Munin | Custo / risco |
 | --- | --- | --- | --- | --- |
-| 1 | `prefers-reduced-motion` global + tipografia mínima 12 px (A8, B5) | **Adotar — prioridade 1** | `apps/web/munin.css` | Baixo; corrige acessibilidade sem mudar identidade |
-| 2 | Chrome que recua: nav mais escura, conteúdo domina (B2) | **Adotar** | `munin.css` `.munin-primary`, sidebar | Baixo; reversível |
+| 1 | Piso tipográfico de 12 px (`font.size.xs`) em status, navegação e paleta (A8, B5) | **Adotar — prioridade 1** | `apps/web/public/munin.css` | Baixo; corrige acessibilidade sem mudar identidade |
+| 2 | Chrome que recua: nav mais escura, conteúdo domina (B2) | **Adotar** | `public/munin.css` `.munin-primary`, sidebar | Baixo; reversível |
 | 3 | Header/toolbar canônico único em todas as telas (B2) | **Adotar** | `munin-nav.js` + `munin-ui/` | Médio; tela a tela, sem mass-restyle |
-| 4 | Paleta de comandos executa ações + mostra atalhos (B3, B4) | **Adotar** | `apps/web/munin-nav.js` | Médio; ações consequentes via approval gate |
+| 4 | Paleta de comandos executa ações + mostra atalhos (B3, B4) | **Adotar** | `apps/web/public/munin-nav.js` | Médio; ações consequentes via approval gate |
 | 5 | J/K/E/Z + UI otimista apenas para ações reversíveis locais (B4) | **Adaptar** | Action Inbox, Career Inbox | Médio; regra explícita *otimista ⇔ reversível* |
 | 6 | Componente "proposta → diff → aprovar" padronizado (B1) | **Adotar** | ApprovalExecutor UI, Action Inbox | Médio; reusa abstrações existentes |
 | 7 | Marcação visual usuário vs. gerado por IA (B6) | **Adotar** | Context Memory, Briefing, Content Studio | Baixo–médio |
@@ -151,8 +152,8 @@ Evidência coletada no repositório em `49c47b8`:
 
 ## 6. Próximos passos propostos (nenhum executado)
 
-1. **PR pequeno de acessibilidade** (itens 1–2): `reduced-motion` em `munin.css`, `.munin-status` 9→12 px, eyebrow/small ≥ 12 px, nav dimmer. Sem tocar tokens canônicos.
-2. **Paleta de ações** (item 4): estender `commands` em `munin-nav.js` com `{action, shortcut, consequential}`; ações `consequential` abrem o fluxo de aprovação existente, nunca executam direto. Teste em `tests/web-navigation.test.ts`.
+1. **PR pequeno de acessibilidade** (item 1): piso de 12 px em `public/munin.css` (status, HUD, nav mobile, links da barra, paleta). Sem tocar tokens canônicos.
+2. **Paleta de ações** (item 4): estender `commands` em `public/munin-nav.js` com `{action, shortcut, consequential}`; ações `consequential` abrem o fluxo de aprovação existente, nunca executam direto. Teste em `tests/web-navigation.test.ts`.
 3. **ADR de tokens** (item 8): proposta separada para ligar `munin.css :root` a `design/tokens.json` e reduzir os 1513 literais — revisão explícita obrigatória pelo contrato.
 4. **Repetir a REA com inspeção real**: liberar `awwwards.com`, `webbyawards.com`, `linear.app`, `apple.com` no ambiente e capturar snapshots via sessão Playwright read-only, convertendo os itens [sec]/[cat] em evidência primária.
 
