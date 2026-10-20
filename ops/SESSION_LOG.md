@@ -885,3 +885,27 @@ FreeLLMAPI validated (MIT, no duplication, zero cost with free-tier keys) and do
 ## What did not work
 
 - llmProviderStatus reports deployment local for localhost proxies that forward to cloud
+
+## 2026-10-20T22:47:45.926Z — MEMORY POST-TASK · munin
+
+REA de 14 referencias (Awwwards SOTY 2025, Webby 2026, ADA 2026, Linear, Raycast, Superhuman, Vercel, Granola) com matriz Adotar/Adaptar/Adiar/Rejeitar em docs/research/award-winning-sites-rea-2026-10.md
+## Decisions
+
+- REA = reverse-engineering analysis por mecanismo
+- Prioridade 1: acessibilidade (reduced-motion, tipo >=12px)
+- Rejeitar WebGL/cursor reativo/scroll-jacking em telas operacionais
+- Tokens em OKLCH exige ADR separada
+
+## Changed
+
+- docs/research/award-winning-sites-rea-2026-10.md
+
+## Next steps
+
+- PR de acessibilidade em munin.css
+- Paleta de comandos executando acoes via approval gate
+- Repetir REA com inspecao Playwright apos liberar dominios
+
+## What did not work
+
+- Rede bloqueou awwwards.com, webbyawards.com, linear.app; sem inspecao visual
