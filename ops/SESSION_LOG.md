@@ -909,3 +909,34 @@ REA de 14 referencias (Awwwards SOTY 2025, Webby 2026, ADA 2026, Linear, Raycast
 ## What did not work
 
 - Rede bloqueou awwwards.com, webbyawards.com, linear.app; sem inspecao visual
+
+## 2026-10-20T22:59:14.385Z — MEMORY POST-TASK · munin
+
+Abertos PR #399 (REA + ADR-0008 proposta), #400 (piso tipográfico 12px no shell) e #401 (paleta de comandos com teclado, recentes e ações locais); suíte completa verde
+## Decisions
+
+- CSS servido é apps/web/public/; cópias na raiz de apps/web são obsoletas
+- Paleta só executa ações locais reversíveis; consequentes ficam no approval flow
+- Piso tipográfico vem de font.size.xs com teste
+
+## Changed
+
+- docs/research/award-winning-sites-rea-2026-10.md
+- decisions/ADR-0008-WEB-CSS-BOUND-TO-DESIGN-TOKENS.md
+- apps/web/public/munin.css
+- apps/web/public/munin-nav.js
+- apps/web/public/munin-workspace.css
+- tests/web-type-floor.test.ts
+- tests/web-command-palette.test.ts
+
+## Next steps
+
+- Revisar e decidir ADR-0008
+- Após merge de #400, mesclar main em #401 (mesma linha de CSS da paleta)
+- Remover cópias obsoletas apps/web/munin.css e munin-nav.js
+- Repetir REA com inspeção visual após liberar domínios
+
+## What did not work
+
+- Primeira versão da REA leu apps/web/munin.css obsoleto; corrigido
+- npm test reescreve dist-web rastreado; restaurar antes do commit
