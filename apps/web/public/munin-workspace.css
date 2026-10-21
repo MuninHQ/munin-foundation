@@ -54,6 +54,7 @@
 .munin-workspace .munin-command-overlay.open { display:block; }
 .munin-workspace .munin-command-sheet { width:100%; margin:0; max-height:none; }
 .munin-workspace .munin-command-results a { min-height:56px; }
+.munin-workspace .munin-command-results { max-height:calc(85dvh - 180px); overflow:auto; }
 /* React command center: retain its real sections and data density. */
 .munin-workspace .sidebar { background:#0D1117; border-color:#202A36; }
 .munin-workspace .sidebar nav :is(button,a) { color:#A8B3C1; font-size:14px; }
