@@ -940,3 +940,56 @@ Abertos PR #399 (REA + ADR-0008 proposta), #400 (piso tipográfico 12px no shell
 
 - Primeira versão da REA leu apps/web/munin.css obsoleto; corrigido
 - npm test reescreve dist-web rastreado; restaurar antes do commit
+
+## 2026-10-20T23:57:59.729Z — MEMORY POST-TASK · munin
+
+REA do Lovable com 8 mecanismos e matriz de adoção; darkly.ai sem evidência verificável (domínio bloqueado, única fonte templated)
+## Decisions
+
+- Adotar seletor Planejar/Executar no chat operacional
+- Mensagem nova rejeita ação pendente; credencial nunca no chat
+- Ações consequentes declaram o que não pode ser desfeito
+- darkly.ai: não fabricar REA sem evidência
+
+## Changed
+
+- docs/research/lovable-darkly-rea-2026-10.md
+
+## Next steps
+
+- Implementar Planejar/Executar + sugestões no operator-chat
+- Liberar darkly.ai ou receber screenshots para REA
+
+## What did not work
+
+- lovable.dev e darkly.ai bloqueados pela rede do ambiente
+
+## 2026-10-21T00:11:51.482Z — MEMORY POST-TASK · munin
+
+PRs #403 (Planejar/Executar, bloqueio de credenciais, undo, sugestões, fix de prioridades), #404 (J/K/E/Z no Action Inbox), #405 (remoção das cópias obsoletas), #406 (veredito do Sentinel e não-desfazível no cartão de aprovação); suíte completa verde em cada um
+## Decisions
+
+- Chat abre em Planejar; API mantém execute como padrão para compatibilidade
+- Atalhos de teclado só para ações reversíveis; aprovar/rejeitar ficam em clique+confirm
+- ADR-0008 não implementada: aguarda decisão explícita
+
+## Changed
+
+- src/assistant.ts
+- src/api.ts
+- apps/web/operator-chat.html
+- apps/web/action-inbox.html
+- src/action-inbox.ts
+- apps/web/munin.css (removido)
+- apps/web/munin-nav.js (removido)
+
+## Next steps
+
+- Merge dos PRs; resolver conflitos #404x#406 (action-inbox.html) e #400x#401 (munin.css)
+- Decidir ADR-0008
+- Persistir vereditos de security-reviewer/cost-guardian nas aprovações
+
+## What did not work
+
+- Atalho de prioridades capturava comandos de escrita (corrigido em #403)
+- ApprovalQueue usa caminho relativo ao cwd (data/runtime), não MUNIN_DATA_DIR
