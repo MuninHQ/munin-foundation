@@ -993,3 +993,37 @@ PRs #403 (Planejar/Executar, bloqueio de credenciais, undo, sugestões, fix de p
 
 - Atalho de prioridades capturava comandos de escrita (corrigido em #403)
 - ApprovalQueue usa caminho relativo ao cwd (data/runtime), não MUNIN_DATA_DIR
+
+## 2026-10-21T20:05:54.170Z — MEMORY PRE-TASK · munin-foundation
+
+Task: find and install improvements
+Consumer: assistant
+Context matches: 0
+Vault matches: 0
+
+## 2026-10-21T20:06:23.276Z — MEMORY POST-TASK · munin-foundation
+
+Vite 6.4.3 -> 6.4.5 closes high advisory (npm audit 0); second-brain strips cmd.exe caret escapes leaked on Windows at CLI input and timeline read; npm second-brain scripts flattened to one npm level; full suite 995 pass 0 fail
+## Decisions
+
+- Historic SESSION_LOG entries kept verbatim for auditability; sanitized only on read
+- Caret unescape only when every whitespace is escaped, so real carets like ^6.4.5 survive
+- dist-web build output not committed (tracking decision still open)
+
+## Changed
+
+- package.json
+- package-lock.json
+- src/second-brain.ts
+- src/second-brain-cli.ts
+- tests/second-brain.test.ts
+- ops/BACKLOG.md
+
+## Next steps
+
+- Confirm on Windows host that new second-brain:commit entries are written without carets
+- Decide dist-web tracking
+
+## What did not work
+
+- Timeline regex with m flag truncates summaries to first line (pre-existing, unchanged)

@@ -6,7 +6,7 @@
 - [x] Verify full suite on the Windows host: 954/954 passing.
 - [x] Diagnose PR #389 CI failure on `352757a` (duplicate `source` property in `src/host-worker-cli.ts`); resolved by `b097619`, all workflows green on head.
 - [ ] Fix Prettier formatting of `.github/ISSUE_TEMPLATE/vaga-munin.md` in MuninHQ/munin-core so `main` CI passes (run 38637505861).
-- [ ] Fix mojibake in `apps/web/public/nordic-theme.js` toggle tooltips.
+- [x] Fix mojibake in `apps/web/public/nordic-theme.js` toggle tooltips (verified clean 2026-10-21).
 - [ ] Decide whether `dist-web/` stays partially tracked or becomes ignored build output.
 - [ ] Reconcile local `main` (15 ahead / 19 behind `origin/main`) — requires explicit approval.
 - [ ] Verify workspace supervisor/API runtime and immersive UI host installation (not verified 2026-10-15).

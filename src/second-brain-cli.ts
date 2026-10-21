@@ -1,9 +1,10 @@
-import { commitAfterTask, recallBeforeTask, secondBrainStatus } from './second-brain.js';
+import { commitAfterTask, recallBeforeTask, secondBrainStatus, stripLeakedCmdEscapes } from './second-brain.js';
 import { secondBrainDaily } from './second-brain-daily.js';
 
 function value(args: string[], flag: string): string | undefined {
   const index = args.indexOf(flag);
-  return index >= 0 ? args[index + 1] : undefined;
+  const raw = index >= 0 ? args[index + 1] : undefined;
+  return raw === undefined ? undefined : stripLeakedCmdEscapes(raw);
 }
 
 function list(args: string[], flag: string): string[] | undefined {
@@ -26,7 +27,7 @@ async function main() {
   }
 
   if (command === 'recall') {
-    const task = value(args, '--task') ?? args.slice(1).join(' ').trim();
+    const task = value(args, '--task') ?? stripLeakedCmdEscapes(args.slice(1).join(' ').trim());
     if (!task) throw new Error('Uso: second-brain recall --task "..." [--project munin]');
     console.log(JSON.stringify(await recallBeforeTask({ task, project: value(args, '--project') }), null, 2));
     return;

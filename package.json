@@ -35,9 +35,9 @@
     "knowledge:vault:status": "npm run knowledge:vault -- status",
     "knowledge:vault:sync": "npm run knowledge:vault -- export-context",
     "second-brain": "npm run build:core && node dist/src/second-brain-cli.js",
-    "second-brain:status": "npm run second-brain -- status",
-    "second-brain:recall": "npm run second-brain -- recall",
-    "second-brain:commit": "npm run second-brain -- commit",
+    "second-brain:status": "npm run build:core && node dist/src/second-brain-cli.js status",
+    "second-brain:recall": "npm run build:core && node dist/src/second-brain-cli.js recall",
+    "second-brain:commit": "npm run build:core && node dist/src/second-brain-cli.js commit",
     "document:ingest": "npm run build:core && node dist/src/document-ingest-cli.js",
     "document:benchmark": "npm run build:core && node dist/src/document-benchmark-cli.js",
     "document:promote": "npm run build:core && node dist/src/document-promotion-cli.js",
@@ -97,7 +97,7 @@
     "react-dom": "^19.0.0",
     "three": "^0.180.0",
     "vanta": "^0.5.24",
-    "vite": "^6.0.5"
+    "vite": "^6.4.5"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
