@@ -30,3 +30,13 @@ test('pending Sentinel approvals surface as P0 review items',()=>{
  assert.equal(item?.priority,'P0');
  assert.match(item?.whyItMatters??'',/Sentinel/i);
 });
+
+test('approval items carry the Sentinel verdict and what approving cannot undo',()=>{
+ const decision={band:'RED' as const,disposition:'needs_approval' as const,rule:'external-write-escalation',request:{class:'external-write' as const,tool:'send email',target:'recruiter',payloadPreview:'Olá, segue meu CV.'},policy:{decision:'needs_user' as const,rule:'external-write-escalation',request:{class:'external-write' as const,tool:'send email',target:'recruiter'}}};
+ const approvals=[{id:'approval-2',createdAt:'2026-09-10T03:00:00.000Z',updatedAt:'2026-09-10T03:00:00.000Z',status:'pending' as const,decision}];
+ const item=buildActionInbox(empty(),{messages:[]},undefined,new Date('2026-09-10T03:01:00.000Z'),[],approvals).items.find(entry=>entry.origin==='approval');
+ assert.equal(item?.verdict?.band,'RED');
+ assert.equal(item?.verdict?.actionClass,'external-write');
+ assert.equal(item?.verdict?.payloadPreview,'Olá, segue meu CV.');
+ assert.match(item?.verdict?.cannotUndo??'',/não pode ser desfeito/);
+});
