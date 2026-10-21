@@ -908,3 +908,33 @@ REA do Lovable com 8 mecanismos e matriz de adoção; darkly.ai sem evidência v
 ## What did not work
 
 - lovable.dev e darkly.ai bloqueados pela rede do ambiente
+
+## 2026-10-21T00:11:51.482Z — MEMORY POST-TASK · munin
+
+PRs #403 (Planejar/Executar, bloqueio de credenciais, undo, sugestões, fix de prioridades), #404 (J/K/E/Z no Action Inbox), #405 (remoção das cópias obsoletas), #406 (veredito do Sentinel e não-desfazível no cartão de aprovação); suíte completa verde em cada um
+## Decisions
+
+- Chat abre em Planejar; API mantém execute como padrão para compatibilidade
+- Atalhos de teclado só para ações reversíveis; aprovar/rejeitar ficam em clique+confirm
+- ADR-0008 não implementada: aguarda decisão explícita
+
+## Changed
+
+- src/assistant.ts
+- src/api.ts
+- apps/web/operator-chat.html
+- apps/web/action-inbox.html
+- src/action-inbox.ts
+- apps/web/munin.css (removido)
+- apps/web/munin-nav.js (removido)
+
+## Next steps
+
+- Merge dos PRs; resolver conflitos #404x#406 (action-inbox.html) e #400x#401 (munin.css)
+- Decidir ADR-0008
+- Persistir vereditos de security-reviewer/cost-guardian nas aprovações
+
+## What did not work
+
+- Atalho de prioridades capturava comandos de escrita (corrigido em #403)
+- ApprovalQueue usa caminho relativo ao cwd (data/runtime), não MUNIN_DATA_DIR
